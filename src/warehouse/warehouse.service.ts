@@ -78,7 +78,7 @@ export class WarehouseService {
         const evt1 = manager.create(ItemEvent, {
           itemId: savedItem.id,
           eventType: ItemEventType.RECEIVED,
-          fromStatus: null as any,
+          fromStatus: undefined,
           toStatus: ItemStatus.WAREHOUSE,
           performedByUserId: userId,
           toLocation: 'Warehouse Receiving Dock',

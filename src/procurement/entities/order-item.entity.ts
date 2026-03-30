@@ -21,7 +21,7 @@ export class OrderItem {
   @JoinColumn({ name: 'orderId' })
   order: Order;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   purchaseRequestId?: string | null;
 
   @ManyToOne(() => PurchaseRequest, { nullable: true })

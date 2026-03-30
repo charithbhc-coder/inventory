@@ -1,15 +1,7 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as bcrypt from 'bcrypt';
-import { User } from '../../users/entities/user.entity';
-import { UserRole } from '../../common/enums';
-import { Company } from '../../companies/entities/company.entity';
-import { Department } from '../../departments/entities/department.entity';
-import { ItemCategory } from '../../items/entities/item-category.entity';
-import { Item } from '../../items/entities/item.entity';
-import { ItemEvent } from '../../items/entities/item-event.entity';
-import { WarehouseStock } from '../../warehouse/entities/warehouse-stock.entity';
-import { AuditLog } from '../../audit-logs/entities/audit-log.entity';
+// Glob import for entities used below
 
 dotenv.config();
 
@@ -25,14 +17,14 @@ async function bootstrap() {
     username: process.env.DB_USER || 'inventory_user',
     password: process.env.DB_PASSWORD || 'inventory_pass_2025',
     database: process.env.DB_NAME || 'inventory_db',
-    entities: [User, Company, Department, ItemCategory, Item, ItemEvent, WarehouseStock, AuditLog],
+    entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
     synchronize: true, // Let it sync schemas first time
   });
 
   await dataSource.initialize();
   console.log('Database connected');
 
-  const usersRepo = dataSource.getRepository(User);
+  const usersRepo = dataSource.getRepository('User');
 
   const email = process.env.SUPER_ADMIN_EMAIL || 'superadmin@inventory.com';
   const tempPass = process.env.SUPER_ADMIN_TEMP_PASS || 'TempAdmin@2025!';
@@ -50,7 +42,7 @@ async function bootstrap() {
       passwordHash,
       firstName,
       lastName,
-      role: UserRole.SUPER_ADMIN,
+      role: 'SUPER_ADMIN', // using string 'SUPER_ADMIN' to avoid importing UserRole Enum
       mustChangePassword: true, // As per requirements
       passwordHistory: [passwordHash],
     });

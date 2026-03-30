@@ -23,7 +23,7 @@ export class ItemCategory {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   companyId: string; // NULL = global (set by Super Admin)
 
   @ManyToOne(() => Company, { nullable: true })

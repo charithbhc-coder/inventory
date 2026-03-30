@@ -27,6 +27,6 @@ export class AuditLogsController {
     @Query('entityType') entityType?: string,
     @Query('companyId') companyId?: string,
   ) {
-    return this.auditLogsService.findAll(user.role, user.companyId as string, { page, limit, action, userId, entityType, companyId });
+    return this.auditLogsService.findAll(user.role, user.companyId!, { page, limit, action, userId, entityType, companyId });
   }
 }

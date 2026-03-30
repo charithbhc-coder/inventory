@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
@@ -20,8 +21,28 @@ import { VendorsModule } from './vendors/vendors.module';
 import { ProcurementModule } from './procurement/procurement.module';
 import { RepairsModule } from './repairs/repairs.module';
 import { TransfersModule } from './transfers/transfers.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReportsModule } from './reports/reports.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CacheModule } from '@nestjs/cache-manager';
+import { DepreciationModule } from './depreciation/depreciation.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+import { ImportModule } from './import/import.module';
+import { LabelsModule } from './labels/labels.module';
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 60 * 15 * 1000, // 15 minutes default
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, jwtConfig],
@@ -36,7 +57,7 @@ import { TransfersModule } from './transfers/transfers.module';
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.name'),
         autoLoadEntities: true,
-        synchronize: true, // Use migrations in production! True is okay for early Phase 1 dev start
+        synchronize: process.env.NODE_ENV !== 'production',
       }),
       inject: [ConfigService],
     }),
@@ -52,12 +73,23 @@ import { TransfersModule } from './transfers/transfers.module';
     ProcurementModule,
     RepairsModule,
     TransfersModule,
+    AnalyticsModule,
+    NotificationsModule,
+    ReportsModule,
+    DepreciationModule,
+    MaintenanceModule,
+    ImportModule,
+    LabelsModule,
   ],
   controllers: [],
   providers: [
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditLogInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

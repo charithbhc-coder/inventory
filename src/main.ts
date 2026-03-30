@@ -30,9 +30,22 @@ async function bootstrap() {
   // Swagger OpenAPI Docs
   const config = new DocumentBuilder()
     .setTitle('Enterprise Inventory API')
-    .setDescription('The API for the multi-tenant inventory management system')
+    .setDescription('Full REST API for multi-tenant Inventory, Procurement, Repairs, and Asset Lifecycle Management')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('Auth', 'Authentication and SSO endpoints')
+    .addTag('Companies', 'Multi-tenant company management')
+    .addTag('Items', 'Core inventory item operations and lifecycle')
+    .addTag('Custom Fields', 'Dynamic category-specific attribute management')
+    .addTag('Warehouse', 'Stock management and storage locations')
+    .addTag('Procurement', 'Purchase requests and vendor orders')
+    .addTag('Repairs', 'Maintenance and repair job tracking')
+    .addTag('Maintenance', 'Preventive maintenance scheduling')
+    .addTag('Depreciation', 'Asset valuation and snapshots')
+    .addTag('Transfers', 'Inter-departmental item transfers')
+    .addTag('Reports', 'PDF/Excel export and data analysis')
+    .addTag('Imports', 'Bulk data ingestion via Excel')
+    .addTag('Audit Logs', 'Immutable system activity tracking')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

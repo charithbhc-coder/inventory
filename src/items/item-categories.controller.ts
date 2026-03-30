@@ -37,13 +37,13 @@ export class ItemCategoriesController {
     @Query('search') search?: string,
     @Query('companyId') companyIdQ?: string,
   ) {
-    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId;
+    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId!;
     return this.categoriesService.findAll(cid as any, { page, limit, search });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of an Item Category' })
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.categoriesService.findOne(id, user.companyId as string);
+    return this.categoriesService.findOne(id, user.companyId!);
   }
 }

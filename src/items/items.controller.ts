@@ -28,7 +28,7 @@ export class ItemsController {
     @Query('categoryId') categoryId?: string,
     @Query('companyId') companyIdQ?: string,
   ) {
-    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId;
+    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId!;
     // For DEPT_ADMIN we could restrict, but maybe they can see company items? Restricting for now:
     const myDept = user.role === UserRole.DEPT_ADMIN ? user.departmentId : undefined;
     return this.itemsService.findAll(cid as any, { page, limit, search, status, categoryId, departmentId: myDept });
@@ -37,21 +37,21 @@ export class ItemsController {
   @Get(':barcodeOrId')
   @ApiOperation({ summary: 'Get item details AND full AliExpress timeline' })
   findOne(@Param('barcodeOrId') barcodeOrId: string, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.getTimeline(barcodeOrId, user.companyId, user.role);
+    return this.itemsService.getTimeline(barcodeOrId, user.companyId!, user.role);
   }
 
   @Post(':id/distribute')
   @Roles(UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Distribute a warehouse item to a department' })
   distribute(@Param('id') id: string, @Body() dto: DistributeItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.distribute(id, dto, user.sub, user.companyId as string);
+    return this.itemsService.distribute(id, dto, user.sub, user.companyId!);
   }
 
   @Post(':id/assign')
   @Roles(UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Assign a distributed item to a staff user' })
   assign(@Param('id') id: string, @Body() dto: AssignItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.assign(id, dto, user.sub, user.departmentId as string);
+    return this.itemsService.assign(id, dto, user.sub, user.departmentId!);
   }
 
   @Post(':id/report-fault')
@@ -59,5 +59,12 @@ export class ItemsController {
   @ApiOperation({ summary: 'Report a fault on an item' })
   reportFault(@Param('id') id: string, @Body() dto: ReportFaultDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.reportFault(id, dto, user.sub, user.role);
+  }
+
+  @Post(':id/acknowledge')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN)
+  @ApiOperation({ summary: 'Acknowledge receipt of a distributed or assigned item' })
+  acknowledge(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.acknowledge(id, user.sub, user.role, user.departmentId!);
   }
 }

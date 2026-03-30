@@ -63,33 +63,33 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
 
   // MFA — designed now, activated in Phase 4
   @Column({ default: false })
   mfaEnabled: boolean;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   mfaSecret?: string | null;
 
   @Column({ type: 'text', array: true, default: '{}' })
   mfaBackupCodes: string[];
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   mfaMethod?: string | null; // 'TOTP' | 'SMS'
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   phoneNumber?: string | null;
 
   // Password reset token
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   passwordResetToken?: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   passwordResetExpiresAt?: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   createdByUserId: string;
 
   @CreateDateColumn()

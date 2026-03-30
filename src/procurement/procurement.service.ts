@@ -10,6 +10,7 @@ import { PRStatus, OrderStatus, UserRole } from '../common/enums';
 import { format } from 'date-fns';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
 import { WarehouseService } from '../warehouse/warehouse.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ProcurementService {
@@ -19,6 +20,7 @@ export class ProcurementService {
     @InjectRepository(ApprovalThreshold) private thresholdRepository: Repository<ApprovalThreshold>,
     private dataSource: DataSource,
     private warehouseService: WarehouseService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   private async generatePrNumber(companyId: string): Promise<string> {
@@ -101,7 +103,18 @@ export class ProcurementService {
       throw new ForbiddenException('You lack permissions to approve');
     }
 
-    return this.prRepository.save(pr);
+    const saved = await this.prRepository.save(pr);
+    
+    if (saved.status === PRStatus.SUPER_APPROVED || saved.status === PRStatus.COMPANY_APPROVED) {
+        this.eventEmitter.emit('purchase_request.approved', {
+            prId: saved.id,
+            requestNumber: saved.requestNumber,
+            userId: saved.requestedByUserId,
+            companyId: saved.companyId,
+        });
+    }
+
+    return saved;
   }
 
   async rejectPr(id: string, dto: RejectPrDto, userId: string, role: UserRole, companyId: string) {

@@ -5,7 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ItemStatus, ItemCondition } from '../../common/enums';
 import { Company } from '../../companies/entities/company.entity';
@@ -13,8 +15,11 @@ import { Department } from '../../departments/entities/department.entity';
 import { User } from '../../users/entities/user.entity';
 import { Vendor } from '../../vendors/entities/vendor.entity';
 import { ItemCategory } from './item-category.entity';
+import { ItemCustomValue } from './item-custom-value.entity';
 
 @Entity('items')
+@Index(['companyId', 'status'])
+@Index(['companyId', 'currentDepartmentId'])
 export class Item {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -45,14 +50,14 @@ export class Item {
   @JoinColumn({ name: 'companyId' })
   company: Company;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   currentDepartmentId: string; // NULL = in warehouse
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'currentDepartmentId' })
   currentDepartment: Department;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   currentAssignedUserId: string; // NULL = not assigned to anyone
 
   @ManyToOne(() => User, { nullable: true })
@@ -88,18 +93,21 @@ export class Item {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   vendorId?: string | null;
 
   @ManyToOne(() => Vendor, { nullable: true })
   @JoinColumn({ name: 'vendorId' })
   vendor?: Vendor | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   receivedByUserId: string; // Warehouse Admin who received it
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToMany(() => ItemCustomValue, (val: ItemCustomValue) => val.item)
+  customValues: ItemCustomValue[];
 
   @UpdateDateColumn()
   updatedAt: Date;

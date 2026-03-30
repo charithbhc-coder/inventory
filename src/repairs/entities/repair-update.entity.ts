@@ -31,7 +31,7 @@ export class RepairUpdate {
   @Column({ type: 'text' })
   updateNote: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   location?: string | null;
 
   @Column({ type: 'text', array: true, default: '{}' })

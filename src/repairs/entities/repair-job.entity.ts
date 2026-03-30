@@ -50,14 +50,14 @@ export class RepairJob {
   @JoinColumn({ name: 'reportedByUserId' })
   reportedByUser: User;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   assignedRepairHandlerId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'assignedRepairHandlerId' })
   assignedRepairHandler?: User | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   vendorId?: string | null;
 
   @ManyToOne(() => Vendor, { nullable: true })
@@ -100,7 +100,7 @@ export class RepairJob {
   @Column({ type: 'enum', enum: RepairOutcome, nullable: true })
   outcome?: RepairOutcome | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   approvedByUserId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })

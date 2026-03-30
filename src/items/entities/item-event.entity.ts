@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ItemEventType, ItemStatus } from '../../common/enums';
 import { Item } from './item.entity';
@@ -17,6 +18,8 @@ import { Department } from '../../departments/entities/department.entity';
  * This powers the "AliExpress-style" tracking timeline.
  */
 @Entity('item_events')
+@Index(['itemId', 'createdAt'])
+@Index(['referenceId'])
 export class ItemEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -53,28 +56,28 @@ export class ItemEvent {
   @Column({ length: 255, nullable: true })
   toLocation: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   fromDepartmentId: string;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'fromDepartmentId' })
   fromDepartment: Department;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   toDepartmentId: string;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'toDepartmentId' })
   toDepartment: Department;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   fromUserId: string;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'fromUserId' })
   fromUser: User;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   toUserId: string;
 
   @ManyToOne(() => User, { nullable: true })
@@ -91,7 +94,7 @@ export class ItemEvent {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   referenceId: string; // Link to order_id, repair_job_id, etc.
 
   @CreateDateColumn()

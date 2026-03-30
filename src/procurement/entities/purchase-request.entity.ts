@@ -62,7 +62,7 @@ export class PurchaseRequest {
   @Column({ type: 'enum', enum: PRStatus, default: PRStatus.DRAFT })
   status: PRStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   companyApprovedByUserId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })
@@ -72,7 +72,7 @@ export class PurchaseRequest {
   @Column({ type: 'timestamp', nullable: true })
   companyApprovedAt?: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   superApprovedByUserId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })
@@ -88,7 +88,7 @@ export class PurchaseRequest {
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   estimatedUnitCost?: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   orderId?: string | null;
 
   @ManyToOne(() => Order, { nullable: true })

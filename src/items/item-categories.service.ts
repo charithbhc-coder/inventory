@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { ItemCategory } from './entities/item-category.entity';
 import { CreateItemCategoryDto, UpdateItemCategoryDto } from './dto/create-category.dto';
 import { UserRole } from '../common/enums';
@@ -21,8 +21,8 @@ export class ItemCategoriesService {
 
     const existing = await this.categoriesRepository.findOne({
       where: [
-        { code: dto.code, companyId: cid as any },
-        { code: dto.code, companyId: null as any } 
+        { code: dto.code, companyId: cid === null ? IsNull() : cid },
+        { code: dto.code, companyId: IsNull() } 
       ]
     });
 

@@ -32,7 +32,7 @@ export class UsersController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Create a new user. Auto-sends temp password email.' })
   create(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
-    return this.usersService.create(dto, user.sub, user.role, user.companyId);
+    return this.usersService.create(dto, user.sub, user.role, user.companyId!);
   }
 
   @Get()
@@ -50,7 +50,7 @@ export class UsersController {
   ) {
     // If CA/DA, force limit queries to their own scope.
     // SuperAdmin can query anyone, but usually filters by companyId via query param.
-    const cid = user.role === UserRole.SUPER_ADMIN ? (companyIdQ || undefined) : user.companyId;
+    const cid = user.role === UserRole.SUPER_ADMIN ? (companyIdQ || undefined) : user.companyId!;
     const did = user.role === UserRole.DEPT_ADMIN ? user.departmentId : (departmentIdQ || undefined);
 
     return this.usersService.findAll(cid as any, did as any, { page, limit, search, role, isActive });
@@ -60,7 +60,7 @@ export class UsersController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Get a user by ID' })
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.usersService.findOne(id, user.companyId, user.role);
+    return this.usersService.findOne(id, user.companyId!, user.role);
   }
 
   @Patch(':id')
@@ -71,7 +71,7 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.usersService.update(id, dto, user.companyId, user.role);
+    return this.usersService.update(id, dto, user.companyId!, user.role);
   }
 
   @Patch(':id/status')
@@ -82,6 +82,6 @@ export class UsersController {
     @Body('isActive') isActive: boolean,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.usersService.setStatus(id, isActive, user.companyId, user.role);
+    return this.usersService.setStatus(id, isActive, user.companyId!, user.role);
   }
 }

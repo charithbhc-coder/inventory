@@ -38,14 +38,14 @@ export class Transfer {
   @JoinColumn({ name: 'fromCompanyId' })
   fromCompany: Company;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   fromDepartmentId?: string | null;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'fromDepartmentId' })
   fromDepartment?: Department | null;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   fromLocation?: string | null;
 
   @Column()
@@ -55,14 +55,14 @@ export class Transfer {
   @JoinColumn({ name: 'toCompanyId' })
   toCompany: Company;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   toDepartmentId?: string | null;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'toDepartmentId' })
   toDepartment?: Department | null;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   toLocation?: string | null;
 
   @Column()
@@ -72,7 +72,7 @@ export class Transfer {
   @JoinColumn({ name: 'initiatedByUserId' })
   initiatedByUser: User;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   currentHolderUserId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })
@@ -94,7 +94,7 @@ export class Transfer {
   @Column({ type: 'timestamp', nullable: true })
   acknowledgedAt?: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   acknowledgedByUserId?: string | null;
 
   @ManyToOne(() => User, { nullable: true })

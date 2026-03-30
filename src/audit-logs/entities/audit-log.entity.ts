@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 /**
@@ -10,6 +11,8 @@ import {
  * Use PostgreSQL RLS in production to prevent application-level deletes.
  */
 @Entity('audit_logs')
+@Index(['companyId', 'createdAt'])
+@Index(['userId', 'createdAt'])
 export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -24,25 +27,25 @@ export class AuditLog {
   action: string; // e.g. 'CREATE_ITEM', 'APPROVE_ORDER'
 
   @Column({ length: 100, nullable: true })
-  entityType: string; // e.g. 'Item', 'User', 'Company'
+  entityType?: string; // e.g. 'Item', 'User', 'Company'
 
-  @Column({ nullable: true })
-  entityId: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  oldValues: Record<string, any>;
+  @Column({ type: 'uuid', nullable: true })
+  entityId?: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  newValues: Record<string, any>;
+  oldValues?: Record<string, any>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  newValues?: Record<string, any>;
 
   @Column({ length: 50, nullable: true })
-  ipAddress: string;
+  ipAddress?: string;
 
   @Column({ length: 500, nullable: true })
-  userAgent: string;
+  userAgent?: string;
 
-  @Column({ nullable: true })
-  companyId: string; // For scoping Company Admin queries
+  @Column({ type: 'uuid', nullable: true })
+  companyId?: string; // For scoping Company Admin queries
 
   @CreateDateColumn()
   createdAt: Date;

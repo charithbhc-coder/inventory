@@ -26,19 +26,21 @@ export class AuditLogInterceptor implements NestInterceptor {
     const startTime = Date.now();
 
     return next.handle().pipe(
-      tap(async () => {
+      tap(async (data) => {
         try {
           const action = this.deriveAction(method, url);
           const entityType = this.deriveEntityType(url);
+          const entityId = this.deriveEntityId(request, data);
 
           const auditLog = this.dataSource.getRepository(AuditLog).create({
             userId: user.sub,
             userEmail: user.email,
             action,
             entityType,
+            entityId,
             ipAddress: ip || request.connection?.remoteAddress || 'unknown',
             userAgent: headers['user-agent'] || 'unknown',
-            companyId: user.companyId || null,
+            companyId: user.companyId || undefined,
             newValues: { method, url, duration: `${Date.now() - startTime}ms` },
           });
 
@@ -48,6 +50,30 @@ export class AuditLogInterceptor implements NestInterceptor {
         }
       }),
     );
+  }
+
+  private deriveEntityId(request: any, data?: any): string | undefined {
+    if (request.params) {
+      const idStr = request.params.id || request.params.uuid || request.params.barcodeOrId;
+      if (idStr) return idStr;
+    }
+
+    const cleanUrl = request.url.split('?')[0];
+    const pathParts = cleanUrl.split('/').filter(Boolean);
+    const uuidFromUrl = pathParts.find((p: string) =>
+      p.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+    );
+
+    if (uuidFromUrl) return uuidFromUrl;
+
+    if (data && typeof data === 'object') {
+      if (data.id) return data.id;
+      if (data.uuid) return data.uuid;
+      if (data.items && Array.isArray(data.items) && data.items[0]?.id) return data.items[0].id;
+      if (data.item && data.item.id) return data.item.id;
+    }
+
+    return undefined;
   }
 
   private deriveAction(method: string, url: string): string {

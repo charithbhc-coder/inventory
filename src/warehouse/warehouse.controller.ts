@@ -20,7 +20,7 @@ export class WarehouseController {
   @Roles(UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Receive items into warehouse, generates barcodes' })
   receiveItems(@Body() dto: ReceiveItemsDto, @CurrentUser() user: JwtPayload) {
-    return this.warehouseService.receiveItems(dto, user.sub, user.companyId as string);
+    return this.warehouseService.receiveItems(dto, user.sub, user.companyId!);
   }
 
   @Get('stock')
@@ -32,7 +32,7 @@ export class WarehouseController {
     @Query('limit') limit?: number,
     @Query('companyId') companyIdQ?: string,
   ) {
-    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId;
+    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId!;
     return this.warehouseService.getStockLevels(cid as any, { page, limit });
   }
 }

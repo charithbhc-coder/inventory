@@ -31,7 +31,9 @@ export class UsersService {
     if (existing) {
       if (!existing.isActive) {
         await this.usersRepository.update(existing.id, { isActive: true, role: UserRole.SUPER_ADMIN });
-        return this.usersRepository.findOneBy({ id: existing.id }) as Promise<User>;
+        const updatedUser = await this.usersRepository.findOne({ where: { id: existing.id } });
+        if (!updatedUser) throw new NotFoundException('User not found after update');
+        return updatedUser;
       }
       return existing;
     }

@@ -4,6 +4,8 @@ import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { Item } from './entities/item.entity';
 import { ItemEvent } from './entities/item-event.entity';
 import { ItemCategory } from './entities/item-category.entity';
+import { CategoryCustomField } from './entities/category-custom-field.entity';
+import { ItemCustomValue } from './entities/item-custom-value.entity';
 import { WarehouseStock } from '../warehouse/entities/warehouse-stock.entity';
 import { Company } from '../companies/entities/company.entity';
 import { UserRole, ItemStatus, ItemCondition, ItemEventType } from '../common/enums';
@@ -19,6 +21,8 @@ export class ItemsService {
     @InjectRepository(ItemCategory) private readonly categoriesRepository: Repository<ItemCategory>,
     @InjectRepository(WarehouseStock) private readonly stockRepository: Repository<WarehouseStock>,
     @InjectRepository(Company) private readonly companyRepository: Repository<Company>,
+    @InjectRepository(CategoryCustomField) private readonly fieldRepository: Repository<CategoryCustomField>,
+    @InjectRepository(ItemCustomValue) private readonly valueRepository: Repository<ItemCustomValue>,
     private dataSource: DataSource,
   ) {}
 
@@ -30,7 +34,13 @@ export class ItemsService {
     
     const item = await this.itemsRepository.findOne({
       where: whereClause,
-      relations: ['category', 'currentDepartment', 'currentAssignedUser']
+      relations: [
+        'category',
+        'currentDepartment',
+        'currentAssignedUser',
+        'customValues',
+        'customValues.fieldDefinition'
+      ]
     });
 
     if (!item) throw new NotFoundException('Item not found');
@@ -46,6 +56,13 @@ export class ItemsService {
     });
 
     return { item, events };
+  }
+
+  async findOne(id: string): Promise<Item | null> {
+    return this.itemsRepository.findOne({
+      where: { id },
+      relations: ['category', 'currentDepartment', 'currentAssignedUser', 'customValues'],
+    });
   }
 
   // Common list endpoint for CA, DA, WH, etc
@@ -122,7 +139,7 @@ export class ItemsService {
       // Adjust Warehouse Stock
       const stock = await manager.findOne(WarehouseStock, { where: { categoryId: item.categoryId, companyId: item.companyId } });
       if (stock) {
-        stock.availableQuantity -= 1;
+        stock.availableQuantity = Math.max(0, stock.availableQuantity - 1);
         stock.distributedQuantity += 1;
         await manager.save(WarehouseStock, stock);
       }
@@ -207,6 +224,45 @@ export class ItemsService {
         fromUserId: item.currentAssignedUserId,
         performedByUserId: userId,
         notes: dto.faultDescription,
+      });
+      await manager.save(ItemEvent, event);
+
+      return item;
+    });
+  }
+
+  async acknowledge(itemId: string, userId: string, role: UserRole, departmentId: string) {
+    return this.dataSource.transaction(async (manager: QueryRunner['manager']) => {
+      const item = await manager.findOne(Item, { where: { id: itemId } });
+      if (!item) throw new NotFoundException('Item not found');
+
+      const prevStatus = item.status;
+      let eventType: ItemEventType;
+
+      if (role === UserRole.DEPT_ADMIN) {
+        if (item.currentDepartmentId !== departmentId) {
+          throw new ForbiddenException('Item is not in your department');
+        }
+        eventType = ItemEventType.DEPT_ACKNOWLEDGED;
+      } else if (role === UserRole.STAFF) {
+        if (item.currentAssignedUserId !== userId) {
+          throw new ForbiddenException('Item is not assigned to you');
+        }
+        eventType = ItemEventType.USER_ACKNOWLEDGED;
+      } else {
+        throw new ForbiddenException('Only Department Admins and Staff can acknowledge receipt');
+      }
+
+      item.status = ItemStatus.ACKNOWLEDGED;
+      await manager.save(Item, item);
+
+      const event = manager.create(ItemEvent, {
+        itemId: item.id,
+        eventType,
+        fromStatus: prevStatus,
+        toStatus: ItemStatus.ACKNOWLEDGED,
+        performedByUserId: userId,
+        notes: 'Receipt acknowledged digitally',
       });
       await manager.save(ItemEvent, event);
 

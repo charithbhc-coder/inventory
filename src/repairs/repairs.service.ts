@@ -11,6 +11,7 @@ import { PurchaseRequest } from '../procurement/entities/purchase-request.entity
 import { ItemStatus, ItemEventType, RepairStatus, UserRole, DisposalStatus, PRStatus, Urgency } from '../common/enums';
 import { format } from 'date-fns';
 import { getPaginationOptions, paginate } from '../common/utils/pagination.util';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class RepairsService {
@@ -18,6 +19,7 @@ export class RepairsService {
     @InjectRepository(RepairJob) private repairJobRepository: Repository<RepairJob>,
     @InjectRepository(DisposalRequest) private disposalRepository: Repository<DisposalRequest>,
     private dataSource: DataSource,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   private async generateRepairNumber(companyId: string): Promise<string> {
@@ -196,6 +198,13 @@ export class RepairsService {
 
            const savedPr = await manager.save(PurchaseRequest, pr);
            disposal.replacementPrId = savedPr.id;
+           
+           this.eventEmitter.emit('item.disposed', {
+               itemId: disposal.item.id,
+               barcode: disposal.item.barcode,
+               userId: userId,
+               companyId: companyId
+           });
         }
 
         return manager.save(DisposalRequest, disposal);

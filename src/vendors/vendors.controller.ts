@@ -59,4 +59,11 @@ export class VendorsController {
   ) {
     return this.vendorsService.update(id, dto, user.companyId, user.role);
   }
+
+  @Get(':id/performance')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @ApiOperation({ summary: 'Get performance metrics for a specific vendor' })
+  getPerformance(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.vendorsService.getPerformanceMetrics(id, user.companyId);
+  }
 }

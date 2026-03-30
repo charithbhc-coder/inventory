@@ -29,7 +29,7 @@ export class Order {
   @JoinColumn({ name: 'companyId' })
   company: Company;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   vendorId?: string | null;
 
   @ManyToOne(() => Vendor, { nullable: true })
@@ -55,7 +55,7 @@ export class Order {
   @Column({ type: 'date', nullable: true })
   actualDeliveryDate?: Date | null;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   vendorReference?: string | null;
 
   @Column({ type: 'text', nullable: true })
