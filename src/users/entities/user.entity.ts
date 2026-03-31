@@ -6,12 +6,17 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { UserRole } from '../../common/enums';
 import { Company } from '../../companies/entities/company.entity';
 import { Department } from '../../departments/entities/department.entity';
 
 @Entity('users')
+@Index(['companyId', 'employeeId'], {
+  unique: true,
+  where: '"employeeId" IS NOT NULL AND "companyId" IS NOT NULL',
+})
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

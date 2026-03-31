@@ -11,7 +11,9 @@ import {
   UseInterceptors,
   UploadedFile,
   ParseFilePipeBuilder,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -48,8 +50,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.email, dto.password);
+  async login(@Body() dto: LoginDto, @Req() req: Request) {
+    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    return this.authService.login(dto.email, dto.password, meta);
   }
 
   @Post('change-password')
@@ -62,8 +65,10 @@ export class AuthController {
   async changePassword(
     @CurrentUser() user: JwtPayload,
     @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
   ) {
-    return this.authService.changePassword(user.sub, dto);
+    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    return this.authService.changePassword(user.sub, dto, meta);
   }
 
   @Post('forgot-password')
@@ -77,8 +82,9 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password using token from email' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
+    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    return this.authService.resetPassword(dto, meta);
   }
 
   @Post('refresh')
@@ -86,6 +92,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Get new access token using refresh token' })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto.refreshToken);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout (records audit log entry)' })
+  async logout(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    return this.authService.logout(user.sub, meta);
   }
 
   @Get('me')

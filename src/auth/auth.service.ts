@@ -13,6 +13,7 @@ import { randomBytes } from 'crypto';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
 import { User } from '../users/entities/user.entity';
+import { AuditLog } from '../audit-logs/entities/audit-log.entity';
 import { JwtPayload } from '../common/interfaces';
 import {
   ChangePasswordDto,
@@ -30,6 +31,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(AuditLog)
+    private auditLogRepository: Repository<AuditLog>,
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailService,
@@ -38,6 +41,7 @@ export class AuthService {
   async login(
     email: string,
     password: string,
+    metadata?: any,
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -50,15 +54,32 @@ export class AuthService {
     });
 
     if (!user) {
+      await this.logAction(
+        '00000000-0000-0000-0000-000000000000',
+        email.toLowerCase(),
+        'LOGIN_FAILURE',
+        undefined,
+        { ...metadata, reason: 'User not found' },
+      );
       throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Your account has been deactivated. Please contact your administrator.');
+      await this.logAction(user.id, user.email, 'LOGIN_FAILURE', user.companyId || undefined, {
+        ...metadata,
+        reason: 'Account deactivated',
+      });
+      throw new UnauthorizedException(
+        'Your account has been deactivated. Please contact your administrator.',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
+      await this.logAction(user.id, user.email, 'LOGIN_FAILURE', user.companyId || undefined, {
+        ...metadata,
+        reason: 'Invalid password',
+      });
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -66,6 +87,8 @@ export class AuthService {
     await this.usersRepository.update(user.id, { lastLoginAt: new Date() });
 
     const tokens = this.generateTokens(user);
+
+    await this.logAction(user.id, user.email, 'LOGIN_SUCCESS', user.companyId || undefined, metadata);
 
     return {
       ...tokens,
@@ -77,6 +100,7 @@ export class AuthService {
   async changePassword(
     userId: string,
     dto: ChangePasswordDto,
+    metadata?: any,
   ): Promise<{ message: string; accessToken: string; refreshToken: string }> {
     if (dto.newPassword !== dto.confirmPassword) {
       throw new BadRequestException('New passwords do not match');
@@ -129,6 +153,14 @@ export class AuthService {
     const updatedUser = { ...user, mustChangePassword: false };
     const tokens = this.generateTokens(updatedUser as User);
 
+    await this.logAction(
+      user.id,
+      user.email,
+      'PASSWORD_CHANGE',
+      user.companyId || undefined,
+      metadata,
+    );
+
     return { message: 'Password changed successfully', ...tokens };
   }
 
@@ -165,7 +197,10 @@ export class AuthService {
     return { message: genericMessage };
   }
 
-  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(
+    dto: ResetPasswordDto,
+    metadata?: any,
+  ): Promise<{ message: string }> {
     if (dto.newPassword !== dto.confirmPassword) {
       throw new BadRequestException('Passwords do not match');
     }
@@ -207,7 +242,23 @@ export class AuthService {
       passwordResetExpiresAt: null,
     });
 
+    await this.logAction(
+      user.id,
+      user.email,
+      'PASSWORD_RESET',
+      user.companyId || undefined,
+      metadata,
+    );
+
     return { message: 'Password reset successfully. Please log in.' };
+  }
+
+  async logout(userId: string, metadata?: any): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (user) {
+      await this.logAction(user.id, user.email, 'LOGOUT', user.companyId || undefined, metadata);
+    }
+    return { message: 'Logged out successfully' };
   }
 
   async refreshToken(
@@ -347,5 +398,28 @@ export class AuthService {
       ...safe
     } = user;
     return safe;
+  }
+
+  private async logAction(
+    userId: string,
+    email: string,
+    action: string,
+    companyId?: string,
+    metadata?: any,
+  ) {
+    try {
+      const log = this.auditLogRepository.create({
+        userId,
+        userEmail: email,
+        action,
+        entityType: 'Auth',
+        entityId: userId !== '00000000-0000-0000-0000-000000000000' ? userId : undefined,
+        companyId: companyId || undefined,
+        newValues: metadata,
+      });
+      await this.auditLogRepository.save(log);
+    } catch (error) {
+      console.error('Audit log failed:', error);
+    }
   }
 }
