@@ -80,6 +80,7 @@ export class UsersService {
     }
 
     const tempPassword = this.generateTempPassword();
+    console.log(`[DEVELOPER MODE] Temporary password for ${dto.email}: ${tempPassword}`);
     const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
     const newUser = this.usersRepository.create({
@@ -105,11 +106,30 @@ export class UsersService {
     query: { page?: number; limit?: number; search?: string; role?: UserRole; isActive?: string },
   ) {
     const { page, limit, skip } = getPaginationOptions(query);
-    
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Filter validation
     const where: FindOptionsWhere<User> = {};
-    if (companyId) where.companyId = companyId;
-    if (departmentId) where.departmentId = departmentId;
-    if (query.role) where.role = query.role;
+    
+    if (companyId) {
+      if (!uuidRegex.test(companyId)) return paginate([], 0, page, limit);
+      where.companyId = companyId;
+    }
+    
+    if (departmentId) {
+      if (!uuidRegex.test(departmentId)) return paginate([], 0, page, limit);
+      where.departmentId = departmentId;
+    }
+
+    if (query.role) {
+      // Ensure the role is a valid UserRole enum
+      if (!Object.values(UserRole).includes(query.role as any)) {
+        // If it's a placeholder like "<string>", just ignore it or return empty
+      } else {
+        where.role = query.role;
+      }
+    }
+    
     if (query.isActive) where.isActive = query.isActive === 'true';
 
     const qb = this.usersRepository.createQueryBuilder('user')

@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipeBuilder,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/create-company.dto';
@@ -10,6 +23,9 @@ import { UsersService } from '../users/users.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @ApiTags('Companies')
 @ApiBearerAuth()
@@ -45,6 +61,22 @@ export class CompaniesController {
     return this.usersService.create(dto, user.sub, user.role, id);
   }
 
+  @Post(':id/users')
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Create a general user (STAFF, etc.) for a specific company' })
+  async createCompanyUser(
+    @Param('id') id: string,
+    @Body() dto: CreateUserDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    // Force company ID from URL for safety
+    dto.companyId = id;
+    
+    // Ensure company exists first
+    await this.companiesService.findOne(id);
+    return this.usersService.create(dto, user.sub, user.role, id);
+  }
+
   @Get()
   @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'List all companies (Super Admin only)' })
@@ -64,5 +96,38 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Update company details' })
   update(@Param('id') id: string, @Body() dto: UpdateCompanyDto) {
     return this.companiesService.update(id, dto);
+  }
+
+  @Post(':id/logo')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @ApiOperation({ summary: 'Upload a new company logo image' })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/logos',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  async uploadLogo(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addValidator(
+          new (require('@nestjs/common').FileTypeValidator)({
+            fileType: /(jpg|jpeg|png|webp)$/i,
+            fallbackToMimetype: true,
+          }),
+        )
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 5 }) // 5MB
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.companiesService.updateLogo(id, file.filename);
   }
 }

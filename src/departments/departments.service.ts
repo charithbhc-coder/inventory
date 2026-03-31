@@ -28,6 +28,12 @@ export class DepartmentsService {
   async findAll(companyId: string, query: { page?: number; limit?: number; search?: string }) {
     const { page, limit, skip } = getPaginationOptions(query);
 
+    // If companyId is a placeholder like "<string>" or any non-UUID, return empty result instead of crashing
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(companyId)) {
+      return paginate([], 0, page, limit);
+    }
+
     const qb = this.departmentsRepository.createQueryBuilder('department');
     qb.where('department.companyId = :companyId', { companyId });
 
