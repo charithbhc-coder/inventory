@@ -17,7 +17,7 @@ export class ItemCategoriesController {
   constructor(private readonly categoriesService: ItemCategoriesService) {}
 
   @Post()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Create a new item category. SA can create global categories.' })
   create(
     @Body() dto: CreateItemCategoryDto,

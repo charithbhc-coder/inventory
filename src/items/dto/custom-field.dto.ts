@@ -1,19 +1,47 @@
-import { IsString, IsEnum, IsBoolean, IsOptional, IsArray, IsInt } from 'class-validator';
+import { IsString, IsEnum, IsBoolean, IsOptional, IsArray, IsInt, IsUUID, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CustomFieldType } from '../entities/category-custom-field.entity';
 
 export class CreateCustomFieldDto {
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  companyId?: string;
+
   @ApiProperty()
-  @IsString()
+  @IsUUID()
+  @IsNotEmpty()
   categoryId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  fieldName: string;
+  @IsOptional()
+  fieldName?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  fieldKey: string;
+  @IsOptional()
+  fieldKey?: string;
+
+  @ApiProperty({ description: 'Human readable label (e.g. Memory RAM)' })
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  @ApiProperty({ description: 'Technical name/slug (e.g. ram_gb). No spaces.' })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ description: 'Helpful explanation for the user' })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiPropertyOptional({ description: 'Ghost text in the input box' })
+  @IsString()
+  @IsOptional()
+  placeholder?: string;
 
   @ApiProperty({ enum: CustomFieldType })
   @IsEnum(CustomFieldType)

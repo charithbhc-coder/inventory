@@ -19,8 +19,17 @@ export class CustomFieldsService {
   async createField(dto: CreateCustomFieldDto, companyId: string | null) {
     const field = this.fieldRepository.create({
       ...dto,
+      fieldName: dto.label || dto.fieldName, // Human label
+      fieldKey: dto.name || dto.fieldKey,     // Technical key
+      description: dto.description,
+      placeholder: dto.placeholder,
       companyId: companyId as any,
     });
+
+    if (!field.fieldName || !field.fieldKey) {
+      throw new BadRequestException('Field label/name or fieldName/fieldKey is required');
+    }
+
     return this.fieldRepository.save(field);
   }
 

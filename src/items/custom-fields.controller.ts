@@ -17,12 +17,17 @@ export class CustomFieldsController {
   constructor(private readonly customFieldsService: CustomFieldsService) {}
 
   @Post('definitions')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Create a new custom field definition for a category' })
   async createField(@Body() dto: CreateCustomFieldDto, @CurrentUser() user: JwtPayload) {
-    // If Super Admin, allow creating global fields (categoryId present, but companyId = null)
-    // In this API, we decide: if Super Admin creates it, it's global.
-    const cid = user.role === UserRole.SUPER_ADMIN ? null : (user.companyId || '');
+    // Logic: 
+    // 1. If Super Admin provides a companyId in the body, use it. 
+    // 2. If Super Admin does NOT provide one, it stays null (Global Field).
+    // 3. For any other role (CA, WH), force their own companyId.
+    const cid = user.role === UserRole.SUPER_ADMIN 
+      ? (dto.companyId || null) 
+      : (user.companyId || '');
+
     return this.customFieldsService.createField(dto, cid);
   }
 

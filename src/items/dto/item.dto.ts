@@ -66,6 +66,11 @@ export class BulkReceiveItemDetail {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  barcode?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   notes?: string;
 }
 

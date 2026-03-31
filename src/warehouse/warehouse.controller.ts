@@ -7,7 +7,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../common/enums';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
-import { ReceiveItemsDto } from '../items/dto/item.dto';
+import { ReceiveItemsDto, BulkReceiveItemsDto } from '../items/dto/item.dto';
 
 @ApiTags('Warehouse')
 @ApiBearerAuth()
@@ -18,9 +18,16 @@ export class WarehouseController {
 
   @Post('receive')
   @Roles(UserRole.WAREHOUSE_ADMIN)
-  @ApiOperation({ summary: 'Receive items into warehouse, generates barcodes' })
+  @ApiOperation({ summary: 'Receive identical items into warehouse, generates barcodes automatically' })
   receiveItems(@Body() dto: ReceiveItemsDto, @CurrentUser() user: JwtPayload) {
     return this.warehouseService.receiveItems(dto, user.sub, user.companyId!);
+  }
+
+  @Post('receive-bulk')
+  @Roles(UserRole.WAREHOUSE_ADMIN)
+  @ApiOperation({ summary: 'Receive unique items into warehouse (onboarding), allows manual barcodes/serial numbers' })
+  receiveBulkItems(@Body() dto: BulkReceiveItemsDto, @CurrentUser() user: JwtPayload) {
+    return this.warehouseService.receiveBulkItems(dto, user.sub, user.companyId!);
   }
 
   @Get('stock')

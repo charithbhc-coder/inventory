@@ -61,6 +61,12 @@ export class CategoryCustomField {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ length: 500, nullable: true })
+  description?: string;
+
+  @Column({ length: 255, nullable: true })
+  placeholder?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
