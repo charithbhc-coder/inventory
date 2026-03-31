@@ -104,11 +104,16 @@ export class ItemsService {
 
   // --- CORE SYSTEM WORKFLOWS ---
 
-  async distribute(itemId: string, dto: DistributeItemDto, userId: string, userCompanyId: string) {
+  async distribute(itemId: string, dto: DistributeItemDto, userId: string, userCompanyId: string, role: UserRole) {
     return this.dataSource.transaction(async (manager: QueryRunner['manager']) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
-      if (item.companyId !== userCompanyId) throw new ForbiddenException('Cannot access');
+
+      // Super Admin can distribute items from any company
+      if (role !== UserRole.SUPER_ADMIN && item.companyId !== userCompanyId) {
+        throw new ForbiddenException('Cannot access items outside your company');
+      }
+
       if (item.status !== ItemStatus.WAREHOUSE && item.status !== ItemStatus.RETURNED_FROM_REPAIR) {
         throw new BadRequestException('Item is not in warehouse');
       }
@@ -148,13 +153,13 @@ export class ItemsService {
     });
   }
 
-  async assign(itemId: string, dto: AssignItemDto, userId: string, departmentId: string) {
+  async assign(itemId: string, dto: AssignItemDto, userId: string, departmentId: string, role: UserRole) {
     return this.dataSource.transaction(async (manager: QueryRunner['manager']) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
       
-      // A DA can only assign items distributed to their own department
-      if (item.currentDepartmentId !== departmentId) {
+      // A DA can only assign items distributed to their own department. Super Admin bypasses this.
+      if (role !== UserRole.SUPER_ADMIN && item.currentDepartmentId !== departmentId) {
         throw new ForbiddenException('Item is not in your department');
       }
 
@@ -239,7 +244,10 @@ export class ItemsService {
       const prevStatus = item.status;
       let eventType: ItemEventType;
 
-      if (role === UserRole.DEPT_ADMIN) {
+      // Super Admin and Company Admin can acknowledge anything for their company (or all companies for SA)
+      if (role === UserRole.SUPER_ADMIN || role === UserRole.COMPANY_ADMIN) {
+        eventType = item.currentAssignedUserId ? ItemEventType.USER_ACKNOWLEDGED : ItemEventType.DEPT_ACKNOWLEDGED;
+      } else if (role === UserRole.DEPT_ADMIN) {
         if (item.currentDepartmentId !== departmentId) {
           throw new ForbiddenException('Item is not in your department');
         }
@@ -250,7 +258,7 @@ export class ItemsService {
         }
         eventType = ItemEventType.USER_ACKNOWLEDGED;
       } else {
-        throw new ForbiddenException('Only Department Admins and Staff can acknowledge receipt');
+        throw new ForbiddenException('Only Administrators, Department Admins and Staff can acknowledge receipt');
       }
 
       item.status = ItemStatus.ACKNOWLEDGED;

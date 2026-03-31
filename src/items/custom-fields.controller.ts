@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CustomFieldsService } from './custom-fields.service';
-import { CreateCustomFieldDto, SetItemCustomValuesDto } from './dto/custom-field.dto';
+import { CreateCustomFieldDto, SetItemCustomValuesDto, UpdateCustomFieldDto } from './dto/custom-field.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -29,6 +29,17 @@ export class CustomFieldsController {
       : (user.companyId || '');
 
     return this.customFieldsService.createField(dto, cid);
+  }
+
+  @Patch('definitions/:id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
+  @ApiOperation({ summary: 'Update a custom field definition' })
+  async updateField(
+    @Param('id') id: string,
+    @Body() dto: UpdateCustomFieldDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.customFieldsService.updateField(id, dto, user.companyId || '', user.role);
   }
 
   @Get('definitions/:categoryId')

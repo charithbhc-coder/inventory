@@ -16,18 +16,20 @@ import { ReceiveItemsDto, BulkReceiveItemsDto } from '../items/dto/item.dto';
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 
-  @Post('receive')
-  @Roles(UserRole.WAREHOUSE_ADMIN)
-  @ApiOperation({ summary: 'Receive identical items into warehouse, generates barcodes automatically' })
-  receiveItems(@Body() dto: ReceiveItemsDto, @CurrentUser() user: JwtPayload) {
-    return this.warehouseService.receiveItems(dto, user.sub, user.companyId!);
+  @Post('create-item')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.WAREHOUSE_ADMIN)
+  @ApiOperation({ summary: 'Create identical item(s) in warehouse, generates barcodes automatically' })
+  createItems(@Body() dto: ReceiveItemsDto, @CurrentUser() user: JwtPayload) {
+    const cid = user.role === UserRole.SUPER_ADMIN ? dto.companyId : user.companyId!;
+    return this.warehouseService.receiveItems(dto, user.sub, cid as string);
   }
 
-  @Post('receive-bulk')
-  @Roles(UserRole.WAREHOUSE_ADMIN)
-  @ApiOperation({ summary: 'Receive unique items into warehouse (onboarding), allows manual barcodes/serial numbers' })
-  receiveBulkItems(@Body() dto: BulkReceiveItemsDto, @CurrentUser() user: JwtPayload) {
-    return this.warehouseService.receiveBulkItems(dto, user.sub, user.companyId!);
+  @Post('create-items-bulk')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.WAREHOUSE_ADMIN)
+  @ApiOperation({ summary: 'Create unique items in warehouse (onboarding), allows manual barcodes/serial numbers' })
+  createBulkItems(@Body() dto: BulkReceiveItemsDto, @CurrentUser() user: JwtPayload) {
+    const cid = user.role === UserRole.SUPER_ADMIN ? dto.companyId : user.companyId!;
+    return this.warehouseService.receiveBulkItems(dto, user.sub, cid as string);
   }
 
   @Get('stock')

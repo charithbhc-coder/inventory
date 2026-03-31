@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ItemCategoriesService } from './item-categories.service';
-import { CreateItemCategoryDto } from './dto/create-category.dto';
+import { CreateItemCategoryDto, UpdateItemCategoryDto } from './dto/create-category.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -39,6 +39,17 @@ export class ItemCategoriesController {
   ) {
     const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId!;
     return this.categoriesService.findAll(cid as any, { page, limit, search });
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
+  @ApiOperation({ summary: 'Update an Item Category' })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateItemCategoryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.categoriesService.update(id, dto, user.companyId!, user.role);
   }
 
   @Get(':id')

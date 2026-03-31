@@ -75,7 +75,52 @@ export class UpdateCustomFieldValueDto {
 }
 
 export class SetItemCustomValuesDto {
-  @ApiProperty({ type: [UpdateCustomFieldValueDto] })
+  @ApiPropertyOptional({ type: [UpdateCustomFieldValueDto] })
   @IsArray()
-  values: UpdateCustomFieldValueDto[];
+  @IsOptional()
+  values?: UpdateCustomFieldValueDto[];
+
+  @ApiPropertyOptional({ 
+    description: 'Flat object for easy updates (e.g. { "ram": "16GB" })',
+    example: { "ram_size": "16GB", "processor": "i7" }
+  })
+  @IsOptional()
+  data?: Record<string, any>;
+}
+
+export class UpdateCustomFieldDto {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  placeholder?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isRequired?: boolean;
+
+  @ApiPropertyOptional()
+  @IsInt()
+  @IsOptional()
+  displayOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

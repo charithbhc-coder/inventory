@@ -21,15 +21,23 @@ export class WarehouseService {
     private dataSource: DataSource,
   ) {}
 
-  async receiveItems(dto: ReceiveItemsDto, userId: string, companyId: string) {
-    if (!companyId) throw new BadRequestException('Company context required');
-
+  async receiveItems(dto: ReceiveItemsDto, userId: string, companyId?: string) {
     return this.dataSource.transaction(async (manager: QueryRunner['manager']) => {
-      // 1. Get or create WarehouseStock for this category
-      let stock = await manager.findOne(WarehouseStock, { where: { categoryId: dto.categoryId, companyId } });
+      // 1. Fetch the category to establish company context if missing
+      const category = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
+      if (!category) throw new NotFoundException('Category not found');
+
+      // Auto-resolve companyId if not provided (convenience for Super Admins)
+      const resolvedCompanyId = companyId || category.companyId;
+      if (!resolvedCompanyId) {
+        throw new BadRequestException('Company context required (or category must be company-scoped)');
+      }
+
+      // 2. Get or create WarehouseStock for this category
+      let stock = await manager.findOne(WarehouseStock, { where: { categoryId: dto.categoryId, companyId: resolvedCompanyId } });
       if (!stock) {
         stock = manager.create(WarehouseStock, {
-          companyId,
+          companyId: resolvedCompanyId,
           categoryId: dto.categoryId,
           totalQuantity: 0,
           availableQuantity: 0,
@@ -37,10 +45,9 @@ export class WarehouseService {
         });
       }
 
-      // 2. Fetch the company and category codes for barcode generation
-      const company = await manager.findOne(Company, { where: { id: companyId } });
-      const category = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
-      if (!company || !category) throw new NotFoundException('Company or category not found');
+      // 3. Fetch the company for barcode generation
+      const company = await manager.findOne(Company, { where: { id: resolvedCompanyId } });
+      if (!company) throw new NotFoundException('Company not found');
 
       // 3. Count matching items received today to establish our barcode sequence start index.
       const dateStr = format(new Date(), 'yyyyMMdd');
@@ -58,10 +65,11 @@ export class WarehouseService {
         const barcode = generateBarcodeString(company.code, category.code, baseSequence);
         
         const item = manager.create(Item, {
-          companyId,
+          companyId: resolvedCompanyId,
           categoryId: category.id,
           name: dto.name,
           barcode,
+          serialNumber: dto.quantity === 1 ? dto.serialNumber : undefined, 
           status: ItemStatus.WAREHOUSE,
           condition: ItemCondition.NEW,
           purchasePrice: dto.unitCost,
@@ -109,14 +117,20 @@ export class WarehouseService {
     });
   }
 
-  async receiveBulkItems(dto: BulkReceiveItemsDto, userId: string, companyId: string) {
-    if (!companyId) throw new BadRequestException('Company context required');
-
+  async receiveBulkItems(dto: BulkReceiveItemsDto, userId: string, companyId?: string) {
     return this.dataSource.transaction(async (manager: QueryRunner['manager']) => {
-      let stock = await manager.findOne(WarehouseStock, { where: { categoryId: dto.categoryId, companyId } });
+      const category = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
+      if (!category) throw new NotFoundException('Category not found');
+
+      const resolvedCompanyId = companyId || category.companyId;
+      if (!resolvedCompanyId) {
+        throw new BadRequestException('Company context required (or category must be company-scoped)');
+      }
+
+      let stock = await manager.findOne(WarehouseStock, { where: { categoryId: dto.categoryId, companyId: resolvedCompanyId } });
       if (!stock) {
         stock = manager.create(WarehouseStock, {
-          companyId,
+          companyId: resolvedCompanyId,
           categoryId: dto.categoryId,
           totalQuantity: 0,
           availableQuantity: 0,
@@ -124,9 +138,8 @@ export class WarehouseService {
         });
       }
 
-      const company = await manager.findOne(Company, { where: { id: companyId } });
-      const category = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
-      if (!company || !category) throw new NotFoundException('Company or category not found');
+      const company = await manager.findOne(Company, { where: { id: resolvedCompanyId } });
+      if (!company) throw new NotFoundException('Company not found');
 
       const dateStr = format(new Date(), 'yyyyMMdd');
       const countTodayQuery = manager.createQueryBuilder(Item, 'item')
@@ -146,7 +159,7 @@ export class WarehouseService {
         }
         
         const item = manager.create(Item, {
-          companyId,
+          companyId: resolvedCompanyId,
           categoryId: category.id,
           name: dto.name,
           barcode,

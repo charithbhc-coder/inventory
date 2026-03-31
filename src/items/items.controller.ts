@@ -41,30 +41,30 @@ export class ItemsController {
   }
 
   @Post(':id/distribute')
-  @Roles(UserRole.WAREHOUSE_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Distribute a warehouse item to a department' })
   distribute(@Param('id') id: string, @Body() dto: DistributeItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.distribute(id, dto, user.sub, user.companyId!);
+    return this.itemsService.distribute(id, dto, user.sub, user.companyId || '', user.role);
   }
 
   @Post(':id/assign')
-  @Roles(UserRole.DEPT_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Assign a distributed item to a staff user' })
   assign(@Param('id') id: string, @Body() dto: AssignItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.assign(id, dto, user.sub, user.departmentId!);
+    return this.itemsService.assign(id, dto, user.sub, user.departmentId || '', user.role); 
   }
 
   @Post(':id/report-fault')
-  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.STAFF, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Report a fault on an item' })
   reportFault(@Param('id') id: string, @Body() dto: ReportFaultDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.reportFault(id, dto, user.sub, user.role);
   }
 
   @Post(':id/acknowledge')
-  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.STAFF, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Acknowledge receipt of a distributed or assigned item' })
   acknowledge(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.acknowledge(id, user.sub, user.role, user.departmentId!);
+    return this.itemsService.acknowledge(id, user.sub, user.role, user.departmentId || '');
   }
 }

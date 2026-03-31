@@ -26,15 +26,23 @@ export class AuditLogsService {
     const { page, limit, skip } = getPaginationOptions(query);
     const qb = this.auditRepository.createQueryBuilder('audit');
 
+    // Scoping logic
+    // Scoping logic
     if (requesterRole !== UserRole.SUPER_ADMIN) {
-      qb.where('audit.companyId = :companyId', { companyId: requesterCompanyId });
-    } else if (query.companyId && query.companyId !== 'all') {
-      qb.where('audit.companyId = :companyId', { companyId: query.companyId });
+      qb.andWhere('audit.companyId = :companyId', { companyId: requesterCompanyId });
+    } else if (query.companyId) {
+      if (query.companyId === 'none') {
+        qb.andWhere('audit.companyId IS NULL');
+      } else if (query.companyId !== 'all') {
+        qb.andWhere('audit.companyId = :companyId', { companyId: query.companyId });
+      }
     }
 
-    if (query.action) qb.andWhere('audit.action = :action', { action: query.action });
-    if (query.userId) qb.andWhere('audit.userId = :userId', { userId: query.userId });
-    if (query.entityType) qb.andWhere('audit.entityType = :entityType', { entityType: query.entityType });
+    const isValid = (val: any) => val && val !== '' && !val.includes('<') && val !== 'undefined';
+
+    if (isValid(query.action)) qb.andWhere('audit.action = :action', { action: query.action });
+    if (isValid(query.userId)) qb.andWhere('audit.userId = :userId', { userId: query.userId });
+    if (isValid(query.entityType)) qb.andWhere('audit.entityType = :entityType', { entityType: query.entityType });
 
     qb.orderBy('audit.createdAt', 'DESC')
       .skip(skip)

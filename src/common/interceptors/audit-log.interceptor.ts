@@ -34,18 +34,19 @@ export class AuditLogInterceptor implements NestInterceptor {
 
           const auditLog = this.dataSource.getRepository(AuditLog).create({
             userId: user.sub,
-            userEmail: user.email,
+            userEmail: user.email || 'system-admin@internal.com', // Prevent null violation for SA
             action,
             entityType,
             entityId,
-            ipAddress: ip || request.connection?.remoteAddress || 'unknown',
-            userAgent: headers['user-agent'] || 'unknown',
-            companyId: user.companyId || undefined,
+            ipAddress: ip || request.connection?.remoteAddress?.substring(0, 50) || 'unknown',
+            userAgent: (headers['user-agent'] || 'unknown').substring(0, 500),
+            companyId: user.companyId || null,
             newValues: { method, url, duration: `${Date.now() - startTime}ms` },
           });
 
           await this.dataSource.getRepository(AuditLog).save(auditLog);
-        } catch {
+        } catch (error) {
+          console.error('[AuditLogInterceptor Error]:', error.message);
           // Never let audit logging crash the main flow
         }
       }),

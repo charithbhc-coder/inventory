@@ -41,6 +41,11 @@ export class ReceiveItemsDto {
   @IsNotEmpty()
   categoryId: string;
 
+  @ApiProperty({ required: false, description: 'Required for Super Admin' })
+  @IsUUID()
+  @IsOptional()
+  companyId?: string;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -55,6 +60,11 @@ export class ReceiveItemsDto {
   @IsNumber()
   @IsOptional()
   unitCost?: number;
+
+  @ApiProperty({ required: false, description: 'Manual serial number for the item' })
+  @IsString()
+  @IsOptional()
+  serialNumber?: string;
 }
 
 export class BulkReceiveItemDetail {
@@ -79,6 +89,11 @@ export class BulkReceiveItemsDto {
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;
+
+  @ApiProperty({ required: false, description: 'Required for Super Admin' })
+  @IsUUID()
+  @IsOptional()
+  companyId?: string;
 
   @ApiProperty()
   @IsString()
