@@ -10,6 +10,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 import { User } from '../users/entities/user.entity';
 import { JwtPayload } from '../common/interfaces';
 import {
@@ -236,9 +238,12 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    if (dto.firstName) user.firstName = dto.firstName;
-    if (dto.lastName) user.lastName = dto.lastName;
-    if (dto.phone) user.phone = dto.phone;
+    // Only apply changes for fields that were explicitly provided in the request
+    // This allows partial updates (e.g. only changing phone without touching name)
+    // It also allows clearing a value by sending an empty string e.g. { "phone": "" }
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.phone !== undefined) user.phone = dto.phone;
 
     await this.usersRepository.save(user);
 
@@ -251,10 +256,42 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
+    // Delete old avatar file from disk to prevent orphaned file build-up
+    if (user.avatarUrl) {
+      const oldFilename = user.avatarUrl.replace('/uploads/avatars/', '');
+      const oldPath = join(process.cwd(), 'uploads', 'avatars', oldFilename);
+      unlink(oldPath).catch(() => {
+        // Silently ignore — old file may have already been deleted
+      });
+    }
+
     const avatarUrl = `/uploads/avatars/${filename}`;
     await this.usersRepository.update(user.id, { avatarUrl });
 
     return { avatarUrl };
+  }
+
+  async deleteAvatar(userId: string): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.avatarUrl) {
+      throw new BadRequestException('No profile image to delete');
+    }
+
+    // Delete file from disk
+    const oldFilename = user.avatarUrl.replace('/uploads/avatars/', '');
+    const oldPath = join(process.cwd(), 'uploads', 'avatars', oldFilename);
+    unlink(oldPath).catch(() => {
+      // Silently ignore — file may already be gone
+    });
+
+    // Clear avatarUrl from database
+    await this.usersRepository.update(user.id, { avatarUrl: null });
+
+    return { message: 'Profile image removed successfully' };
   }
 
   async getMe(userId: string): Promise<Partial<User>> {

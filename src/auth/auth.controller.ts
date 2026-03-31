@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   UseGuards,
   HttpCode,
@@ -152,5 +153,14 @@ export class AuthController {
   ) {
     console.log(file.mimetype);
     return this.authService.updateAvatar(user.sub, file.filename);
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete your current profile avatar image' })
+  async deleteAvatar(@CurrentUser() user: JwtPayload) {
+    return this.authService.deleteAvatar(user.sub);
   }
 }
