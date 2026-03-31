@@ -68,6 +68,11 @@ export class UpdateUserDto {
   @ApiProperty({ required: false })
   @IsUUID()
   @IsOptional()
+  companyId?: string;
+
+  @ApiProperty({ required: false })
+  @IsUUID()
+  @IsOptional()
   departmentId?: string;
 
   @ApiProperty({ required: false })

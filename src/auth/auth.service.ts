@@ -17,6 +17,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from './dto/auth.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { addMinutes, isAfter } from 'date-fns';
 
@@ -227,6 +228,33 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  async updateMe(userId: string, dto: UpdateProfileDto): Promise<Partial<User>> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.firstName) user.firstName = dto.firstName;
+    if (dto.lastName) user.lastName = dto.lastName;
+    if (dto.phone) user.phone = dto.phone;
+
+    await this.usersRepository.save(user);
+
+    return this.sanitizeUser(user);
+  }
+
+  async updateAvatar(userId: string, filename: string): Promise<{ avatarUrl: string }> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const avatarUrl = `/uploads/avatars/${filename}`;
+    await this.usersRepository.update(user.id, { avatarUrl });
+
+    return { avatarUrl };
   }
 
   async getMe(userId: string): Promise<Partial<User>> {

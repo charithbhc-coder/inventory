@@ -158,6 +158,11 @@ export class UsersService {
        throw new ForbiddenException('Cannot assign Super Admin role via UI');
     }
 
+    if (requesterRole !== UserRole.SUPER_ADMIN) {
+      delete dto.companyId;
+      delete dto.departmentId;
+    }
+
     Object.assign(user, dto);
     const saved = await this.usersRepository.save(user);
     return this.sanitizeUser(saved);
