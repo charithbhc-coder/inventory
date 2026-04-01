@@ -7,6 +7,7 @@ import { PurchaseRequestItem } from './entities/purchase-request-item.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { ApprovalThreshold } from './entities/approval-threshold.entity';
+import { Requisition } from './entities/requisition.entity';
 import { WarehouseModule } from '../warehouse/warehouse.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { WarehouseModule } from '../warehouse/warehouse.module';
       Order,
       OrderItem,
       ApprovalThreshold,
+      Requisition,
     ]),
     WarehouseModule,
   ],

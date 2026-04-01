@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsEnum, IsUUID, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEnum, IsUUID, IsOptional, IsArray, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Urgency, PRItemSource } from '../../common/enums';
@@ -134,3 +134,43 @@ export class ReceiveOrderDto {
   @IsString()
   itemName: string;
 }
+
+export class CreateRequisitionDto {
+  @ApiProperty({ example: 'Wireless Mouse' })
+  @IsString()
+  @IsNotEmpty()
+  itemName: string;
+
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  justification?: string;
+}
+
+export class ConvertRequisitionsDto {
+  @ApiProperty({ type: [String], description: 'List of Requisition IDs to consolidate into one PR' })
+  @IsArray()
+  @IsUUID(4, { each: true })
+  requisitionIds: string[];
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  justification?: string;
+
+  @ApiPropertyOptional({ enum: Urgency, default: Urgency.NORMAL })
+  @IsEnum(Urgency)
+  @IsOptional()
+  urgency?: Urgency;
+}
+

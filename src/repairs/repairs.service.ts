@@ -143,13 +143,14 @@ export class RepairsService {
      await manager.save(ItemEvent, event);
   }
 
-  async getJobs(companyId: string | undefined, query: { page?: number; limit?: number }) {
+  async getJobs(companyId: string | undefined, userId: string | undefined, query: { page?: number; limit?: number }) {
     const { page, limit, skip } = getPaginationOptions(query);
     const qb = this.repairJobRepository.createQueryBuilder('job')
       .leftJoinAndSelect('job.item', 'item')
       .leftJoinAndSelect('job.reportedByUser', 'user');
 
-    if (companyId) qb.where('job.companyId = :companyId', { companyId });
+    if (companyId) qb.andWhere('job.companyId = :companyId', { companyId });
+    if (userId) qb.andWhere('job.reportedByUserId = :userId', { userId });
 
     qb.orderBy('job.createdAt', 'DESC').skip(skip).take(limit);
     const [jobs, total] = await qb.getManyAndCount();
@@ -165,13 +166,14 @@ export class RepairsService {
     return paginate(sanitized, total, page, limit);
   }
 
-  async getDisposals(companyId: string | undefined, query: { page?: number; limit?: number }) {
+  async getDisposals(companyId: string | undefined, userId: string | undefined, query: { page?: number; limit?: number }) {
     const { page, limit, skip } = getPaginationOptions(query);
     const qb = this.disposalRepository.createQueryBuilder('dis')
       .leftJoinAndSelect('dis.item', 'item')
       .leftJoinAndSelect('dis.requestedByUser', 'user');
 
-    if (companyId) qb.where('dis.companyId = :companyId', { companyId });
+    if (companyId) qb.andWhere('dis.companyId = :companyId', { companyId });
+    if (userId) qb.andWhere('dis.requestedByUserId = :userId', { userId });
 
     qb.orderBy('dis.createdAt', 'DESC').skip(skip).take(limit);
     const [items, total] = await qb.getManyAndCount();

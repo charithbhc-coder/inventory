@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ProcurementService } from './procurement.service';
-import { CreatePurchaseRequestDto, CreateOrderDto, RejectPrDto, ReceiveOrderDto, SourcePrItemDto } from './dto/procurement.dto';
+import { CreatePurchaseRequestDto, CreateOrderDto, RejectPrDto, ReceiveOrderDto, SourcePrItemDto, CreateRequisitionDto, ConvertRequisitionsDto } from './dto/procurement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -27,7 +27,7 @@ export class ProcurementController {
   @Roles(UserRole.DEPT_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Submit a DRAFT PR into the approval chain' })
   submitPr(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.procurementService.submitPr(id, user.companyId as string);
+    return this.procurementService.submitPr(id, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
   }
 
   @Patch('purchase-requests/:id/items/:itemId/source')
@@ -39,7 +39,7 @@ export class ProcurementController {
     @Body() dto: SourcePrItemDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.procurementService.sourceItem(id, itemId, dto, user.companyId as string);
+    return this.procurementService.sourceItem(id, itemId, dto, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
   }
 
   @Get('purchase-requests')
@@ -54,21 +54,21 @@ export class ProcurementController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Approve PR at current stage (Calculates total cost across bundle)' })
   approvePr(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.procurementService.approvePr(id, user.sub, user.role, user.companyId as string);
+    return this.procurementService.approvePr(id, user.sub, user.role, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
   }
 
   @Post('purchase-requests/:id/reject')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Reject PR at current stage' })
   rejectPr(@Param('id') id: string, @Body() dto: RejectPrDto, @CurrentUser() user: JwtPayload) {
-    return this.procurementService.rejectPr(id, dto, user.sub, user.role, user.companyId as string);
+    return this.procurementService.rejectPr(id, dto, user.sub, user.role, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
   }
 
   @Post('orders')
-  @Roles(UserRole.WAREHOUSE_ADMIN)
+  @Roles(UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Place a vendor order from approved PRs' })
   createOrder(@Body() dto: CreateOrderDto, @CurrentUser() user: JwtPayload) {
-    return this.procurementService.createOrder(dto, user.sub, user.companyId as string);
+    return this.procurementService.createOrder(dto, user.sub, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
   }
 
   @Get('orders')
@@ -79,9 +79,47 @@ export class ProcurementController {
   }
 
   @Post('orders/:id/receive')
-  @Roles(UserRole.WAREHOUSE_ADMIN)
+  @Roles(UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Receive items against a vendor order, triggers barcode generation' })
   receiveOrderItems(@Param('id') id: string, @Body() dto: ReceiveOrderDto, @CurrentUser() user: JwtPayload) {
-    return this.procurementService.receiveOrderItems(id, dto, user.sub, user.companyId as string);
+    return this.procurementService.receiveOrderItems(id, dto, user.sub, user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string);
+  }
+
+  @Post('requisitions')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Create a new item requisition (Staff Request)' })
+  createRequisition(@Body() dto: CreateRequisitionDto, @CurrentUser() user: JwtPayload) {
+    return this.procurementService.createRequisition(dto, user.sub, user.companyId as string, user.departmentId as string);
+  }
+
+  @Get('requisitions')
+  @Roles(UserRole.DEPT_ADMIN, UserRole.COMPANY_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List requisitions (Department/Company context)' })
+  getRequisitions(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.procurementService.getRequisitions(
+      user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string,
+      (user.role === UserRole.DEPT_ADMIN) ? user.departmentId as string : undefined,
+      undefined,
+      { page, limit },
+    );
+  }
+
+  @Get('requisitions/my')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List my own requisitions' })
+  getMyRequisitions(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.procurementService.getRequisitions(
+      undefined,
+      undefined,
+      user.sub,
+      { page, limit }
+    );
+  }
+
+  @Post('requisitions/convert')
+  @Roles(UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Convert one or more requisitions into a formal Purchase Request' })
+  convertRequisitions(@Body() dto: ConvertRequisitionsDto, @CurrentUser() user: JwtPayload) {
+    return this.procurementService.convertToPr(dto, user.sub, user.role, user.companyId as string, user.departmentId as string);
   }
 }

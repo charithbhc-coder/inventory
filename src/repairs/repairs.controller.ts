@@ -17,7 +17,7 @@ export class RepairsController {
   constructor(private readonly repairsService: RepairsService) {}
 
   @Post('repair-jobs')
-  @Roles(UserRole.DEPT_ADMIN)
+  @Roles(UserRole.DEPT_ADMIN, UserRole.STAFF, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Submit a new repair request' })
   createJob(@Body() dto: CreateRepairJobDto, @CurrentUser() user: JwtPayload) {
     return this.repairsService.createRepairJob(dto, user.sub, user.companyId as string, user.departmentId as string);
@@ -27,7 +27,22 @@ export class RepairsController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.DEPT_ADMIN, UserRole.REPAIR_HANDLER)
   @ApiOperation({ summary: 'List repair jobs' })
   getJobs(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.repairsService.getJobs(user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string, { page, limit });
+    return this.repairsService.getJobs(
+      user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string,
+      undefined,
+      { page, limit }
+    );
+  }
+
+  @Get('repair-jobs/my')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List my reported repair jobs' })
+  getMyJobs(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.repairsService.getJobs(
+      undefined,
+      user.sub,
+      { page, limit }
+    );
   }
 
   @Post('repair-jobs/:id/approve')
@@ -48,7 +63,22 @@ export class RepairsController {
   @Roles(UserRole.COMPANY_ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'List disposal requests' })
   getDisposals(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.repairsService.getDisposals(user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string, { page, limit });
+    return this.repairsService.getDisposals(
+      user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string,
+      undefined,
+      { page, limit }
+    );
+  }
+
+  @Get('disposal-requests/my')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List my items pending disposal' })
+  getMyDisposals(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.repairsService.getDisposals(
+      undefined,
+      user.sub,
+      { page, limit }
+    );
   }
 
   @Post('disposal-requests')

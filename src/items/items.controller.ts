@@ -34,6 +34,17 @@ export class ItemsController {
     return this.itemsService.findAll(cid as any, { page, limit, search, status, categoryId, departmentId: myDept });
   }
 
+  @Get('my')
+  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List items assigned to me' })
+  getMyItems(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.itemsService.findAll(user.companyId!, {
+      page,
+      limit,
+      assigneeId: user.sub,
+    });
+  }
+
   @Get(':barcodeOrId')
   @ApiOperation({ summary: 'Get item details AND full AliExpress timeline' })
   findOne(@Param('barcodeOrId') barcodeOrId: string, @CurrentUser() user: JwtPayload) {
