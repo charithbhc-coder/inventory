@@ -17,53 +17,50 @@ export class VendorsController {
   constructor(private readonly vendorsService: VendorsService) {}
 
   @Post()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Add a new vendor' })
   create(
     @Body() dto: CreateVendorDto,
     @CurrentUser() user: JwtPayload,
-    @Query('companyId') companyIdQ?: string,
   ) {
-    return this.vendorsService.create(dto, user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId, user.role);
+    // Pass the user sub (ID) so we can track the owner
+    return this.vendorsService.create(dto, user.sub);
   }
 
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'List all vendors' })
   findAll(
-    @CurrentUser() user: JwtPayload,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('type') type?: string,
-    @Query('companyId') companyIdQ?: string,
   ) {
-    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId;
-    return this.vendorsService.findAll(cid, { page, limit, search, type });
+    // Vendors are global, so we don't filter by companyId anymore
+    return this.vendorsService.findAll({ page, limit, search, type });
   }
 
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.DEPT_ADMIN)
   @ApiOperation({ summary: 'Get details of a specific vendor' })
-  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.vendorsService.findOne(id, user.companyId);
+  findOne(@Param('id') id: string) {
+    return this.vendorsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Update vendor details' })
   update(
     @Param('id') id: string,
     @Body() dto: UpdateVendorDto,
-    @CurrentUser() user: JwtPayload,
   ) {
-    return this.vendorsService.update(id, dto, user.companyId, user.role);
+    return this.vendorsService.update(id, dto);
   }
 
   @Get(':id/performance')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.WAREHOUSE_ADMIN)
   @ApiOperation({ summary: 'Get performance metrics for a specific vendor' })
-  getPerformance(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.vendorsService.getPerformanceMetrics(id, user.companyId);
+  getPerformance(@Param('id') id: string) {
+    return this.vendorsService.getPerformanceMetrics(id);
   }
 }

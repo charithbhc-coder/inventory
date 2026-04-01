@@ -7,8 +7,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Company } from '../../companies/entities/company.entity';
 import { VendorType } from '../../common/enums';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('vendors')
 export class Vendor {
@@ -16,11 +16,11 @@ export class Vendor {
   id: string;
 
   @Column({ type: 'uuid', nullable: true })
-  companyId?: string | null;
+  createdByUserId?: string | null;
 
-  @ManyToOne(() => Company, { nullable: true, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'companyId' })
-  company?: Company | null;
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'createdByUserId' })
+  createdByUser?: User | null;
 
   @Column({ length: 255 })
   name: string;
