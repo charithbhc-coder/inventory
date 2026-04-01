@@ -6,13 +6,14 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Company } from '../../companies/entities/company.entity';
 import { Department } from '../../departments/entities/department.entity';
 import { User } from '../../users/entities/user.entity';
-import { ItemCategory } from '../../items/entities/item-category.entity';
 import { PRStatus, Urgency } from '../../common/enums';
 import { Order } from './order.entity';
+import { PurchaseRequestItem } from './purchase-request-item.entity';
 
 @Entity('purchase_requests')
 export class PurchaseRequest {
@@ -42,16 +43,6 @@ export class PurchaseRequest {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'requestedByUserId' })
   requestedByUser: User;
-
-  @Column()
-  categoryId: string;
-
-  @ManyToOne(() => ItemCategory)
-  @JoinColumn({ name: 'categoryId' })
-  category: ItemCategory;
-
-  @Column({ type: 'int' })
-  quantity: number;
 
   @Column({ type: 'text' })
   justification: string;
@@ -85,8 +76,10 @@ export class PurchaseRequest {
   @Column({ type: 'text', nullable: true })
   rejectionReason?: string | null;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
-  estimatedUnitCost?: number | null;
+  @OneToMany(() => PurchaseRequestItem, (item) => item.purchaseRequest, {
+    cascade: true,
+  })
+  items: PurchaseRequestItem[];
 
   @Column({ type: 'uuid', nullable: true })
   orderId?: string | null;

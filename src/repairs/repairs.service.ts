@@ -146,13 +146,45 @@ export class RepairsService {
   async getJobs(companyId: string | undefined, query: { page?: number; limit?: number }) {
     const { page, limit, skip } = getPaginationOptions(query);
     const qb = this.repairJobRepository.createQueryBuilder('job')
-      .leftJoinAndSelect('job.item', 'item');
+      .leftJoinAndSelect('job.item', 'item')
+      .leftJoinAndSelect('job.reportedByUser', 'user');
 
     if (companyId) qb.where('job.companyId = :companyId', { companyId });
 
     qb.orderBy('job.createdAt', 'DESC').skip(skip).take(limit);
     const [jobs, total] = await qb.getManyAndCount();
-    return paginate(jobs, total, page, limit);
+
+    const sanitized = jobs.map(job => {
+      const { reportedByUserId, ...rest } = job;
+      return {
+        ...rest,
+        reportedByUser: job.reportedByUser ? this.sanitizeUser(job.reportedByUser) : null,
+      };
+    });
+
+    return paginate(sanitized, total, page, limit);
+  }
+
+  async getDisposals(companyId: string | undefined, query: { page?: number; limit?: number }) {
+    const { page, limit, skip } = getPaginationOptions(query);
+    const qb = this.disposalRepository.createQueryBuilder('dis')
+      .leftJoinAndSelect('dis.item', 'item')
+      .leftJoinAndSelect('dis.requestedByUser', 'user');
+
+    if (companyId) qb.where('dis.companyId = :companyId', { companyId });
+
+    qb.orderBy('dis.createdAt', 'DESC').skip(skip).take(limit);
+    const [items, total] = await qb.getManyAndCount();
+
+    const sanitized = items.map(dis => {
+      const { requestedByUserId, ...rest } = dis;
+      return {
+        ...rest,
+        requestedByUser: dis.requestedByUser ? this.sanitizeUser(dis.requestedByUser) : null,
+      };
+    });
+
+    return paginate(sanitized, total, page, limit);
   }
 
   async createDisposal(dto: CreateDisposalRequestDto, userId: string, companyId: string) {
@@ -209,5 +241,14 @@ export class RepairsService {
 
         return manager.save(DisposalRequest, disposal);
      });
+  }
+
+  private sanitizeUser(user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 }

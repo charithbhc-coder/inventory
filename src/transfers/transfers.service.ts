@@ -140,6 +140,24 @@ export class TransfersService {
       qb.orderBy('trf.createdAt', 'DESC').skip(skip).take(limit);
 
       const [items, total] = await qb.getManyAndCount();
-      return paginate(items, total, page, limit);
+
+      const sanitized = items.map(trf => {
+        const { initiatedByUserId, ...rest } = trf;
+        return {
+          ...rest,
+          initiatedByUser: trf.initiatedByUser ? this.sanitizeUser(trf.initiatedByUser) : null,
+        };
+      });
+
+      return paginate(sanitized, total, page, limit);
+  }
+
+  private sanitizeUser(user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 }

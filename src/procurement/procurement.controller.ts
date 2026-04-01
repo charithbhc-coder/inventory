@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ProcurementService } from './procurement.service';
-import { CreatePurchaseRequestDto, CreateOrderDto, RejectPrDto, ReceiveOrderDto } from './dto/procurement.dto';
+import { CreatePurchaseRequestDto, CreateOrderDto, RejectPrDto, ReceiveOrderDto, SourcePrItemDto } from './dto/procurement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -17,17 +17,29 @@ export class ProcurementController {
   constructor(private readonly procurementService: ProcurementService) {}
 
   @Post('purchase-requests')
-  @Roles(UserRole.DEPT_ADMIN)
-  @ApiOperation({ summary: 'Draft a new PR' })
+  @Roles(UserRole.DEPT_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Draft a new multi-item PR' })
   createPr(@Body() dto: CreatePurchaseRequestDto, @CurrentUser() user: JwtPayload) {
     return this.procurementService.createPr(dto, user.sub, user.companyId as string, user.departmentId as string);
   }
 
   @Post('purchase-requests/:id/submit')
-  @Roles(UserRole.DEPT_ADMIN)
+  @Roles(UserRole.DEPT_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Submit a DRAFT PR into the approval chain' })
   submitPr(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.procurementService.submitPr(id, user.companyId as string);
+  }
+
+  @Patch('purchase-requests/:id/items/:itemId/source')
+  @Roles(UserRole.WAREHOUSE_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Source/Price a specific item in a PR (Warehouse Job)' })
+  sourcePrItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body() dto: SourcePrItemDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.procurementService.sourceItem(id, itemId, dto, user.companyId as string);
   }
 
   @Get('purchase-requests')
@@ -40,7 +52,7 @@ export class ProcurementController {
 
   @Post('purchase-requests/:id/approve')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
-  @ApiOperation({ summary: 'Approve PR at current stage' })
+  @ApiOperation({ summary: 'Approve PR at current stage (Calculates total cost across bundle)' })
   approvePr(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.procurementService.approvePr(id, user.sub, user.role, user.companyId as string);
   }

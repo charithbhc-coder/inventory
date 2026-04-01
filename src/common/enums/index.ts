@@ -197,3 +197,16 @@ export enum MaintenanceOutcome {
   DEFERRED = 'DEFERRED',
   FAILED = 'FAILED',
 }
+
+export enum PRItemSource {
+  WAREHOUSE = 'WAREHOUSE',
+  PURCHASE = 'PURCHASE',
+}
+
+export enum PRItemStatus {
+  PENDING = 'PENDING',
+  SOURCED = 'SOURCED',
+  ORDERED = 'ORDERED',
+  RECEIVED = 'RECEIVED',
+  CANCELLED = 'CANCELLED',
+}

@@ -27,7 +27,7 @@ export class ItemsService {
   ) {}
 
   // The AliExpress timeline fetcher
-  async getTimeline(barcodeOrId: string, companyId?: string, role?: UserRole): Promise<{ item: Item, events: ItemEvent[] }> {
+  async getTimeline(barcodeOrId: string, companyId?: string, role?: UserRole): Promise<any> {
     const isBarcode = !barcodeOrId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     
     let whereClause = isBarcode ? { barcode: barcodeOrId } : { id: barcodeOrId };
@@ -55,14 +55,36 @@ export class ItemsService {
       order: { createdAt: 'DESC' }
     });
 
-    return { item, events };
+    const { currentAssignedUserId, ...restItem } = item;
+    const sanitizedItem = {
+      ...restItem,
+      currentAssignedUser: item.currentAssignedUser ? this.sanitizeUser(item.currentAssignedUser) : null,
+    };
+
+    const sanitizedEvents = events.map(ev => {
+      const { fromUserId, toUserId, performedByUserId, ...restEv } = ev;
+      return {
+        ...restEv,
+        fromUser: ev.fromUser ? this.sanitizeUser(ev.fromUser) : null,
+        toUser: ev.toUser ? this.sanitizeUser(ev.toUser) : null,
+        performedByUser: ev.performedByUser ? this.sanitizeUser(ev.performedByUser) : null,
+      };
+    });
+
+    return { item: sanitizedItem, events: sanitizedEvents };
   }
 
-  async findOne(id: string): Promise<Item | null> {
-    return this.itemsRepository.findOne({
+  async findOne(id: string): Promise<any> {
+    const item = await this.itemsRepository.findOne({
       where: { id },
       relations: ['category', 'currentDepartment', 'currentAssignedUser', 'customValues'],
     });
+    if (!item) return null;
+    const { currentAssignedUserId, ...rest } = item;
+    return {
+      ...rest,
+      currentAssignedUser: item.currentAssignedUser ? this.sanitizeUser(item.currentAssignedUser) : null,
+    };
   }
 
   // Common list endpoint for CA, DA, WH, etc
@@ -99,7 +121,16 @@ export class ItemsService {
       .take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    return paginate(items, total, page, limit);
+    
+    const sanitized = items.map(item => {
+      const { currentAssignedUserId, ...rest } = item;
+      return {
+        ...rest,
+        currentAssignedUser: item.currentAssignedUser ? this.sanitizeUser(item.currentAssignedUser) : null,
+      };
+    });
+
+    return paginate(sanitized, total, page, limit);
   }
 
   // --- CORE SYSTEM WORKFLOWS ---
@@ -276,5 +307,14 @@ export class ItemsService {
 
       return item;
     });
+  }
+
+  private sanitizeUser(user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 }

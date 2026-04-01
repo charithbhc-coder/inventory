@@ -6,7 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
-import { PurchaseRequest } from './purchase-request.entity';
+import { PurchaseRequestItem } from './purchase-request-item.entity';
 import { ItemCategory } from '../../items/entities/item-category.entity';
 
 @Entity('order_items')
@@ -22,11 +22,11 @@ export class OrderItem {
   order: Order;
 
   @Column({ type: 'uuid', nullable: true })
-  purchaseRequestId?: string | null;
+  purchaseRequestItemId?: string | null;
 
-  @ManyToOne(() => PurchaseRequest, { nullable: true })
-  @JoinColumn({ name: 'purchaseRequestId' })
-  purchaseRequest?: PurchaseRequest | null;
+  @ManyToOne(() => PurchaseRequestItem, { nullable: true })
+  @JoinColumn({ name: 'purchaseRequestItemId' })
+  purchaseRequestItem?: PurchaseRequestItem | null;
 
   @Column()
   categoryId: string;

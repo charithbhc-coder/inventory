@@ -44,6 +44,13 @@ export class RepairsController {
     return this.repairsService.updateJobStatus(id, dto, user.sub, user.companyId as string);
   }
 
+  @Get('disposal-requests')
+  @Roles(UserRole.COMPANY_ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List disposal requests' })
+  getDisposals(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.repairsService.getDisposals(user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId as string, { page, limit });
+  }
+
   @Post('disposal-requests')
   @Roles(UserRole.DEPT_ADMIN, UserRole.COMPANY_ADMIN)
   @ApiOperation({ summary: 'Raise a disposal request for an item' })

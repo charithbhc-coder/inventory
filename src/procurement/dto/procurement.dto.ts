@@ -1,17 +1,30 @@
 import { IsString, IsNotEmpty, IsNumber, IsEnum, IsUUID, IsOptional, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Urgency } from '../../common/enums';
+import { Urgency, PRItemSource } from '../../common/enums';
 
-export class CreatePurchaseRequestDto {
-  @ApiProperty()
-  @IsUUID()
-  categoryId: string;
+export class CreatePurchaseRequestItemDto {
+  @ApiProperty({ example: 'Ergonomic Keyboard' })
+  @IsString()
+  @IsNotEmpty()
+  requestedItemName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 5 })
   @IsNumber()
   quantity: number;
 
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  estimatedUnitCost?: number;
+}
+
+export class CreatePurchaseRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -22,10 +35,41 @@ export class CreatePurchaseRequestDto {
   @IsOptional()
   urgency?: Urgency;
 
+  @ApiProperty({ type: [CreatePurchaseRequestItemDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePurchaseRequestItemDto)
+  items: CreatePurchaseRequestItemDto[];
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  companyId?: string;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  departmentId?: string;
+}
+
+export class SourcePrItemDto {
+  @ApiProperty()
+  @IsEnum(PRItemSource)
+  source: PRItemSource;
+
+  @ApiProperty()
+  @IsUUID()
+  categoryId: string;
+
   @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
   estimatedUnitCost?: number;
+
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  vendorId?: string;
 }
 
 export class RejectPrDto {
@@ -39,7 +83,7 @@ export class OrderItemDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  purchaseRequestId?: string;
+  purchaseRequestItemId?: string;
 
   @ApiProperty()
   @IsUUID()
