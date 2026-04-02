@@ -18,8 +18,8 @@ export class PdfGenerator {
     try {
       const page = await browser.newPage();
       
-      // We set the content with wait until network idle to ensure fonts/images load if any
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      // We set the content resolving as soon as the DOM is loaded, avoiding networkidle hangups
+      await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
 
       // Generate the PDF
       const pdfBuffer = await page.pdf({
