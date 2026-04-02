@@ -5,7 +5,7 @@ export class JwtPayload {
   email: string;
   role: UserRole;
   companyId?: string;
-  departmentId?: string;
+  permissions?: string[];
   mustChangePassword: boolean;
   iat?: number;
   exp?: number;

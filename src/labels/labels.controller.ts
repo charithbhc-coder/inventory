@@ -1,8 +1,18 @@
-import { Controller, Get, Param, Res, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Res, NotFoundException, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { LabelsService } from './labels.service';
 import { ItemsService } from '../items/items.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { UserRole, AdminPermission } from '../common/enums';
 
+@ApiTags('Labels')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('labels')
 export class LabelsController {
   constructor(
@@ -11,6 +21,9 @@ export class LabelsController {
   ) {}
 
   @Get('generate/:itemId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.GENERATE_BARCODES)
+  @ApiOperation({ summary: 'Generate a barcode label PDF for an item' })
   async generateLabel(@Param('itemId') itemId: string, @Res() res: Response) {
     const item = await this.itemsService.findOne(itemId);
     if (!item) {

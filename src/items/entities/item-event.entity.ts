@@ -13,13 +13,12 @@ import { User } from '../../users/entities/user.entity';
 import { Department } from '../../departments/entities/department.entity';
 
 /**
- * THE most important table — the immutable timeline of every event in an item's life.
+ * Immutable timeline of every event in an item's life.
  * Never delete or update rows. Only insert.
- * This powers the "AliExpress-style" tracking timeline.
+ * Powers the tracking timeline view.
  */
 @Entity('item_events')
 @Index(['itemId', 'createdAt'])
-@Index(['referenceId'])
 export class ItemEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -42,7 +41,7 @@ export class ItemEvent {
     enum: ItemStatus,
     nullable: true,
   })
-  fromStatus: ItemStatus;
+  fromStatus: ItemStatus | null;
 
   @Column({
     type: 'enum',
@@ -50,39 +49,32 @@ export class ItemEvent {
   })
   toStatus: ItemStatus;
 
-  @Column({ length: 255, nullable: true })
-  fromLocation: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  fromLocation: string | null;
 
-  @Column({ length: 255, nullable: true })
-  toLocation: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  toLocation: string | null;
 
   @Column({ type: 'uuid', nullable: true })
-  fromDepartmentId: string;
+  fromDepartmentId: string | null;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'fromDepartmentId' })
   fromDepartment: Department;
 
   @Column({ type: 'uuid', nullable: true })
-  toDepartmentId: string;
+  toDepartmentId: string | null;
 
   @ManyToOne(() => Department, { nullable: true })
   @JoinColumn({ name: 'toDepartmentId' })
   toDepartment: Department;
 
-  @Column({ type: 'uuid', nullable: true })
-  fromUserId: string;
+  // Text-based person tracking (not FK)
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  fromPersonName: string | null;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'fromUserId' })
-  fromUser: User;
-
-  @Column({ type: 'uuid', nullable: true })
-  toUserId: string;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'toUserId' })
-  toUser: User;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  toPersonName: string | null;
 
   @Column()
   performedByUserId: string;
@@ -92,10 +84,7 @@ export class ItemEvent {
   performedByUser: User;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  referenceId: string; // Link to order_id, repair_job_id, etc.
+  notes: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

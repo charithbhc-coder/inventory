@@ -12,25 +12,18 @@ import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './companies/companies.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { ItemsModule } from './items/items.module';
-import { WarehouseModule } from './warehouse/warehouse.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { MailModule } from './mail/mail.module';
+import { LabelsModule } from './labels/labels.module';
 
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
-import { VendorsModule } from './vendors/vendors.module';
-import { ProcurementModule } from './procurement/procurement.module';
-import { RepairsModule } from './repairs/repairs.module';
-import { TransfersModule } from './transfers/transfers.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CacheModule } from '@nestjs/cache-manager';
-import { DepreciationModule } from './depreciation/depreciation.module';
-import { MaintenanceModule } from './maintenance/maintenance.module';
-import { ImportModule } from './import/import.module';
-import { LabelsModule } from './labels/labels.module';
+
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
@@ -41,7 +34,7 @@ import { LabelsModule } from './labels/labels.module';
     }]),
     CacheModule.register({
       isGlobal: true,
-      ttl: 60 * 15 * 1000, // 15 minutes default
+      ttl: 60 * 15 * 1000,
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -67,19 +60,11 @@ import { LabelsModule } from './labels/labels.module';
     CompaniesModule,
     DepartmentsModule,
     ItemsModule,
-    WarehouseModule,
     AuditLogsModule,
-    VendorsModule,
-    ProcurementModule,
-    RepairsModule,
-    TransfersModule,
+    LabelsModule,
     AnalyticsModule,
     NotificationsModule,
     ReportsModule,
-    DepreciationModule,
-    MaintenanceModule,
-    ImportModule,
-    LabelsModule,
   ],
   controllers: [],
   providers: [

@@ -4,9 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 
 @Entity('companies')
@@ -21,29 +18,19 @@ export class Company {
   code: string; // Used in barcode prefix e.g. 'ACME'
 
   @Column({ type: 'text', nullable: true })
-  address: string;
+  address: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  email: string;
+  email: string | null;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  phone: string;
+  phone: string | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  logoUrl: string;
+  logoUrl: string | null;
 
   @Column({ default: true })
   isActive: boolean;
-
-  @Column({ type: 'uuid', nullable: true })
-  parentCompanyId: string;
-
-  @ManyToOne(() => Company, { nullable: true })
-  @JoinColumn({ name: 'parentCompanyId' })
-  parentCompany: Company;
-
-  @OneToMany(() => Company, (c) => c.parentCompany)
-  subsidiaries: Company[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,10 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsUUID, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsUUID, IsBoolean, IsDateString, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemCondition, ItemStatus } from '../../common/enums';
+import { ItemCondition, ItemStatus, DisposalMethod } from '../../common/enums';
+import { Type } from 'class-transformer';
 
 export class CreateItemDto {
-  // Can be used if someone manually creates a single item outside warehouse flow
-  @ApiProperty()
+  @ApiProperty({ example: 'Dell Latitude 5540' })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -19,12 +19,17 @@ export class CreateItemDto {
   @IsNotEmpty()
   categoryId: string;
 
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  companyId: string;
+
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   serialNumber?: string;
 
-  @ApiProperty({ enum: ItemCondition, default: ItemCondition.NEW })
+  @ApiProperty({ enum: ItemCondition, default: ItemCondition.NEW, required: false })
   @IsEnum(ItemCondition)
   @IsOptional()
   condition?: ItemCondition;
@@ -32,117 +37,118 @@ export class CreateItemDto {
   @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   purchasePrice?: number;
-}
-
-export class ReceiveItemsDto {
-  @ApiProperty()
-  @IsUUID()
-  @IsNotEmpty()
-  categoryId: string;
-
-  @ApiProperty({ required: false, description: 'Required for Super Admin' })
-  @IsUUID()
-  @IsOptional()
-  companyId?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty()
-  @IsNumber()
-  @IsNotEmpty()
-  quantity: number;
 
   @ApiProperty({ required: false })
-  @IsNumber()
+  @IsDateString()
   @IsOptional()
-  unitCost?: number;
-
-  @ApiProperty({ required: false, description: 'Manual serial number for the item' })
-  @IsString()
-  @IsOptional()
-  serialNumber?: string;
-}
-
-export class BulkReceiveItemDetail {
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  serialNumber?: string;
+  purchaseDate?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  barcode?: string;
+  purchasedFrom?: string;
 
   @ApiProperty({ required: false })
-  @IsString()
+  @IsDateString()
   @IsOptional()
-  notes?: string;
-}
+  warrantyExpiresAt?: string;
 
-export class BulkReceiveItemsDto {
-  @ApiProperty()
-  @IsUUID()
-  @IsNotEmpty()
-  categoryId: string;
-
-  @ApiProperty({ required: false, description: 'Required for Super Admin' })
-  @IsUUID()
-  @IsOptional()
-  companyId?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({ type: [BulkReceiveItemDetail] })
-  @IsArray()
-  items: BulkReceiveItemDetail[];
-
-  @ApiProperty({ required: false })
-  @IsNumber()
-  @IsOptional()
-  unitCost?: number;
-}
-
-export class UpdateItemStatusDto {
-  @ApiProperty({ enum: ItemStatus })
-  @IsEnum(ItemStatus)
-  status: ItemStatus;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  notes?: string;
-  
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   location?: string;
-}
-
-export class DistributeItemDto {
-  @ApiProperty()
-  @IsUUID()
-  @IsNotEmpty()
-  departmentId: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   notes?: string;
+}
+
+export class UpdateItemDto {
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({ required: false })
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  serialNumber?: string;
+
+  @ApiProperty({ enum: ItemCondition, required: false })
+  @IsEnum(ItemCondition)
+  @IsOptional()
+  condition?: ItemCondition;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  purchasePrice?: number;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  purchaseDate?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  purchasedFrom?: string;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  warrantyExpiresAt?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  isWorking?: boolean;
 }
 
 export class AssignItemDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsUUID()
-  @IsNotEmpty()
-  userId: string;
+  @IsOptional()
+  departmentId?: string;
+
+  @ApiProperty({ required: false, example: 'John Silva' })
+  @IsString()
+  @IsOptional()
+  assignedToName?: string;
+
+  @ApiProperty({ required: false, example: 'EMP-0042' })
+  @IsString()
+  @IsOptional()
+  assignedToEmployeeId?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  location?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -150,9 +156,47 @@ export class AssignItemDto {
   notes?: string;
 }
 
-export class ReportFaultDto {
+export class RepairItemDto {
+  @ApiProperty({ required: false, example: 'ABC Repair Shop' })
+  @IsString()
+  @IsOptional()
+  repairVendorName?: string;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  faultDescription: string;
+  repairNotes: string;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  sentToRepair?: boolean; // true = sent out, false = just needs repair
+}
+
+export class DisposeItemDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  disposalReason: string;
+
+  @ApiProperty({ enum: DisposalMethod })
+  @IsEnum(DisposalMethod)
+  disposalMethod: DisposalMethod;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  disposalNotes?: string;
+}
+
+export class ReturnFromRepairDto {
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  repairNotes?: string;
+
+  @ApiProperty({ enum: ItemCondition, required: false })
+  @IsEnum(ItemCondition)
+  @IsOptional()
+  condition?: ItemCondition;
 }

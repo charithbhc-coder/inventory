@@ -5,13 +5,12 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
 import { User } from './entities/user.entity';
-import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, UpdateUserDto, UpdatePermissionsDto } from './dto/create-user.dto';
 import { MailService } from '../mail/mail.service';
-import { UserRole } from '../common/enums';
+import { UserRole, AdminPermission } from '../common/enums';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
 
 const BCRYPT_ROUNDS = 12;
@@ -46,30 +45,15 @@ export class UsersService {
     dto: CreateUserDto,
     creatorId: string,
     creatorRole: UserRole,
-    creatorCompanyId?: string,
   ): Promise<Partial<User>> {
-    // Check access
-    if (creatorRole !== UserRole.SUPER_ADMIN && creatorRole !== UserRole.COMPANY_ADMIN && creatorRole !== UserRole.DEPT_ADMIN) {
+    // Only SUPER_ADMIN can create users; ADMIN with MANAGE_USERS permission handled via guard
+    if (creatorRole !== UserRole.SUPER_ADMIN && creatorRole !== UserRole.ADMIN) {
       throw new ForbiddenException('You do not have permission to create users');
     }
 
-    // A Company Admin or Dept Admin can only create users within their own company
-    if (creatorRole !== UserRole.SUPER_ADMIN) {
-      if (dto.companyId && dto.companyId !== creatorCompanyId) {
-        throw new ForbiddenException('You can only create users for your own company');
-      }
-      dto.companyId = creatorCompanyId; // Force correct company
-    }
-
-    // Role restrictions
+    // Cannot create SUPER_ADMIN via API
     if (dto.role === UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Super Admins can only be created via seed scripts');
-    }
-    if (creatorRole === UserRole.COMPANY_ADMIN && dto.role === UserRole.COMPANY_ADMIN) {
-      // Allow CA to create other CAs ? Usually okay, but SA handles billing/license. Let's allow for now.
-    }
-    if (creatorRole === UserRole.DEPT_ADMIN && dto.role !== UserRole.STAFF) {
-      throw new ForbiddenException('Department Admins can only create STAFF users');
     }
 
     const existing = await this.usersRepository.findOne({
@@ -77,6 +61,16 @@ export class UsersService {
     });
     if (existing) {
       throw new ConflictException('A user with that email already exists');
+    }
+
+    // Validate permissions — only valid AdminPermission values
+    if (dto.permissions && dto.permissions.length > 0) {
+      const validPermissions = Object.values(AdminPermission);
+      for (const perm of dto.permissions) {
+        if (!validPermissions.includes(perm as AdminPermission)) {
+          throw new ForbiddenException(`Invalid permission: ${perm}`);
+        }
+      }
     }
 
     const tempPassword = this.generateTempPassword();
@@ -90,51 +84,47 @@ export class UsersService {
       createdByUserId: creatorId,
       mustChangePassword: true,
       passwordHistory: [passwordHash],
+      permissions: dto.permissions || [],
     });
 
     const saved = await this.usersRepository.save(newUser);
 
-    // Don't await email, let it send in background
+    // Send welcome email in background
     this.mailService.sendWelcomeEmailWithTempPassword(saved.email, saved.firstName, tempPassword).catch(() => {});
 
     return this.sanitizeUser(saved);
   }
 
   async findAll(
-    companyId: string,
-    departmentId: string,
-    query: { page?: number; limit?: number; search?: string; role?: UserRole; isActive?: string },
+    query: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: UserRole;
+      isActive?: string;
+      companyId?: string;
+    },
   ) {
     const { page, limit, skip } = getPaginationOptions(query);
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // Filter validation
-    const where: FindOptionsWhere<User> = {};
-    
-    if (companyId) {
-      if (!uuidRegex.test(companyId)) return paginate([], 0, page, limit);
-      where.companyId = companyId;
-    }
-    
-    if (departmentId) {
-      if (!uuidRegex.test(departmentId)) return paginate([], 0, page, limit);
-      where.departmentId = departmentId;
+    const qb = this.usersRepository.createQueryBuilder('user')
+      .leftJoinAndSelect('user.company', 'company');
+
+    if (query.companyId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(query.companyId)) return paginate([], 0, page, limit);
+      qb.andWhere('user.companyId = :companyId', { companyId: query.companyId });
     }
 
     if (query.role) {
-      // Ensure the role is a valid UserRole enum
-      if (!Object.values(UserRole).includes(query.role as any)) {
-        // If it's a placeholder like "<string>", just ignore it or return empty
-      } else {
-        where.role = query.role;
+      if (Object.values(UserRole).includes(query.role as any)) {
+        qb.andWhere('user.role = :role', { role: query.role });
       }
     }
-    
-    if (query.isActive) where.isActive = query.isActive === 'true';
 
-    const qb = this.usersRepository.createQueryBuilder('user')
-      .leftJoinAndSelect('user.department', 'department')
-      .where(where);
+    if (query.isActive) {
+      qb.andWhere('user.isActive = :isActive', { isActive: query.isActive === 'true' });
+    }
 
     if (query.search) {
       qb.andWhere('(user.firstName ILIKE :search OR user.lastName ILIKE :search OR user.email ILIKE :search)', {
@@ -151,36 +141,32 @@ export class UsersService {
     return paginate(items.map(u => this.sanitizeUser(u)), total, page, limit);
   }
 
-  async findOne(id: string, requesterCompanyId?: string, requesterRole?: UserRole): Promise<Partial<User>> {
+  async findOne(id: string): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({
       where: { id },
-      relations: ['company', 'department'],
+      relations: ['company'],
     });
 
     if (!user) throw new NotFoundException('User not found');
-
-    if (requesterRole !== UserRole.SUPER_ADMIN && user.companyId !== requesterCompanyId) {
-      throw new ForbiddenException('Access denied to this user profile');
-    }
-
     return this.sanitizeUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto, requesterCompanyId?: string, requesterRole?: UserRole): Promise<Partial<User>> {
+  async update(id: string, dto: UpdateUserDto, requesterRole?: UserRole): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    if (requesterRole !== UserRole.SUPER_ADMIN && user.companyId !== requesterCompanyId) {
-      throw new ForbiddenException('Access denied to update this user');
-    }
-
     if (dto.role === UserRole.SUPER_ADMIN) {
-       throw new ForbiddenException('Cannot assign Super Admin role via UI');
+      throw new ForbiddenException('Cannot assign Super Admin role via API');
     }
 
-    if (requesterRole !== UserRole.SUPER_ADMIN) {
-      delete dto.companyId;
-      delete dto.departmentId;
+    // Validate permissions if provided
+    if (dto.permissions) {
+      const validPermissions = Object.values(AdminPermission);
+      for (const perm of dto.permissions) {
+        if (!validPermissions.includes(perm as AdminPermission)) {
+          throw new ForbiddenException(`Invalid permission: ${perm}`);
+        }
+      }
     }
 
     Object.assign(user, dto);
@@ -188,13 +174,30 @@ export class UsersService {
     return this.sanitizeUser(saved);
   }
 
-  async setStatus(id: string, isActive: boolean, requesterCompanyId?: string, requesterRole?: UserRole): Promise<{ message: string }> {
+  async updatePermissions(id: string, dto: UpdatePermissionsDto): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    if (requesterRole !== UserRole.SUPER_ADMIN && user.companyId !== requesterCompanyId) {
-      throw new ForbiddenException('Access denied to modify this user');
+    if (user.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Cannot modify Super Admin permissions');
     }
+
+    // Validate
+    const validPermissions = Object.values(AdminPermission);
+    for (const perm of dto.permissions) {
+      if (!validPermissions.includes(perm as AdminPermission)) {
+        throw new ForbiddenException(`Invalid permission: ${perm}`);
+      }
+    }
+
+    user.permissions = dto.permissions;
+    const saved = await this.usersRepository.save(user);
+    return this.sanitizeUser(saved);
+  }
+
+  async setStatus(id: string, isActive: boolean): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
 
     if (user.role === UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Super Admin cannot be deactivated via this endpoint');
@@ -205,7 +208,6 @@ export class UsersService {
   }
 
   private generateTempPassword(): string {
-    // Ensure complexity rules: Min 8, 1 uppercase, 1 lowercase, 1 number, 1 special
     const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const lower = 'abcdefghijklmnopqrstuvwxyz';
     const num = '0123456789';
@@ -222,7 +224,6 @@ export class UsersService {
       pass += all[Math.floor(Math.random() * all.length)];
     }
 
-    // Shuffle
     return pass.split('').sort(() => 0.5 - Math.random()).join('');
   }
 

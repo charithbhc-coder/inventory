@@ -1,13 +1,13 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateItemCategoryDto {
+export class CreateCategoryDto {
   @ApiProperty({ example: 'Laptop' })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'LAP', description: 'Used in barcode prefix' })
+  @ApiProperty({ example: 'LAP' })
   @IsString()
   @IsNotEmpty()
   code: string;
@@ -16,14 +16,9 @@ export class CreateItemCategoryDto {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @ApiProperty({ required: false, default: 12 })
-  @IsNumber()
-  @IsOptional()
-  defaultWarrantyMonths?: number;
 }
 
-export class UpdateItemCategoryDto {
+export class UpdateCategoryDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
@@ -33,14 +28,4 @@ export class UpdateItemCategoryDto {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @ApiProperty({ required: false })
-  @IsNumber()
-  @IsOptional()
-  defaultWarrantyMonths?: number;
-
-  @ApiProperty({ required: false })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
 }

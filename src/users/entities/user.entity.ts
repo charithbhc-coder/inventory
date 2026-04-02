@@ -8,15 +8,10 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { UserRole } from '../../common/enums';
+import { UserRole, AdminPermission } from '../../common/enums';
 import { Company } from '../../companies/entities/company.entity';
-import { Department } from '../../departments/entities/department.entity';
 
 @Entity('users')
-@Index(['companyId', 'employeeId'], {
-  unique: true,
-  where: '"employeeId" IS NOT NULL AND "companyId" IS NOT NULL',
-})
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -36,11 +31,8 @@ export class User {
   @Column({ length: 100 })
   lastName: string;
 
-  @Column({ length: 50, nullable: true })
-  phone: string;
-
-  @Column({ length: 100, nullable: true })
-  employeeId: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  phone: string | null;
 
   @Column({
     type: 'enum',
@@ -48,19 +40,17 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   companyId?: string | null;
 
   @ManyToOne(() => Company, { nullable: true })
   @JoinColumn({ name: 'companyId' })
   company?: Company | null;
 
-  @Column({ nullable: true })
-  departmentId?: string | null;
-
-  @ManyToOne(() => Department, { nullable: true })
-  @JoinColumn({ name: 'departmentId' })
-  department?: Department | null;
+  // Granular permissions — only used for ADMIN role
+  // SUPER_ADMIN has all permissions implicitly
+  @Column({ type: 'text', array: true, default: '{}' })
+  permissions: string[];
 
   @Column({ default: true })
   mustChangePassword: boolean;
@@ -72,9 +62,9 @@ export class User {
   isActive: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastLoginAt: Date;
+  lastLoginAt: Date | null;
 
-  // MFA — designed now, activated in Phase 4
+  // MFA
   @Column({ default: false })
   mfaEnabled: boolean;
 
@@ -85,7 +75,7 @@ export class User {
   mfaBackupCodes: string[];
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  mfaMethod?: string | null; // 'TOTP' | 'SMS'
+  mfaMethod?: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   phoneNumber?: string | null;
@@ -98,7 +88,7 @@ export class User {
   passwordResetExpiresAt?: Date | null;
 
   @Column({ type: 'uuid', nullable: true })
-  createdByUserId: string;
+  createdByUserId: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

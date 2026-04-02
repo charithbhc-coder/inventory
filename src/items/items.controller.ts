@@ -1,81 +1,210 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipeBuilder,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { ItemsService } from './items.service';
-import { DistributeItemDto, AssignItemDto, ReportFaultDto } from './dto/item.dto';
+import {
+  CreateItemDto,
+  UpdateItemDto,
+  AssignItemDto,
+  RepairItemDto,
+  DisposeItemDto,
+  ReturnFromRepairDto,
+} from './dto/item.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { ItemStatus, UserRole } from '../common/enums';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { ItemStatus, UserRole, AdminPermission } from '../common/enums';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 
 @ApiTags('Items')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('items')
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
+  // --- CRUD ---
+
+  @Post()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.ADD_ITEMS)
+  @ApiOperation({ summary: 'Add a new item to inventory (auto-generates barcode)' })
+  create(@Body() dto: CreateItemDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.create(dto, user.sub);
+  }
+
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN, UserRole.DEPT_ADMIN)
-  @ApiOperation({ summary: 'List all items matching criteria' })
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'List all items with filters' })
   findAll(
-    @CurrentUser() user: JwtPayload,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('status') status?: ItemStatus,
     @Query('categoryId') categoryId?: string,
-    @Query('companyId') companyIdQ?: string,
+    @Query('companyId') companyId?: string,
+    @Query('departmentId') departmentId?: string,
+    @Query('isWorking') isWorking?: string,
+    @Query('needsRepair') needsRepair?: string,
   ) {
-    const cid = user.role === UserRole.SUPER_ADMIN ? companyIdQ : user.companyId!;
-    // For DEPT_ADMIN we could restrict, but maybe they can see company items? Restricting for now:
-    const myDept = user.role === UserRole.DEPT_ADMIN ? user.departmentId : undefined;
-    return this.itemsService.findAll(cid as any, { page, limit, search, status, categoryId, departmentId: myDept });
+    return this.itemsService.findAll({ page, limit, search, status, categoryId, companyId, departmentId, isWorking, needsRepair });
   }
 
-  @Get('my')
-  @Roles(UserRole.STAFF, UserRole.DEPT_ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'List items assigned to me' })
-  getMyItems(@CurrentUser() user: JwtPayload, @Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.itemsService.findAll(user.companyId!, {
-      page,
-      limit,
-      assigneeId: user.sub,
-    });
+  @Get('warehouse/:companyId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.VIEW_WAREHOUSE)
+  @ApiOperation({ summary: 'View company warehouse — unassigned and disposed items' })
+  getWarehouse(
+    @Param('companyId') companyId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('includeDisposed') includeDisposed?: string,
+  ) {
+    return this.itemsService.getWarehouseItems(companyId, { page, limit, search, includeDisposed });
   }
 
   @Get(':barcodeOrId')
-  @ApiOperation({ summary: 'Get item details AND full AliExpress timeline' })
-  findOne(@Param('barcodeOrId') barcodeOrId: string, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.getTimeline(barcodeOrId, user.companyId!, user.role);
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get item details with full event timeline' })
+  findOne(@Param('barcodeOrId') barcodeOrId: string) {
+    return this.itemsService.getTimeline(barcodeOrId);
   }
 
-  @Post(':id/distribute')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.WAREHOUSE_ADMIN)
-  @ApiOperation({ summary: 'Distribute a warehouse item to a department' })
-  distribute(@Param('id') id: string, @Body() dto: DistributeItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.distribute(id, dto, user.sub, user.companyId || '', user.role);
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.EDIT_ITEMS)
+  @ApiOperation({ summary: 'Update item details' })
+  update(@Param('id') id: string, @Body() dto: UpdateItemDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.update(id, dto, user.sub);
   }
+
+  // --- ACTIONS ---
 
   @Post(':id/assign')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.DEPT_ADMIN)
-  @ApiOperation({ summary: 'Assign a distributed item to a staff user' })
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @ApiOperation({ summary: 'Assign item to department/person' })
   assign(@Param('id') id: string, @Body() dto: AssignItemDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.assign(id, dto, user.sub, user.departmentId || '', user.role); 
+    return this.itemsService.assign(id, dto, user.sub);
   }
 
-  @Post(':id/report-fault')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.STAFF, UserRole.DEPT_ADMIN)
-  @ApiOperation({ summary: 'Report a fault on an item' })
-  reportFault(@Param('id') id: string, @Body() dto: ReportFaultDto, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.reportFault(id, dto, user.sub, user.role);
+  @Post(':id/unassign')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @ApiOperation({ summary: 'Unassign item from person (return to department/warehouse)' })
+  unassign(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.unassign(id, user.sub);
   }
 
-  @Post(':id/acknowledge')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.STAFF, UserRole.DEPT_ADMIN)
-  @ApiOperation({ summary: 'Acknowledge receipt of a distributed or assigned item' })
-  acknowledge(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.acknowledge(id, user.sub, user.role, user.departmentId || '');
+  @Post(':id/repair')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.MANAGE_REPAIRS)
+  @ApiOperation({ summary: 'Mark item for repair or send to repair vendor' })
+  repair(@Param('id') id: string, @Body() dto: RepairItemDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.markForRepair(id, dto, user.sub);
+  }
+
+  @Post(':id/return-from-repair')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.MANAGE_REPAIRS)
+  @ApiOperation({ summary: 'Return item from repair' })
+  returnFromRepair(@Param('id') id: string, @Body() dto: ReturnFromRepairDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.returnFromRepair(id, dto, user.sub);
+  }
+
+  @Post(':id/dispose')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.MANAGE_DISPOSALS)
+  @ApiOperation({ summary: 'Dispose item (requires reason and disposal method)' })
+  dispose(@Param('id') id: string, @Body() dto: DisposeItemDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.dispose(id, dto, user.sub, `${user.email}`);
+  }
+
+  @Post(':id/move-to-warehouse')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @ApiOperation({ summary: 'Return item to company warehouse' })
+  moveToWarehouse(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.moveToWarehouse(id, user.sub);
+  }
+
+  // --- FILE UPLOADS ---
+
+  @Post(':id/warranty')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.EDIT_ITEMS)
+  @ApiOperation({ summary: 'Upload warranty card for an item' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/warranties',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  uploadWarranty(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 }) // 10MB
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.itemsService.addWarrantyCard(id, file.filename);
+  }
+
+  @Post(':id/invoice')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.EDIT_ITEMS)
+  @ApiOperation({ summary: 'Upload invoice for an item' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/invoices',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  uploadInvoice(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 })
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.itemsService.addInvoice(id, file.filename);
   }
 }

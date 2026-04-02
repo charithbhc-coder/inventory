@@ -5,12 +5,13 @@ import {
   IsEnum,
   IsOptional,
   IsUUID,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../../common/enums';
+import { UserRole, AdminPermission } from '../../common/enums';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'john.doe@acmecorp.com' })
+  @ApiProperty({ example: 'admin@company.com' })
   @IsEmail()
   email: string;
 
@@ -24,7 +25,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   lastName: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.STAFF })
+  @ApiProperty({ enum: UserRole, example: UserRole.ADMIN })
   @IsEnum(UserRole)
   role: UserRole;
 
@@ -34,19 +35,14 @@ export class CreateUserDto {
   companyId?: string;
 
   @ApiProperty({ required: false })
-  @IsUUID()
-  @IsOptional()
-  departmentId?: string;
-
-  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, type: [String], enum: AdminPermission, isArray: true })
+  @IsArray()
   @IsOptional()
-  employeeId?: string;
+  permissions?: string[];
 }
 
 export class UpdateUserDto {
@@ -71,17 +67,19 @@ export class UpdateUserDto {
   companyId?: string;
 
   @ApiProperty({ required: false })
-  @IsUUID()
-  @IsOptional()
-  departmentId?: string;
-
-  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, type: [String], enum: AdminPermission, isArray: true })
+  @IsArray()
   @IsOptional()
-  employeeId?: string;
+  permissions?: string[];
+}
+
+export class UpdatePermissionsDto {
+  @ApiProperty({ type: [String], enum: AdminPermission, isArray: true })
+  @IsArray()
+  @IsNotEmpty()
+  permissions: string[];
 }

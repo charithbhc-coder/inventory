@@ -92,4 +92,61 @@ export class MailService {
       this.logger.error(`Failed to send welcome email to ${to}`, error.stack);
     }
   }
+  async sendPasswordChangedEmail(to: string, name: string) {
+    const mailOptions = {
+      from: this.configService.get<string>('MAIL_FROM'),
+      to,
+      subject: 'Your Password Has Been Changed',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Password Changed Successfully</h2>
+          <p>Hi ${name},</p>
+          <p>This is a confirmation that the password for your Inventory Management System account has just been changed.</p>
+          <p>If you made this change, no further action is required.</p>
+          <p style="color: #d9363e; font-weight: bold;">If you did NOT make this change, please contact your system administrator immediately to secure your account.</p>
+          <p>Thanks,<br>The Inventory System Team</p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Password changed notification sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password changed notification to ${to}`, error.stack);
+    }
+  }
+
+  async sendFirstLoginEmail(to: string, name: string) {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const dashboardLink = `${frontendUrl}/dashboard`;
+
+    const mailOptions = {
+      from: this.configService.get<string>('MAIL_FROM'),
+      to,
+      subject: 'Security Alert: First Time Login from Your Account',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Security Alert: New Login</h2>
+          <p>Hi ${name},</p>
+          <p>We noticed that someone successfully logged into your Inventory Management System account for the very first time.</p>
+          <p>If this was you, congratulations and welcome aboard!</p>
+          <div style="margin: 30px 0;">
+            <a href="${dashboardLink}" style="background-color: #1677ff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+              Go to Your Dashboard
+            </a>
+          </div>
+          <p style="color: #666;">If this wasn't you, please reset your password or contact your IT helpdesk immediately.</p>
+          <p>Thanks,<br>The Inventory System Team</p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`First login notification sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send first login notification to ${to}`, error.stack);
+    }
+  }
 }

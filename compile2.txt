@@ -1,0 +1,15 @@
+src/items/items.service.ts(207,9): error TS2769: No overload matches this call.
+  Overload 2 of 2, '(entityClass: EntityTarget<ItemEvent>, plainObjects?: DeepPartial<ItemEvent>[] | undefined): ItemEvent[]', gave the following error.
+    Object literal may only specify known properties, and 'itemId' does not exist in type 'DeepPartial<ItemEvent>[]'.
+src/items/items.service.ts(242,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(entityClass: EntityTarget<ItemEvent>, plainObject?: DeepPartial<ItemEvent> | undefined): ItemEvent', gave the following error.
+    Type 'string | null' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+  Overload 2 of 2, '(entityClass: EntityTarget<ItemEvent>, plainObjects?: DeepPartial<ItemEvent>[] | undefined): ItemEvent[]', gave the following error.
+    Object literal may only specify known properties, and 'itemId' does not exist in type 'DeepPartial<ItemEvent>[]'.
+src/items/items.service.ts(440,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(entityClass: EntityTarget<ItemEvent>, plainObject?: DeepPartial<ItemEvent> | undefined): ItemEvent', gave the following error.
+    Type 'string | null' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+  Overload 2 of 2, '(entityClass: EntityTarget<ItemEvent>, plainObjects?: DeepPartial<ItemEvent>[] | undefined): ItemEvent[]', gave the following error.
+    Object literal may only specify known properties, and 'itemId' does not exist in type 'DeepPartial<ItemEvent>[]'.

@@ -5,37 +5,37 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToMany,
   JoinColumn,
   Index,
 } from 'typeorm';
-import { ItemStatus, ItemCondition } from '../../common/enums';
+import { ItemStatus, ItemCondition, DisposalMethod } from '../../common/enums';
 import { Company } from '../../companies/entities/company.entity';
 import { Department } from '../../departments/entities/department.entity';
-import { User } from '../../users/entities/user.entity';
-import { Vendor } from '../../vendors/entities/vendor.entity';
 import { ItemCategory } from './item-category.entity';
-import { ItemCustomValue } from './item-custom-value.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('items')
 @Index(['companyId', 'status'])
-@Index(['companyId', 'currentDepartmentId'])
+@Index(['companyId', 'departmentId'])
+@Index(['barcode'], { unique: true })
 export class Item {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // --- Identity ---
   @Column({ length: 100, unique: true })
-  barcode: string; // Format: ACME-LAP-20250615-0042
+  barcode: string; // Auto-generated: ACME-LAP-20250615-0042
 
-  @Column({ length: 255, nullable: true })
-  serialNumber: string; // Manufacturer serial if available
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  serialNumber: string | null; // Manufacturer serial if available
 
   @Column({ length: 255 })
   name: string; // e.g. 'Dell Latitude 5540'
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
+  // --- Category (FK) ---
   @Column()
   categoryId: string;
 
@@ -43,6 +43,7 @@ export class Item {
   @JoinColumn({ name: 'categoryId' })
   category: ItemCategory;
 
+  // --- Location / Ownership ---
   @Column()
   companyId: string;
 
@@ -51,22 +52,29 @@ export class Item {
   company: Company;
 
   @Column({ type: 'uuid', nullable: true })
-  currentDepartmentId: string; // NULL = in warehouse
+  departmentId: string | null; // NULL = in warehouse
 
   @ManyToOne(() => Department, { nullable: true })
-  @JoinColumn({ name: 'currentDepartmentId' })
-  currentDepartment: Department;
+  @JoinColumn({ name: 'departmentId' })
+  department: Department;
 
-  @Column({ type: 'uuid', nullable: true })
-  currentAssignedUserId: string; // NULL = not assigned to anyone
+  // --- Assignment (TEXT, not FK — employees can leave) ---
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  assignedToName: string | null; // e.g. "John Silva"
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'currentAssignedUserId' })
-  currentAssignedUser: User;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  assignedToEmployeeId: string | null; // e.g. "EMP-0042"
 
-  @Column({ length: 255, nullable: true })
-  currentLocation: string; // Free text: 'Warehouse Shelf A3', 'IT Dept - Floor 2'
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  previousAssignedToName: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  previousAssignedToEmployeeId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string | null; // Physical location: 'Warehouse Shelf A3', 'IT Dept - Floor 2'
+
+  // --- Status & Condition ---
   @Column({
     type: 'enum',
     enum: ItemStatus,
@@ -81,33 +89,77 @@ export class Item {
   })
   condition: ItemCondition;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
-  purchasePrice: number;
+  @Column({ default: true })
+  isWorking: boolean; // Quick flag: does it still work?
 
-  @Column({ type: 'date', nullable: true })
-  purchaseDate: Date;
+  // --- Repair Tracking (columns, not separate table) ---
+  @Column({ default: false })
+  needsRepair: boolean;
 
-  @Column({ type: 'date', nullable: true })
-  warrantyExpiresAt: Date;
+  @Column({ default: false })
+  sentToRepair: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  repairVendorName: string | null; // Where it's sent for repair
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  repairNotes: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  repairDate: Date | null; // When sent for repair
+
+  @Column({ type: 'timestamp', nullable: true })
+  repairReturnDate: Date | null; // When returned from repair
+
+  // --- Purchase & Warranty ---
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  purchasePrice: number | null;
+
+  @Column({ type: 'date', nullable: true })
+  purchaseDate: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  purchasedFrom: string | null; // Vendor/shop name (simple text)
+
+  @Column({ type: 'date', nullable: true })
+  warrantyExpiresAt: Date | null;
+
+  // Multiple warranty cards & invoices (arrays)
+  @Column({ type: 'text', array: true, default: '{}' })
+  warrantyCardUrls: string[];
+
+  @Column({ type: 'text', array: true, default: '{}' })
+  invoiceUrls: string[];
+
+  // --- Disposal (requires permission) ---
+  @Column({ type: 'text', nullable: true })
+  disposalReason: string | null;
+
+  @Column({ type: 'enum', enum: DisposalMethod, nullable: true })
+  disposalMethod: DisposalMethod | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  disposalApprovedByName: string | null; // Admin who approved
+
+  @Column({ type: 'timestamp', nullable: true })
+  disposalDate: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  disposalNotes: string | null;
+
+  // --- Metadata ---
+  @Column({ type: 'text', nullable: true })
+  notes: string | null;
 
   @Column({ type: 'uuid', nullable: true })
-  vendorId?: string | null;
+  addedByUserId: string | null;
 
-  @ManyToOne(() => Vendor, { nullable: true })
-  @JoinColumn({ name: 'vendorId' })
-  vendor?: Vendor | null;
-
-  @Column({ type: 'uuid', nullable: true })
-  receivedByUserId: string; // Warehouse Admin who received it
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'addedByUserId' })
+  addedByUser: User;
 
   @CreateDateColumn()
   createdAt: Date;
-
-  @OneToMany(() => ItemCustomValue, (val: ItemCustomValue) => val.item)
-  customValues: ItemCustomValue[];
 
   @UpdateDateColumn()
   updatedAt: Date;

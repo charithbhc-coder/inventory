@@ -37,14 +37,9 @@ export class NotificationsService {
 
     const saved = await this.notificationRepo.save(notification);
 
-    // 1. Push WebSocket
+    // Push WebSocket notification
     this.gateway.sendNotification(saved.recipientUserId, saved);
 
-    // 2. Send Email
-    // Note: We need the user's email address. Here we'll rely on the MailService to format
-    // In a real scenario, we'd join on user to get the email explicitly immediately,
-    // but the MailService can handle basic send logic here.
-    // We will emit an event or run it async
     return saved;
   }
 
@@ -73,33 +68,44 @@ export class NotificationsService {
     );
   }
 
-  // --- Example Event Listeners ---
-  
-  @OnEvent('purchase_request.approved')
-  handlePrApproved(payload: { prId: string, requestNumber: string, userId: string, companyId: string }) {
+  // --- Event Listeners ---
+
+  @OnEvent('item.disposed')
+  async handleItemDisposed(payload: { itemId: string; barcode: string; userId: string; companyId: string }) {
     this.create({
-       recipientUserId: payload.userId,
-       companyId: payload.companyId,
-       type: NotificationType.PR_APPROVED,
-       title: 'Purchase Request Approved',
-       message: `Your Purchase Request ${payload.requestNumber} has been approved.`,
-       entityType: 'PurchaseRequest',
-       entityId: payload.prId,
-       actionUrl: `/procurement/${payload.prId}`,
+      recipientUserId: payload.userId,
+      companyId: payload.companyId,
+      type: NotificationType.ITEM_DISPOSED,
+      title: 'Item Disposed',
+      message: `Item ${payload.barcode} has been disposed and removed from active inventory.`,
+      entityType: 'Item',
+      entityId: payload.itemId,
     });
   }
 
-  @OnEvent('item.disposed')
-  async handleItemDisposed(payload: { itemId: string, barcode: string, userId: string, companyId: string }) {
-    // Send to company admin
+  @OnEvent('item.assigned')
+  async handleItemAssigned(payload: { itemId: string; barcode: string; assignedTo: string; userId: string; companyId: string }) {
     this.create({
-       recipientUserId: payload.userId, // Normally we'd look up the Company Admin ID
-       companyId: payload.companyId,
-       type: NotificationType.ITEM_DISPOSED,
-       title: 'Item Disposed',
-       message: `Item ${payload.barcode} has been disposed and removed from active inventory.`,
-       entityType: 'Item',
-       entityId: payload.itemId,
+      recipientUserId: payload.userId,
+      companyId: payload.companyId,
+      type: NotificationType.ITEM_ASSIGNED,
+      title: 'Item Assigned',
+      message: `Item ${payload.barcode} has been assigned to ${payload.assignedTo}.`,
+      entityType: 'Item',
+      entityId: payload.itemId,
+    });
+  }
+
+  @OnEvent('item.sent_to_repair')
+  async handleItemSentToRepair(payload: { itemId: string; barcode: string; userId: string; companyId: string }) {
+    this.create({
+      recipientUserId: payload.userId,
+      companyId: payload.companyId,
+      type: NotificationType.ITEM_SENT_TO_REPAIR,
+      title: 'Item Sent to Repair',
+      message: `Item ${payload.barcode} has been sent for repair.`,
+      entityType: 'Item',
+      entityId: payload.itemId,
     });
   }
 }

@@ -29,8 +29,8 @@ export class Department {
   @JoinColumn({ name: 'companyId' })
   company: Company;
 
-  @Column({ length: 255, nullable: true })
-  location: string; // Physical floor / building
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string | null; // Physical floor / building
 
   @Column({ default: true })
   isActive: boolean;

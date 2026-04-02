@@ -50,7 +50,7 @@ export class AuthService {
   }> {
     const user = await this.usersRepository.findOne({
       where: { email: email.toLowerCase() },
-      relations: ['company', 'department'],
+      relations: ['company'],
     });
 
     if (!user) {
@@ -83,12 +83,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    const isFirstLogin = !user.lastLoginAt;
+
     // Update last login
     await this.usersRepository.update(user.id, { lastLoginAt: new Date() });
 
     const tokens = this.generateTokens(user);
 
     await this.logAction(user.id, user.email, 'LOGIN_SUCCESS', user.companyId || undefined, metadata);
+
+    if (isFirstLogin) {
+      // Send asynchronously so as not to block the HTTP request
+      this.mailService.sendFirstLoginEmail(user.email, user.firstName).catch(console.error);
+    }
 
     return {
       ...tokens,
@@ -160,6 +167,8 @@ export class AuthService {
       user.companyId || undefined,
       metadata,
     );
+
+    this.mailService.sendPasswordChangedEmail(user.email, user.firstName).catch(console.error);
 
     return { message: 'Password changed successfully', ...tokens };
   }
@@ -249,6 +258,8 @@ export class AuthService {
       user.companyId || undefined,
       metadata,
     );
+
+    this.mailService.sendPasswordChangedEmail(user.email, user.firstName).catch(console.error);
 
     return { message: 'Password reset successfully. Please log in.' };
   }
@@ -348,7 +359,7 @@ export class AuthService {
   async getMe(userId: string): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['company', 'department'],
+      relations: ['company'],
     });
 
     if (!user) {
@@ -367,7 +378,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       companyId: user.companyId || undefined,
-      departmentId: user.departmentId || undefined,
+      permissions: user.permissions || [],
       mustChangePassword: user.mustChangePassword,
     };
 

@@ -19,7 +19,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve static UI assets (Avatar uploads)
+  // Serve static uploads (avatars, logos, warranties, invoices)
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
@@ -30,29 +30,26 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true, // Auto transform payloads to DTO instances
+      transform: true,
     }),
   );
 
   // Swagger OpenAPI Docs
   const config = new DocumentBuilder()
-    .setTitle('Enterprise Inventory API')
-    .setDescription('Full REST API for multi-tenant Inventory, Procurement, Repairs, and Asset Lifecycle Management')
-    .setVersion('1.0')
+    .setTitle('KTMG Inventory API')
+    .setDescription('Simplified Inventory Management System — Items, Barcodes, Assignments, and Tracking')
+    .setVersion('2.0')
     .addBearerAuth()
-    .addTag('Auth', 'Authentication and SSO endpoints')
-    .addTag('Companies', 'Multi-tenant company management')
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Users', 'Admin user management with permissions')
+    .addTag('Companies', 'Company management')
+    .addTag('Departments', 'Department management')
+    .addTag('Categories', 'Item category management')
     .addTag('Items', 'Core inventory item operations and lifecycle')
-    .addTag('Custom Fields', 'Dynamic category-specific attribute management')
-    .addTag('Warehouse', 'Stock management and storage locations')
-    .addTag('Procurement', 'Purchase requests and vendor orders')
-    .addTag('Repairs', 'Maintenance and repair job tracking')
-    .addTag('Maintenance', 'Preventive maintenance scheduling')
-    .addTag('Depreciation', 'Asset valuation and snapshots')
-    .addTag('Transfers', 'Inter-departmental item transfers')
-    .addTag('Reports', 'PDF/Excel export and data analysis')
-    .addTag('Imports', 'Bulk data ingestion via Excel')
-    .addTag('Audit Logs', 'Immutable system activity tracking')
+    .addTag('Labels', 'Barcode generation and printing')
+    .addTag('Analytics', 'Simplified dashboard analytics')
+    .addTag('Reports', 'Report generation')
+    .addTag('Audit Logs', 'System activity tracking')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

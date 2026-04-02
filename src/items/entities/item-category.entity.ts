@@ -4,10 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
-import { Company } from '../../companies/entities/company.entity';
 
 @Entity('item_categories')
 export class ItemCategory {
@@ -22,16 +19,6 @@ export class ItemCategory {
 
   @Column({ type: 'text', nullable: true })
   description: string;
-
-  @Column({ type: 'uuid', nullable: true })
-  companyId: string; // NULL = global (set by Super Admin)
-
-  @ManyToOne(() => Company, { nullable: true })
-  @JoinColumn({ name: 'companyId' })
-  company: Company;
-
-  @Column({ default: 12 })
-  defaultWarrantyMonths: number;
 
   @Column({ default: true })
   isActive: boolean;

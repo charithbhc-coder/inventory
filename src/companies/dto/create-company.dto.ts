@@ -27,10 +27,6 @@ export class CreateCompanyDto {
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ required: false })
-  @IsUUID()
-  @IsOptional()
-  parentCompanyId?: string;
 }
 
 export class UpdateCompanyDto {

@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './entities/department.entity';
 import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/create-department.dto';
-import { UserRole } from '../common/enums';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
 
 @Injectable()
@@ -18,7 +17,7 @@ export class DepartmentsService {
       where: { code: dto.code, companyId },
     });
     if (existing) {
-      throw new ConflictException(`Department code ${dto.code} already exists in your company`);
+      throw new ConflictException(`Department code ${dto.code} already exists in this company`);
     }
 
     const newDept = this.departmentsRepository.create({ ...dto, companyId });
@@ -28,7 +27,6 @@ export class DepartmentsService {
   async findAll(companyId: string, query: { page?: number; limit?: number; search?: string }) {
     const { page, limit, skip } = getPaginationOptions(query);
 
-    // If companyId is a placeholder like "<string>" or any non-UUID, return empty result instead of crashing
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(companyId)) {
       return paginate([], 0, page, limit);
@@ -51,20 +49,14 @@ export class DepartmentsService {
     return paginate(items, total, page, limit);
   }
 
-  async findOne(id: string, requesterCompanyId?: string, requesterRole?: UserRole): Promise<Department> {
+  async findOne(id: string): Promise<Department> {
     const department = await this.departmentsRepository.findOne({ where: { id } });
     if (!department) throw new NotFoundException('Department not found');
-
-    if (requesterRole !== UserRole.SUPER_ADMIN && department.companyId !== requesterCompanyId) {
-      throw new ForbiddenException('Access denied to this department');
-    }
-
     return department;
   }
 
-  async update(id: string, dto: UpdateDepartmentDto, requesterCompanyId?: string, requesterRole?: UserRole): Promise<Department> {
-    const department = await this.findOne(id, requesterCompanyId, requesterRole);
-
+  async update(id: string, dto: UpdateDepartmentDto): Promise<Department> {
+    const department = await this.findOne(id);
     Object.assign(department, dto);
     return this.departmentsRepository.save(department);
   }
