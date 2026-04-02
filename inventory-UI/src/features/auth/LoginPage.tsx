@@ -1,0 +1,518 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  AtSign, Lock, Eye, EyeOff, Info, ArrowRight, ShieldCheck,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { authService } from '@/services/auth.service';
+import { useAuthStore } from '@/store/auth.store';
+
+const schema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(1, 'Password is required'),
+});
+type FormData = z.infer<typeof schema>;
+
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [emailFocus, setEmailFocus] = useState(false);
+  const [passFocus, setPassFocus] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    try {
+      const res = await authService.login(data.email, data.password);
+      setAuth(res.user, res.accessToken, res.refreshToken);
+      if (res.mustChangePassword) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Invalid credentials. Please try again.';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={styles.page}>
+      {/* Grain overlay */}
+      <div style={styles.grain} />
+
+      <div style={styles.wrapper}>
+        {/* ── Brand mark ── */}
+        <div style={styles.brand}>
+          <div style={styles.logoCircle}>
+            <Lock size={22} color="#F5C518" strokeWidth={2.5} />
+          </div>
+          <h1 style={styles.brandName}>KTMG-Vault</h1>
+          <p style={styles.brandSub}>Secure Enterprise Access Layer</p>
+        </div>
+
+        {/* ── Glass card ── */}
+        <div style={styles.card}>
+
+          {/* Card heading */}
+          <div style={{ marginBottom: 4, textAlign: 'center' }}>
+            <h2 style={{
+              fontSize: 25,
+              fontWeight: 800,
+              color: '#1a1a2e',
+              margin: 0,
+              letterSpacing: '-0.3px',
+              lineHeight: 1.2,
+            }}>
+              Log into your account
+            </h2>
+            <p style={{
+              fontSize: 13,
+              color: '#9a9284',
+              marginTop: 5,
+              fontWeight: 500,
+            }}>
+              Please enter your details
+            </p>
+          </div>
+
+          {/* Email */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>EMAIL</label>
+            <div style={{
+              ...styles.inputWrap,
+              boxShadow: emailFocus ? styles.inputWrapFocusShadow : styles.inputWrapShadow,
+            }}>
+              <AtSign size={15} color={emailFocus ? '#F5C518' : '#aaa'} style={styles.inputIcon} />
+              <input
+                placeholder="Email or Username"
+                autoComplete="email"
+                style={styles.input}
+                {...register('email')}
+                onFocus={() => setEmailFocus(true)}
+                onBlur={() => setEmailFocus(false)}
+              />
+            </div>
+            {errors.email && <p style={styles.errMsg}>{errors.email.message}</p>}
+          </div>
+
+          {/* Password */}
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>PASSWORD</label>
+            <div style={{
+              ...styles.inputWrap,
+              boxShadow: passFocus ? styles.inputWrapFocusShadow : styles.inputWrapShadow,
+            }}>
+              <Lock size={15} color={passFocus ? '#F5C518' : '#aaa'} style={styles.inputIcon} />
+              <input
+                type={showPass ? 'text' : 'password'}
+                placeholder="••••••••••"
+                autoComplete="current-password"
+                style={{ ...styles.input, paddingRight: 44 }}
+                {...register('password')}
+                onFocus={() => setPassFocus(true)}
+                onBlur={() => setPassFocus(false)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(v => !v)}
+                style={styles.eyeBtn}
+                tabIndex={-1}
+              >
+                {showPass
+                  ? <EyeOff size={15} color="#aaa" />
+                  : <Eye size={15} color="#aaa" />}
+              </button>
+            </div>
+            {errors.password && <p style={styles.errMsg}>{errors.password.message}</p>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+              <a href="/forgot-password" style={styles.forgotLink}>Forgot password?</a>
+            </div>
+          </div>
+
+          {/* Notice */}
+          <div style={styles.notice}>
+            <Info size={14} color="#7a6f5a" style={{ flexShrink: 0, marginTop: 1 }} />
+            <p style={styles.noticeText}>
+              <strong>System Notice:</strong> New <em>Company Admins</em> must use the
+              temporary passkey issued during onboarding for their first authentication session.
+            </p>
+          </div>
+
+          {/* CTA */}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...styles.cta,
+                ...(loading ? styles.ctaLoading : {}),
+              }}
+              onMouseEnter={e => {
+                if (!loading) {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = styles.ctaHoverShadow;
+                }
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = styles.ctaShadow;
+              }}
+            >
+              {loading ? (
+                <span style={styles.spinner} />
+              ) : (
+                <>
+                  <span>Sign In to KTMG-Vault</span>
+                  <ArrowRight size={16} strokeWidth={2.5} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Security badges */}
+          <div style={styles.badges}>
+            <span style={styles.badge}><ShieldCheck size={11} /> FIPS 140-2</span>
+            <span style={styles.badgeDot} />
+            <span style={styles.badge}><ShieldCheck size={11} /> E2E Encrypted</span>
+          </div>
+        </div>
+
+        {/* ── Footer links ── */}
+        <div style={styles.footer}>
+          <a href="#" style={styles.footerLink}>Privacy Policy</a>
+          <span style={styles.footerSep}>|</span>
+          <a href="#" style={styles.footerLink}>Terms of Service</a>
+          <span style={styles.footerSep}>|</span>
+          <a href="#" style={styles.footerLink}>Security Audit</a>
+        </div>
+        <p style={styles.copy}>© 2024 KTMG Systems. KTMG-Vault Secure Layer.</p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────
+const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> = {
+  page: {
+    minHeight: '100vh',
+    minHeight: '100dvh',
+    background: 'linear-gradient(135deg, #f7f3ec 0%, #f0eeeb 40%, #ebebeb 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px 16px',
+    position: 'relative',
+    fontFamily: "'Inter', system-ui, sans-serif",
+  } as React.CSSProperties,
+
+  grain: {
+    position: 'fixed',
+    inset: 0,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'repeat',
+    backgroundSize: '256px 256px',
+    pointerEvents: 'none',
+    zIndex: 0,
+    opacity: 0.6,
+  } as React.CSSProperties,
+
+  wrapper: {
+    position: 'relative',
+    zIndex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 420,
+    gap: 0,
+  } as React.CSSProperties,
+
+  // ── Brand ──
+  brand: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 28,
+    gap: 0,
+  } as React.CSSProperties,
+
+  logoCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: '50%',
+    background: '#14202e',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  } as React.CSSProperties,
+
+  brandName: {
+    fontSize: 26,
+    fontWeight: 700,
+    letterSpacing: '-0.5px',
+    color: '#1a1a2e',
+    margin: 0,
+    lineHeight: 1.1,
+  } as React.CSSProperties,
+
+  brandSub: {
+    fontSize: 13,
+    color: '#9a9284',
+    marginTop: 5,
+    fontWeight: 400,
+    letterSpacing: '0.01em',
+  } as React.CSSProperties,
+
+  // ── Card ──
+  card: {
+    width: '100%',
+    background: 'rgba(255,255,255,0.72)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    borderRadius: 24,
+    padding: '36px 36px 28px',
+    boxShadow: [
+      '0 2px 0px rgba(255,255,255,0.9) inset',
+      '0 32px 64px rgba(0,0,0,0.09)',
+      '0 8px 24px rgba(0,0,0,0.06)',
+      '0 1px 2px rgba(0,0,0,0.04)',
+    ].join(', '),
+    border: '1px solid rgba(255,255,255,0.9)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+  } as React.CSSProperties,
+
+  // ── Form fields ──
+  fieldGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 7,
+  } as React.CSSProperties,
+
+  label: {
+    fontSize: 10,
+    fontWeight: 700,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.13em',
+    color: '#999084',
+  } as React.CSSProperties,
+
+  labelRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as React.CSSProperties,
+
+  forgotLink: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#c5a400',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase' as const,
+    textDecoration: 'none',
+  } as React.CSSProperties,
+
+  inputWrap: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: 50,
+    background: '#f0eeea',
+    transition: 'box-shadow 0.2s ease',
+  } as React.CSSProperties,
+
+  inputWrapShadow: [
+    'inset 3px 3px 7px rgba(0,0,0,0.08)',
+    'inset -2px -2px 5px rgba(255,255,255,0.95)',
+  ].join(', '),
+
+  inputWrapFocusShadow: [
+    'inset 3px 3px 7px rgba(0,0,0,0.1)',
+    'inset -2px -2px 5px rgba(255,255,255,0.95)',
+    '0 0 0 2.5px rgba(245,197,24,0.35)',
+  ].join(', '),
+
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    pointerEvents: 'none',
+    transition: 'color 0.2s',
+  } as React.CSSProperties,
+
+  input: {
+    width: '100%',
+    padding: '13px 16px 13px 40px',
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    fontSize: 14,
+    color: '#1a1a2e',
+    borderRadius: 50,
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+    borderRadius: '50%',
+    transition: 'opacity 0.15s',
+  } as React.CSSProperties,
+
+  errMsg: {
+    fontSize: 11,
+    color: '#dc2626',
+    marginTop: 2,
+    marginLeft: 14,
+  } as React.CSSProperties,
+
+  // ── Notice ──
+  notice: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    background: 'rgba(245,235,200,0.38)',
+    borderRadius: 14,
+    padding: '12px 14px',
+    border: '1px solid rgba(210,190,130,0.25)',
+  } as React.CSSProperties,
+
+  noticeText: {
+    fontSize: 12.5,
+    color: '#7a6f5a',
+    lineHeight: 1.55,
+    margin: 0,
+  } as React.CSSProperties,
+
+  // ── CTA ──
+  cta: {
+    width: '100%',
+    padding: '15px 24px',
+    borderRadius: 50,
+    background: 'linear-gradient(135deg, #f5d020 0%, #f5c518 60%, #e8b800 100%)',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 14.5,
+    fontWeight: 700,
+    letterSpacing: '0.01em',
+    color: '#1a1100',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    transition: 'transform 0.18s ease, box-shadow 0.18s ease, opacity 0.15s',
+    boxShadow: [
+      '0 4px 20px rgba(245,197,24,0.45)',
+      '0 1px 4px rgba(0,0,0,0.1)',
+    ].join(', '),
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+
+  ctaLoading: {
+    opacity: 0.75,
+    cursor: 'not-allowed',
+  } as React.CSSProperties,
+
+  ctaShadow: [
+    '0 4px 20px rgba(245,197,24,0.45)',
+    '0 1px 4px rgba(0,0,0,0.1)',
+  ].join(', '),
+
+  ctaHoverShadow: [
+    '0 8px 28px rgba(245,197,24,0.55)',
+    '0 2px 8px rgba(0,0,0,0.12)',
+  ].join(', '),
+
+  // ── Spinner ──
+  spinner: {
+    display: 'inline-block',
+    width: 18,
+    height: 18,
+    border: '2.5px solid rgba(0,0,0,0.15)',
+    borderTopColor: '#1a1100',
+    borderRadius: '50%',
+    animation: 'spin 0.65s linear infinite',
+  } as React.CSSProperties,
+
+  // ── Security badges ──
+  badges: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: -4,
+  } as React.CSSProperties,
+
+  badge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 10.5,
+    fontWeight: 600,
+    color: '#b0a898',
+    letterSpacing: '0.04em',
+  } as React.CSSProperties,
+
+  badgeDot: {
+    width: 3,
+    height: 3,
+    borderRadius: '50%',
+    background: '#ccc',
+    display: 'inline-block',
+  } as React.CSSProperties,
+
+  // ── Footer ──
+  footer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 28,
+  } as React.CSSProperties,
+
+  footerLink: {
+    fontSize: 11,
+    letterSpacing: '0.06em',
+    fontWeight: 500,
+    color: '#bbb5ad',
+    textDecoration: 'none',
+    textTransform: 'uppercase' as const,
+    transition: 'color 0.15s',
+  } as React.CSSProperties,
+
+  footerSep: {
+    color: '#d8d4cf',
+    fontSize: 11,
+    userSelect: 'none',
+  } as React.CSSProperties,
+
+  copy: {
+    fontSize: 10.5,
+    color: '#ccc8c2',
+    marginTop: 8,
+    letterSpacing: '0.02em',
+  } as React.CSSProperties,
+};
