@@ -38,6 +38,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
       load: [databaseConfig, jwtConfig],
     }),
     TypeOrmModule.forRootAsync({

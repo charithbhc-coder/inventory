@@ -26,7 +26,7 @@ export default function AuthShell({ leftContent, children, copyright }: AuthShel
           {children}
         </div>
         <div className="auth-right-footer">
-          {copyright ?? '© 2024 KTMG Systems. KTMG-Vault Secure Layer.'}
+          {copyright ?? '© 2026 KTMG Systems. KTMG-Vault Secure Layer.'}
         </div>
       </div>
     </div>

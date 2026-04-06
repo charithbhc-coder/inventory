@@ -312,7 +312,7 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  async updateAvatar(userId: string, filename: string): Promise<{ avatarUrl: string }> {
+  async updateAvatar(userId: string, filename: string): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -330,7 +330,9 @@ export class AuthService {
     const avatarUrl = `/uploads/avatars/${filename}`;
     await this.usersRepository.update(user.id, { avatarUrl });
 
-    return { avatarUrl };
+    // Return the full updated user object
+    const updatedUser = await this.usersRepository.findOne({ where: { id: user.id } });
+    return this.sanitizeUser(updatedUser as User);
   }
 
   async deleteAvatar(userId: string): Promise<{ message: string }> {

@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AtSign, ArrowLeft, AlertCircle, Lock, ArrowRight, CheckCircle } from 'lucide-react';
+import { AtSign, ArrowLeft, AlertCircle, ArrowRight, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '@/services/auth.service';
+import logo from '@/assets/logo.png';
 
 const schema = z.object({
-  email: z.string().email('Enter a valid corporate email'),
+  email: z.string().email('Enter a valid email'),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -42,7 +43,11 @@ export default function ForgotPasswordPage() {
         {/* ── Brand ── */}
         <div style={styles.brand}>
           <div style={styles.logoCircle}>
-            <Lock size={22} color="#F5C518" strokeWidth={2.5} />
+            <img
+              src={logo}
+              alt="KTMG-Vault"
+              style={{ height: 110, objectFit: 'contain' }}
+            />
           </div>
           <h1 style={styles.brandName}>KTMG-Vault</h1>
           <p style={styles.brandSub}>Secure Enterprise Access Layer</p>
@@ -59,7 +64,7 @@ export default function ForgotPasswordPage() {
               </div>
               <h2 style={styles.successTitle}>Check your inbox</h2>
               <p style={styles.successDesc}>
-                A secure reset link has been sent to your corporate email address.
+                A secure reset link has been sent to your email address.
                 The link will expire in 30 minutes.
               </p>
               <Link to="/login" style={styles.returnBtn}>
@@ -72,16 +77,16 @@ export default function ForgotPasswordPage() {
             <>
               {/* Card heading */}
               <div style={styles.heading}>
-                <h2 style={styles.headingTitle}>Reset Security Key</h2>
+                <h2 style={styles.headingTitle}>Reset PASSWORD</h2>
                 <p style={styles.headingDesc}>
-                  Enter your registered corporate email address to receive a secure reset link.
+                  Enter your registered email address to receive a secure reset link.
                 </p>
               </div>
 
               {/* Email input */}
               <form onSubmit={handleSubmit(onSubmit)}>
                 <div style={styles.fieldGroup}>
-                  <label style={styles.label}>Corporate Email</label>
+                  <label style={styles.label}>Email</label>
                   <div style={{
                     ...styles.inputWrap,
                     boxShadow: emailFocus ? styles.inputFocusShadow : styles.inputShadow,
@@ -156,23 +161,25 @@ export default function ForgotPasswordPage() {
           <span style={styles.footerSep}>|</span>
           <a href="#" style={styles.footerLink}>Security Audit</a>
         </div>
-        <p style={styles.copy}>© 2024 KTMG Systems. KTMG-Vault Secure Layer.</p>
+        <p style={styles.copy}>© 2026 KTMG Systems. KTMG-Vault Secure Layer.</p>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
+const styles = {
   page: {
-    minHeight: '100vh',
+    minHeight: '100dvh',
     background: 'linear-gradient(135deg, #f7f3ec 0%, #f0eeeb 40%, #ebebeb 100%)',
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: '24px 16px',
+    alignItems: 'flex-start',
+    padding: '40px 16px 40px',
     position: 'relative',
     fontFamily: "'Inter', system-ui, sans-serif",
+    overflowY: 'auto',
+    scrollbarGutter: 'stable',
   } as React.CSSProperties,
 
   grain: {
@@ -193,7 +200,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     flexDirection: 'column',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 440,
   } as React.CSSProperties,
 
   // ── Brand ──
@@ -202,18 +209,14 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     flexDirection: 'column',
     alignItems: 'center',
     marginBottom: 28,
+    gap: 0,
   } as React.CSSProperties,
 
   logoCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: '50%',
-    background: '#14202e',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: -12,
   } as React.CSSProperties,
 
   brandName: {
@@ -223,13 +226,15 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     color: '#1a1a2e',
     margin: 0,
     lineHeight: 1.1,
+    marginBottom: 4,
   } as React.CSSProperties,
 
   brandSub: {
     fontSize: 13,
-    color: '#9a9284',
-    marginTop: 5,
-    fontWeight: 400,
+    color: '#6d7278',
+    fontWeight: 500,
+    letterSpacing: '0.02em',
+    margin: 0,
   } as React.CSSProperties,
 
   // ── Card ──
@@ -239,7 +244,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderRadius: 24,
-    padding: '36px 36px 32px',
+    padding: '20px 24px 20px',
     boxShadow: [
       '0 2px 0px rgba(255,255,255,0.9) inset',
       '0 32px 64px rgba(0,0,0,0.09)',

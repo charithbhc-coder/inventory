@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
+import logo from '@/assets/logo.png';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -56,7 +57,11 @@ export default function LoginPage() {
         {/* ── Brand mark ── */}
         <div style={styles.brand}>
           <div style={styles.logoCircle}>
-            <Lock size={22} color="#F5C518" strokeWidth={2.5} />
+            <img
+              src={logo}
+              alt="KTMG-Vault"
+              style={{ height: 110, objectFit: 'contain' }}
+            />
           </div>
           <h1 style={styles.brandName}>KTMG-Vault</h1>
           <p style={styles.brandSub}>Secure Enterprise Access Layer</p>
@@ -68,7 +73,7 @@ export default function LoginPage() {
           {/* Card heading */}
           <div style={{ marginBottom: 4, textAlign: 'center' }}>
             <h2 style={{
-              fontSize: 25,
+              fontSize: 20,
               fontWeight: 800,
               color: '#1a1a2e',
               margin: 0,
@@ -181,12 +186,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Security badges */}
-          <div style={styles.badges}>
-            <span style={styles.badge}><ShieldCheck size={11} /> FIPS 140-2</span>
-            <span style={styles.badgeDot} />
-            <span style={styles.badge}><ShieldCheck size={11} /> E2E Encrypted</span>
-          </div>
         </div>
 
         {/* ── Footer links ── */}
@@ -206,17 +205,18 @@ export default function LoginPage() {
 // ─────────────────────────────────────────────────────────────
 // Styles
 // ─────────────────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> = {
+const styles = {
   page: {
-    minHeight: '100vh',
     minHeight: '100dvh',
     background: 'linear-gradient(135deg, #f7f3ec 0%, #f0eeeb 40%, #ebebeb 100%)',
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: '24px 16px',
+    alignItems: 'flex-start',
+    padding: '40px 16px 40px',
     position: 'relative',
     fontFamily: "'Inter', system-ui, sans-serif",
+    overflowY: 'auto',
+    scrollbarGutter: 'stable',
   } as React.CSSProperties,
 
   grain: {
@@ -228,7 +228,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     pointerEvents: 'none',
     zIndex: 0,
     opacity: 0.6,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   wrapper: {
     position: 'relative',
@@ -237,9 +237,9 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     flexDirection: 'column',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 440,
     gap: 0,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   // ── Brand ──
   brand: {
@@ -248,19 +248,14 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     alignItems: 'center',
     marginBottom: 28,
     gap: 0,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   logoCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: '50%',
-    background: '#14202e',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  } as React.CSSProperties,
+    marginBottom: -12,
+  } as CSSProperties,
 
   brandName: {
     fontSize: 26,
@@ -269,15 +264,16 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     color: '#1a1a2e',
     margin: 0,
     lineHeight: 1.1,
-  } as React.CSSProperties,
+    marginBottom: 4,
+  } as CSSProperties,
 
   brandSub: {
     fontSize: 13,
-    color: '#9a9284',
-    marginTop: 5,
-    fontWeight: 400,
-    letterSpacing: '0.01em',
-  } as React.CSSProperties,
+    color: '#6d7278',
+    fontWeight: 500,
+    letterSpacing: '0.02em',
+    margin: 0,
+  } as CSSProperties,
 
   // ── Card ──
   card: {
@@ -286,7 +282,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderRadius: 24,
-    padding: '36px 36px 28px',
+    padding: '20px 24px 20px',
     boxShadow: [
       '0 2px 0px rgba(255,255,255,0.9) inset',
       '0 32px 64px rgba(0,0,0,0.09)',
@@ -296,29 +292,29 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     border: '1px solid rgba(255,255,255,0.9)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 18,
-  } as React.CSSProperties,
+    gap: 12,
+  } as CSSProperties,
 
   // ── Form fields ──
   fieldGroup: {
     display: 'flex',
     flexDirection: 'column',
     gap: 7,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   label: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 700,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.13em',
     color: '#999084',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   labelRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   forgotLink: {
     fontSize: 11,
@@ -327,7 +323,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     letterSpacing: '0.06em',
     textTransform: 'uppercase' as const,
     textDecoration: 'none',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   inputWrap: {
     position: 'relative',
@@ -336,7 +332,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     borderRadius: 50,
     background: '#f0eeea',
     transition: 'box-shadow 0.2s ease',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   inputWrapShadow: [
     'inset 3px 3px 7px rgba(0,0,0,0.08)',
@@ -354,11 +350,11 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     left: 16,
     pointerEvents: 'none',
     transition: 'color 0.2s',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   input: {
     width: '100%',
-    padding: '13px 16px 13px 40px',
+    padding: '11px 16px 11px 40px',
     background: 'transparent',
     border: 'none',
     outline: 'none',
@@ -366,7 +362,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     color: '#1a1a2e',
     borderRadius: 50,
     fontFamily: 'inherit',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   eyeBtn: {
     position: 'absolute',
@@ -380,14 +376,14 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     padding: 4,
     borderRadius: '50%',
     transition: 'opacity 0.15s',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   errMsg: {
     fontSize: 11,
     color: '#dc2626',
     marginTop: 2,
     marginLeft: 14,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   // ── Notice ──
   notice: {
@@ -396,21 +392,21 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     gap: 10,
     background: 'rgba(245,235,200,0.38)',
     borderRadius: 14,
-    padding: '12px 14px',
+    padding: '8px 12px',
     border: '1px solid rgba(210,190,130,0.25)',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   noticeText: {
     fontSize: 12.5,
     color: '#7a6f5a',
     lineHeight: 1.55,
     margin: 0,
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   // ── CTA ──
   cta: {
     width: '100%',
-    padding: '15px 24px',
+    padding: '12px 24px',
     borderRadius: 50,
     background: 'linear-gradient(135deg, #f5d020 0%, #f5c518 60%, #e8b800 100%)',
     border: 'none',
@@ -429,12 +425,12 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
       '0 1px 4px rgba(0,0,0,0.1)',
     ].join(', '),
     fontFamily: 'inherit',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   ctaLoading: {
     opacity: 0.75,
     cursor: 'not-allowed',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   ctaShadow: [
     '0 4px 20px rgba(245,197,24,0.45)',
@@ -455,7 +451,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     borderTopColor: '#1a1100',
     borderRadius: '50%',
     animation: 'spin 0.65s linear infinite',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   // ── Security badges ──
   badges: {
@@ -463,8 +459,8 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: -4,
-  } as React.CSSProperties,
+    marginTop: -8,
+  } as CSSProperties,
 
   badge: {
     display: 'inline-flex',
@@ -474,7 +470,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     fontWeight: 600,
     color: '#b0a898',
     letterSpacing: '0.04em',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   badgeDot: {
     width: 3,
@@ -482,7 +478,7 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     borderRadius: '50%',
     background: '#ccc',
     display: 'inline-block',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   // ── Footer ──
   footer: {
@@ -490,8 +486,8 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginTop: 28,
-  } as React.CSSProperties,
+    marginTop: 16,
+  } as CSSProperties,
 
   footerLink: {
     fontSize: 11,
@@ -501,18 +497,18 @@ const styles: Record<string, React.CSSProperties & { [key: string]: unknown }> =
     textDecoration: 'none',
     textTransform: 'uppercase' as const,
     transition: 'color 0.15s',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   footerSep: {
     color: '#d8d4cf',
     fontSize: 11,
     userSelect: 'none',
-  } as React.CSSProperties,
+  } as CSSProperties,
 
   copy: {
     fontSize: 10.5,
     color: '#ccc8c2',
-    marginTop: 8,
+    marginTop: 4,
     letterSpacing: '0.02em',
-  } as React.CSSProperties,
+  } as CSSProperties,
 };

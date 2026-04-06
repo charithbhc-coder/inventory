@@ -31,6 +31,20 @@ export const authService = {
     return data;
   },
 
+  updateMe: async (payload: { firstName?: string; lastName?: string; phone?: string }) => {
+    const { data } = await api.patch('/auth/me', payload);
+    return data;
+  },
+
+  uploadAvatar: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post('/auth/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
   logout: async () => {
     await api.post('/auth/logout');
   },

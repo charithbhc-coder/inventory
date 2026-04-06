@@ -7,6 +7,7 @@ import { Lock, Eye, EyeOff, Check, ArrowRight, ShieldCheck, Key } from 'lucide-r
 import toast from 'react-hot-toast';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
+import logo from '@/assets/logo.png';
 
 const schema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -45,7 +46,7 @@ export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { logout } = useAuthStore();
-  
+
   const [curFocus, setCurFocus] = useState(false);
   const [pwFocus, setPwFocus] = useState(false);
   const [cpwFocus, setCpwFocus] = useState(false);
@@ -62,9 +63,9 @@ export default function ChangePasswordPage() {
 
   const requirements = [
     { label: 'At least 8 characters', met: newPassword.length >= 8 },
-    { label: 'One special symbol',    met: /[^a-zA-Z0-9]/.test(newPassword) },
-    { label: 'One numeric value',     met: /[0-9]/.test(newPassword) },
-    { label: 'Mixed case (Aa)',       met: /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) },
+    { label: 'One special symbol', met: /[^a-zA-Z0-9]/.test(newPassword) },
+    { label: 'One numeric value', met: /[0-9]/.test(newPassword) },
+    { label: 'Mixed case (Aa)', met: /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) },
   ];
 
   const onSubmit = async (data: FormData) => {
@@ -91,7 +92,11 @@ export default function ChangePasswordPage() {
         {/* ── Brand ── */}
         <div style={styles.brand}>
           <div style={styles.logoCircle}>
-            <Lock size={22} color="#F5C518" strokeWidth={2.5} />
+            <img
+              src={logo}
+              alt="KTMG-Vault"
+              style={{ height: 110, objectFit: 'contain' }}
+            />
           </div>
           <h1 style={styles.brandName}>KTMG-Vault</h1>
           <p style={styles.brandSub}>Secure Enterprise Access Layer</p>
@@ -106,8 +111,8 @@ export default function ChangePasswordPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
             {/* Current Password */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>CURRENT TEMPORARY PASSWORD</label>
@@ -138,7 +143,7 @@ export default function ChangePasswordPage() {
 
             {/* New Password */}
             <div style={styles.fieldGroup}>
-              <label style={styles.label}>NEW SECURITY KEY</label>
+              <label style={styles.label}>NEW PASSWORD</label>
               <div style={{
                 ...styles.inputWrap,
                 boxShadow: pwFocus ? styles.inputFocusShadow : styles.inputShadow,
@@ -165,8 +170,8 @@ export default function ChangePasswordPage() {
             </div>
 
             {/* Confirm Password */}
-            <div style={{...styles.fieldGroup, marginBottom: 4}}>
-              <label style={styles.label}>CONFIRM NEW SECURITY KEY</label>
+            <div style={{ ...styles.fieldGroup, marginBottom: 4 }}>
+              <label style={styles.label}>CONFIRM NEW PASSWORD</label>
               <div style={{
                 ...styles.inputWrap,
                 boxShadow: cpwFocus ? styles.inputFocusShadow : styles.inputShadow,
@@ -241,23 +246,25 @@ export default function ChangePasswordPage() {
           <span style={styles.footerSep}>|</span>
           <a href="#" style={styles.footerLink}>Security Audit</a>
         </div>
-        <p style={styles.copy}>© 2024 KTMG Systems. KTMG-Vault Secure Layer.</p>
+        <p style={styles.copy}>© 2026 KTMG Systems. KTMG-Vault Secure Layer.</p>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
+const styles = {
   page: {
-    minHeight: '100vh',
+    minHeight: '100dvh',
     background: 'linear-gradient(135deg, #f7f3ec 0%, #f0eeeb 40%, #ebebeb 100%)',
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: '24px 16px',
+    alignItems: 'flex-start',
+    padding: '40px 16px 40px',
     position: 'relative',
     fontFamily: "'Inter', system-ui, sans-serif",
+    overflowY: 'auto',
+    scrollbarGutter: 'stable',
   } as React.CSSProperties,
 
   grain: {
@@ -286,18 +293,14 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     flexDirection: 'column',
     alignItems: 'center',
     marginBottom: 28,
+    gap: 0,
   } as React.CSSProperties,
 
   logoCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: '50%',
-    background: '#14202e',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: -12,
   } as React.CSSProperties,
 
   brandName: {
@@ -307,13 +310,15 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     color: '#1a1a2e',
     margin: 0,
     lineHeight: 1.1,
+    marginBottom: 4,
   } as React.CSSProperties,
 
   brandSub: {
     fontSize: 13,
-    color: '#9a9284',
-    marginTop: 5,
-    fontWeight: 400,
+    color: '#6d7278',
+    fontWeight: 500,
+    letterSpacing: '0.02em',
+    margin: 0,
   } as React.CSSProperties,
 
   card: {
@@ -322,7 +327,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     borderRadius: 24,
-    padding: '36px 36px 32px',
+    padding: '20px 24px 20px',
     boxShadow: [
       '0 2px 0px rgba(255,255,255,0.9) inset',
       '0 32px 64px rgba(0,0,0,0.09)',
@@ -336,7 +341,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
 
   heading: {
     textAlign: 'center',
-    paddingBottom: 20,
+    paddingBottom: 8,
   } as React.CSSProperties,
 
   headingTitle: {
@@ -357,11 +362,11 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
   fieldGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 7,
+    gap: 4,
   } as React.CSSProperties,
 
   label: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 700,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.13em',
@@ -389,7 +394,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
 
   input: {
     width: '100%',
-    padding: '13px 16px 13px 40px',
+    padding: '9px 16px 9px 40px',
     background: 'transparent',
     border: 'none',
     outline: 'none',
@@ -425,8 +430,8 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     border: '1px solid rgba(255,255,255,0.8)',
     boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
     borderRadius: 16,
-    padding: '14px 18px',
-    marginBottom: 4,
+    padding: '8px 12px',
+    marginBottom: 0,
   } as React.CSSProperties,
 
   reqTitle: {
@@ -438,13 +443,13 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     textTransform: 'uppercase' as const,
     letterSpacing: '0.13em',
     color: '#999084',
-    marginBottom: 10,
+    marginBottom: 4,
   } as React.CSSProperties,
 
   reqGrid: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-    gap: '8px 12px',
+    gap: '6px 12px',
   } as React.CSSProperties,
 
   reqItem: {
@@ -492,7 +497,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
 
   cta: {
     width: '100%',
-    padding: '15px 24px',
+    padding: '12px 24px',
     borderRadius: 50,
     background: 'linear-gradient(135deg, #f5d020 0%, #f5c518 60%, #e8b800 100%)',
     border: 'none',
@@ -507,7 +512,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     transition: 'transform 0.18s ease, box-shadow 0.18s ease',
     boxShadow: '0 4px 20px rgba(245,197,24,0.45), 0 1px 4px rgba(0,0,0,0.1)',
     fontFamily: 'inherit',
-    marginTop: 6,
+    marginTop: 4,
   } as React.CSSProperties,
 
   ctaDisabled: { opacity: 0.7, cursor: 'not-allowed' } as React.CSSProperties,
@@ -529,7 +534,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginTop: 28,
+    marginTop: 10,
   } as React.CSSProperties,
   footerLink: {
     fontSize: 11,
@@ -543,7 +548,7 @@ const styles: Record<string, React.CSSProperties & { [k: string]: unknown }> = {
   copy: {
     fontSize: 10.5,
     color: '#ccc8c2',
-    marginTop: 8,
+    marginTop: 4,
     letterSpacing: '0.02em',
   } as React.CSSProperties,
 };
