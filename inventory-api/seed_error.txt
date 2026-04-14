@@ -1,0 +1,11 @@
+[dotenv@17.2.3] injecting env (23) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+Seeding failed: DataTypeNotSupportedError: Data type "Object" in "User.phone" is not supported by "postgres" database.
+    at C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\metadata-builder\EntityMetadataValidator.ts:133:31
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validate (C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\metadata-builder\EntityMetadataValidator.ts:128:18)
+    at C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\metadata-builder\EntityMetadataValidator.ts:43:18
+    at Array.forEach (<anonymous>)
+    at EntityMetadataValidator.validateMany (C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\metadata-builder\EntityMetadataValidator.ts:42:25)
+    at DataSource.buildMetadatas (C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\data-source\DataSource.ts:753:33)
+    at async DataSource.initialize (C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\node_modules\src\data-source\DataSource.ts:264:13)
+    at async bootstrap (C:\Users\Charith\Downloads\KTMG-Vault\inventory-api\src\database\seeds\super-admin.seed.ts:24:3)

@@ -1,0 +1,15 @@
+export const EmailTheme = {
+  primary: '#00b9f7',
+  secondary: '#0f172a',
+  success: '#059669',
+  info: '#0284c7',
+  danger: '#dc2626',
+  warningBg: '#f8bfbfff',
+  infoBg: '#f0f9ff',
+  successBg: '#f0fdf4',
+  skyBlue: '#87cefa',
+  skyBlueBg: '#e0f2fe',
+  text: '#334155',
+  title: '#0f172a',
+  brand: '#fff01f',
+};

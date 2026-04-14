@@ -1,0 +1,66 @@
+﻿node.exe : npm error code 
+ERESOLVE
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" "C:\
+Users\chari\AppData\Roaming
+\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (npm  
+   error code ERESOLVE:S   
+ tring) [], RemoteExcep    
+tion
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+npm error ERESOLVE unable 
+to resolve dependency tree
+npm error
+npm error While resolving: 
+inventory-ui@0.0.0
+npm error Found: vite@7.3.2
+npm error node_modules/vite
+npm error   dev 
+vite@"^7.3.0" from the 
+root project
+npm error
+npm error Could not 
+resolve dependency:
+npm error peer 
+vite@"^3.0.0 || ^4.0.0 || 
+^5.0.0 || ^6.0.0" from @vit
+ejs/plugin-basic-ssl@1.2.0
+npm error node_modules/@vit
+ejs/plugin-basic-ssl
+npm error   dev @vitejs/plu
+gin-basic-ssl@"^1.2.0" 
+from the root project
+npm error
+npm error Fix the upstream 
+dependency conflict, or 
+retry
+npm error this command 
+with --force or 
+--legacy-peer-deps
+npm error to accept an 
+incorrect (and potentially 
+broken) dependency 
+resolution.
+npm error
+npm error
+npm error For a full 
+report see:
+npm error C:\Users\chari\Ap
+pData\Local\npm-cache\_logs
+\2026-04-14T01_41_55_005Z-e
+resolve-report.txt
+npm error A complete log 
+of this run can be found 
+in: C:\Users\chari\AppData\
+Local\npm-cache\_logs\2026-
+04-14T01_41_55_005Z-debug-0
+.log
+
