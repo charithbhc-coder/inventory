@@ -42,7 +42,7 @@ async function bootstrap() {
   });
 
   // Global prefixes and pipes
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('inventory-api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

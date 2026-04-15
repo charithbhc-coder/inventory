@@ -23,10 +23,9 @@ jobs:
             git pull origin main
 
             # Update build-time environment variable for UI build
-            export VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}"
+            export VITE_API_BASE_URL="https://apps.myblockchainbpo.com/inventory-api/v1"
 
             # Build and restart containers
-            # Using --build to ensure UI picks up new VITE_API_BASE_URL if it changed
             sudo VITE_API_BASE_URL=$VITE_API_BASE_URL docker-compose up -d --build
 
             # Prune old images to save space
