@@ -27,28 +27,33 @@ jobs:
         run: |
           cd inventory-UI
           npm install
-          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} npm run build
+          VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" npm run build
+
+      - name: Prepare Staging
+        run: |
+          mkdir staging
+          cp -r inventory-api/dist staging/inventory-api-dist
+          cp inventory-api/package.json staging/
+          cp inventory-api/package-lock.json staging/
+          cp inventory-api/ecosystem.config.js staging/
+          cp -r inventory-UI/dist staging/inventory-UI-dist
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: deployment-package
-          path: |
-            inventory-api/dist
-            inventory-api/package.json
-            inventory-api/package-lock.json
-            inventory-api/ecosystem.config.js
-            inventory-UI/dist
+          path: staging/
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main' && secrets.LIGHTSAIL_SSH_KEY != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && ${{ secrets.LIGHTSAIL_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: deployment-package
+          path: .
 
       - name: Deploy to Server (SCP)
         uses: appleboy/scp-action@master
@@ -56,9 +61,9 @@ jobs:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          source: "*"
+          source: "staging/*"
           target: "~/deploy-tmp"
-          strip_components: 0
+          strip_components: 1
 
       - name: Post-deployment Commands (SSH)
         uses: appleboy/ssh-action@master
@@ -74,7 +79,11 @@ jobs:
 
             # Prepare API directory
             mkdir -p ~/ktmg-inventory/api
-            cp -r ~/deploy-tmp/inventory-api/* ~/ktmg-inventory/api/
+            cp -r ~/deploy-tmp/inventory-api-dist/* ~/ktmg-inventory/api/
+            cp ~/deploy-tmp/package.json ~/ktmg-inventory/api/
+            cp ~/deploy-tmp/package-lock.json ~/ktmg-inventory/api/
+            cp ~/deploy-tmp/ecosystem.config.js ~/ktmg-inventory/api/
+            
             cd ~/ktmg-inventory/api
             npm install --omit=dev
             
@@ -90,7 +99,7 @@ jobs:
 
             # Prepare UI directory (Nginx)
             sudo mkdir -p /var/www/html/inventory
-            sudo cp -r ~/deploy-tmp/inventory-UI/dist/* /var/www/html/inventory/
+            sudo cp -r ~/deploy-tmp/inventory-UI-dist/* /var/www/html/inventory/
             
             # Clean up tmp
             rm -rf ~/deploy-tmp
