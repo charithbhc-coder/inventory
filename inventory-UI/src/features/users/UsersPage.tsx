@@ -306,18 +306,21 @@ export default function UsersPage() {
 
   return (
     <div style={{ padding: '0 0 40px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>Staff Matrix</h1>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14 }}>Add personnel, manage roles, and control access levels.</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>Staff Matrix</h1>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>Add personnel, manage roles, and control access levels.</p>
         </div>
         {hasPermission(AdminPermission.CREATE_USERS) && (
-          <button 
-            className="primary-btn" 
-            onClick={() => { setSelectedUser(null); setIsModalOpen(true); }}
-          >
-            <Plus size={18} /> Add Staff
-          </button>
+          <div className="header-actions">
+            <button 
+              className="primary-btn" 
+              onClick={() => { setSelectedUser(null); setIsModalOpen(true); }}
+            >
+              <Plus size={18} strokeWidth={3} /> 
+              Add Staff
+            </button>
+          </div>
         )}
       </header>
 
@@ -468,6 +471,18 @@ export default function UsersPage() {
           }
         }}
       />
+      <style>{`
+        @media (max-width: 768px) {
+          .header-actions {
+            width: 100%;
+            flex-wrap: wrap;
+          }
+          .header-actions button {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+      `}</style>
     </div>
   );
 }
