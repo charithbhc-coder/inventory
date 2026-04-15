@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
 import { Notification, notificationsService } from '../services/notifications.service';
 import { useAuthStore } from './auth.store';
+import { queryClient } from '../App';
+import { NotificationType } from '../types';
 
 interface NotificationState {
   notifications: Notification[];
@@ -60,6 +62,28 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         // Prevent duplicates
         if (state.notifications.some(n => n.id === newNotif.id)) return state;
         
+        // --- Real-time Sync Actions ---
+        const type = newNotif.type;
+        
+        // Sync Users/Staff
+        if (type === NotificationType.USER_UPDATED || 
+            type === NotificationType.ACCOUNT_ROLE_UPDATED || 
+            type === NotificationType.ACCOUNT_PERMISSIONS_UPDATED) {
+          queryClient.invalidateQueries({ queryKey: ['users'] });
+          queryClient.invalidateQueries({ queryKey: ['auth-me'] });
+        }
+        
+        // Sync Licenses
+        if (type.startsWith('LICENSE_')) {
+          queryClient.invalidateQueries({ queryKey: ['licenses'] });
+        }
+        
+        // Sync Items/Assets
+        if (type.startsWith('ITEM_') || type.startsWith('DISPOSAL_')) {
+          queryClient.invalidateQueries({ queryKey: ['items'] });
+          queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        }
+
         return {
           notifications: [newNotif, ...state.notifications],
           unreadCount: state.unreadCount + 1

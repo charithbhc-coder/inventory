@@ -11,9 +11,6 @@ const licenseSchema = z.object({
   licenseKey: z.string().nullish().or(z.literal('')),
   purchaseDate: z.string().nullish().or(z.literal('')),
   expiryDate: z.string().min(1, 'Expiry date is required'),
-  maxUsers: z.union([z.number(), z.string(), z.null(), z.undefined()])
-    .transform((val) => (val === '' || val === null || val === undefined ? undefined : Number(val)))
-    .pipe(z.number().positive('Must be a positive number').optional()),
   contactEmail: z.string().email('Invalid email').nullish().or(z.literal('')),
   category: z.string().nullish().or(z.literal('')),
   notes: z.string().nullish().or(z.literal('')),
@@ -38,14 +35,13 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
   }, []);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<LicenseFormValues>({
-    resolver: zodResolver(licenseSchema),
+    resolver: zodResolver(licenseSchema) as any,
     defaultValues: {
       softwareName: '',
       vendor: '',
       licenseKey: '',
       purchaseDate: '',
       expiryDate: '',
-      maxUsers: undefined,
       contactEmail: '',
       category: '',
       notes: '',
@@ -60,7 +56,6 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
         licenseKey: license?.licenseKey || '',
         purchaseDate: license?.purchaseDate ? license.purchaseDate.split('T')[0] : '',
         expiryDate: license?.expiryDate ? license.expiryDate.split('T')[0] : '',
-        maxUsers: license?.maxUsers || undefined,
         contactEmail: license?.contactEmail || '',
         category: license?.category || '',
         notes: license?.notes || '',
@@ -112,7 +107,7 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSave as any)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit((data) => onSave(data as any))} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Row 1: Software Name + Vendor */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16 }}>
             <div style={{ flex: 1 }}>
@@ -167,18 +162,8 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
             </div>
           </div>
 
-          {/* Row 4: Max Users + Category */}
+          {/* Row 4: Category */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16 }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>MAX USERS / SEATS</label>
-              <input
-                type="number"
-                {...register('maxUsers')}
-                placeholder="e.g. 50 (Optional)"
-                style={inputStyle(!!errors.maxUsers)}
-              />
-              {errors.maxUsers && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.maxUsers.message}</span>}
-            </div>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>CATEGORY</label>
               <input
@@ -187,6 +172,7 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
                 style={inputStyle(false)}
               />
             </div>
+            {!isMobile && <div style={{ flex: 1 }} />}
           </div>
 
           {/* Row 5: Contact Email */}

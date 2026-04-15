@@ -18,6 +18,7 @@ import {
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
+import { queryClient } from '@/App';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -82,6 +83,7 @@ export default function ProfilePage() {
       if (accessToken && refreshToken) {
         setAuth({ ...user, ...updatedUser }, accessToken, refreshToken);
       }
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Profile updated successfully');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to update profile');
@@ -127,6 +129,7 @@ export default function ProfilePage() {
       if (accessToken && refreshToken) {
         setAuth({ ...user, ...updatedUser }, accessToken, refreshToken);
       }
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Avatar updated successfully');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to upload avatar');
@@ -139,7 +142,7 @@ export default function ProfilePage() {
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '');
   const avatarUrl = user.avatarUrl
-    ? `${baseUrl}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`
+    ? `${baseUrl}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`
     : '';
 
   return (

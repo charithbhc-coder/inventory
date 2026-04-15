@@ -13,6 +13,7 @@ export interface User {
   permissions: string[];
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedUsers {

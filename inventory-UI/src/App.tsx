@@ -5,7 +5,7 @@ import AppRouter from './router';
 import { settingsService } from '@/services/settings.service';
 import './index.css';
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 min

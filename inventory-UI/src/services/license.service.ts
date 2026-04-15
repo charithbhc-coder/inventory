@@ -14,7 +14,7 @@ export interface License {
   licenseKey?: string | null;
   purchaseDate?: string | null;
   expiryDate: string;
-  maxUsers?: number | null;
+
   status: LicenseStatus;
   contactEmail?: string | null;
   category?: string | null;

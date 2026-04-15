@@ -166,6 +166,9 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           case 'ITEM_LOST':
           case 'ITEM_DISPOSED':
             return { icon: <AlertCircle size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
+          case 'LICENSE_EXPIRING':
+          case 'LICENSE_EXPIRED':
+            return { icon: <Key size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
           case 'ACCOUNT_PERMISSIONS_UPDATED':
           case 'ACCOUNT_ROLE_UPDATED':
             return { icon: <Shield size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
@@ -173,11 +176,13 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
             return { icon: <Bell size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
         }
       case 'LOW':
+        if (n.type.includes('LICENSE')) return { icon: <Key size={14} color="#3b82f6" />, bg: 'rgba(59, 130, 246, 0.1)' };
         return { icon: <Package size={14} color="#3b82f6" />, bg: 'rgba(59, 130, 246, 0.1)' };
       case 'MEDIUM':
       default:
         if (n.type.includes('REPAIR')) return { icon: <Wrench size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
         if (n.type.includes('ASSIGN')) return { icon: <UserPlus size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
+        if (n.type.includes('LICENSE')) return { icon: <Key size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
         return { icon: <Bell size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
     }
   };
@@ -430,7 +435,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-yellow)', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, overflow: 'hidden' }}>
             {user?.avatarUrl ? (
               <img
-                src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`}
+                src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`}
                 alt="Profile"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

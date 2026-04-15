@@ -7,6 +7,7 @@ import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../common/enums';
 import { differenceInDays, startOfDay } from 'date-fns';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class LicensesScheduler {
@@ -18,6 +19,7 @@ export class LicensesScheduler {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly mailService: MailService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
@@ -90,6 +92,13 @@ export class LicensesScheduler {
           license.lastNotifiedDays = daysRemaining;
           _hasChanged = true;
           this.logger.log(`Sent expiry notification for ${license.softwareName} (Days left: ${daysRemaining})`);
+
+          const eventName = daysRemaining <= 0 ? 'license.expired' : 'license.expiring';
+          this.eventEmitter.emit(eventName, {
+            licenseId: license.id,
+            softwareName: license.softwareName,
+            daysRemaining,
+          });
         } catch (error) {
           this.logger.error(`Failed to send expiry notification for license ${license.id}`, error);
         }

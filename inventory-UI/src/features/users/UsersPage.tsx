@@ -164,7 +164,7 @@ export default function UsersPage() {
           }}>
              {info.row.original.avatarUrl ? (
                <img 
-                 src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${info.row.original.avatarUrl.startsWith('/') ? '' : '/'}${info.row.original.avatarUrl}`} 
+                 src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${info.row.original.avatarUrl.startsWith('/') ? '' : '/'}${info.row.original.avatarUrl}${info.row.original.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(info.row.original.updatedAt || 0).getTime()}`} 
                  alt="" 
                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                />

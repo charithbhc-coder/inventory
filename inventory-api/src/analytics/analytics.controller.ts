@@ -1,5 +1,4 @@
 import { Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,8 +10,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
-@ApiTags('Analytics')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('analytics')
 export class AnalyticsController {
@@ -21,7 +20,6 @@ export class AnalyticsController {
   @Get('assets-by-company')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get total assets grouped by company' })
   getAssetsByCompany() {
     return this.analyticsService.getAssetsByCompany();
   }
@@ -29,7 +27,6 @@ export class AnalyticsController {
   @Get('asset-status')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get asset status overview for a company' })
   getAssetStatus(@Query('companyId') companyId: string) {
     return this.analyticsService.getAssetStatusByCompany(companyId);
   }
@@ -37,7 +34,6 @@ export class AnalyticsController {
   @Get('by-department')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get items breakdown by department' })
   getItemsByDepartment(@Query('companyId') companyId: string) {
     return this.analyticsService.getItemsByDepartment(companyId);
   }
@@ -45,7 +41,6 @@ export class AnalyticsController {
   @Get('by-category')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_CATEGORIES, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get items breakdown by category' })
   getItemsByCategory(@Query('companyId') companyId?: string) {
     return this.analyticsService.getItemsByCategory(companyId);
   }
@@ -53,7 +48,6 @@ export class AnalyticsController {
   @Get('recent-activity')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get recent item activity feed' })
   getRecentActivity(@Query('limit') limit?: number, @CurrentUser() userObj?: JwtPayload) {
     const isSuperAdmin = userObj?.role === UserRole.SUPER_ADMIN;
     const hasViewReports = userObj?.permissions?.includes(AdminPermission.VIEW_REPORTS);
@@ -64,7 +58,6 @@ export class AnalyticsController {
   @Get('audit-activity')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_AUDIT_LOGS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get 365 day audit log heatmap' })
   getAuditHeatmap() {
     return this.analyticsService.getSystemAuditHeatmap();
   }
@@ -72,7 +65,6 @@ export class AnalyticsController {
   @Get('summary')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get high-level executive summary' })
   getSummary() {
     return this.analyticsService.getExecutiveSummary();
   }
@@ -80,7 +72,6 @@ export class AnalyticsController {
   @Get('repair-trends')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_REPAIRS, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Get 12-month repair trend data' })
   getTrends() {
     return this.analyticsService.getRepairTrends();
   }

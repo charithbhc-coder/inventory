@@ -13,7 +13,6 @@ import {
   ParseFilePipeBuilder,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -37,8 +36,8 @@ import { ItemStatus, UserRole, AdminPermission } from '../common/enums';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 
-@ApiTags('Items')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('items')
 export class ItemsController {
@@ -49,7 +48,6 @@ export class ItemsController {
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.CREATE_ITEMS)
-  @ApiOperation({ summary: 'Add a new item to inventory (auto-generates barcode)' })
   create(@Body() dto: CreateItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.create(dto, user.sub);
   }
@@ -57,7 +55,6 @@ export class ItemsController {
   @Get('preview-barcode')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_ITEMS, AdminPermission.CREATE_ITEMS)
-  @ApiOperation({ summary: 'Preview the next available barcode for a category/company' })
   previewBarcode(
     @Query('companyId') companyId: string,
     @Query('categoryId') categoryId: string,
@@ -68,7 +65,6 @@ export class ItemsController {
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_ITEMS)
-  @ApiOperation({ summary: 'List all items with filters' })
   findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -86,7 +82,6 @@ export class ItemsController {
   @Get('warehouse/:companyId')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_WAREHOUSE)
-  @ApiOperation({ summary: 'View company warehouse — unassigned and disposed items' })
   getWarehouse(
     @Param('companyId') companyId: string,
     @Query('page') page?: number,
@@ -100,7 +95,6 @@ export class ItemsController {
   @Get(':barcodeOrId')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_ITEMS)
-  @ApiOperation({ summary: 'Get item details with full event timeline' })
   findOne(@Param('barcodeOrId') barcodeOrId: string) {
     return this.itemsService.getTimeline(barcodeOrId);
   }
@@ -108,7 +102,6 @@ export class ItemsController {
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @ApiOperation({ summary: 'Update item details' })
   update(@Param('id') id: string, @Body() dto: UpdateItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.update(id, dto, user.sub);
   }
@@ -118,7 +111,6 @@ export class ItemsController {
   @Post(':id/assign')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.ASSIGN_ITEMS)
-  @ApiOperation({ summary: 'Assign item to department/person' })
   assign(@Param('id') id: string, @Body() dto: AssignItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.assign(id, dto, user.sub);
   }
@@ -126,7 +118,6 @@ export class ItemsController {
   @Post('assign-bulk')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.ASSIGN_ITEMS)
-  @ApiOperation({ summary: 'Bulk assign items to department/person' })
   assignBulk(@Body() dto: AssignBulkDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.assignBulk(dto, user.sub);
   }
@@ -134,7 +125,6 @@ export class ItemsController {
   @Post(':id/unassign')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.ASSIGN_ITEMS)
-  @ApiOperation({ summary: 'Unassign item from person (return to department/warehouse)' })
   unassign(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.itemsService.unassign(id, user.sub);
   }
@@ -142,7 +132,6 @@ export class ItemsController {
   @Post(':id/repair')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_REPAIRS)
-  @ApiOperation({ summary: 'Mark item for repair or send to repair vendor' })
   repair(@Param('id') id: string, @Body() dto: RepairItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.markForRepair(id, dto, user.sub);
   }
@@ -150,7 +139,6 @@ export class ItemsController {
   @Post(':id/return-from-repair')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_REPAIRS)
-  @ApiOperation({ summary: 'Return item from repair' })
   returnFromRepair(@Param('id') id: string, @Body() dto: ReturnFromRepairDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.returnFromRepair(id, dto, user.sub);
   }
@@ -158,14 +146,12 @@ export class ItemsController {
   @Post(':id/dispose')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_DISPOSALS)
-  @ApiOperation({ summary: 'Dispose item (requires reason and disposal method)' })
   dispose(@Param('id') id: string, @Body() dto: DisposeItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.dispose(id, dto, user.sub, `${user.email}`);
   }
 
   @Post(':id/lost')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Report item as missing/lost' })
   reportLost(@Param('id') id: string, @Body() dto: ReportLostDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.reportLost(id, dto.notes, user.sub);
   }
@@ -173,7 +159,6 @@ export class ItemsController {
   @Post(':id/move-to-warehouse')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.ASSIGN_ITEMS)
-  @ApiOperation({ summary: 'Return item to company warehouse' })
   moveToWarehouse(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.itemsService.moveToWarehouse(id, user.sub);
   }
@@ -183,9 +168,6 @@ export class ItemsController {
   @Post(':id/warranty')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @ApiOperation({ summary: 'Upload warranty card for an item' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -212,9 +194,6 @@ export class ItemsController {
   @Post(':id/invoice')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @ApiOperation({ summary: 'Upload invoice for an item' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -241,9 +220,6 @@ export class ItemsController {
   @Post(':id/image')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @ApiOperation({ summary: 'Upload an image for an item' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

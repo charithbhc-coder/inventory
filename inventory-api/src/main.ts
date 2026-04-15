@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
@@ -52,30 +51,9 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger OpenAPI Docs
-  const config = new DocumentBuilder()
-    .setTitle('KTMG Inventory API')
-    .setDescription('Simplified Inventory Management System — Items, Barcodes, Assignments, and Tracking')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .addTag('Auth', 'Authentication endpoints')
-    .addTag('Users', 'Admin user management with permissions')
-    .addTag('Companies', 'Company management')
-    .addTag('Departments', 'Department management')
-    .addTag('Categories', 'Item category management')
-    .addTag('Items', 'Core inventory item operations and lifecycle')
-    .addTag('Labels', 'Barcode generation and printing')
-    .addTag('Analytics', 'Simplified dashboard analytics')
-    .addTag('Reports', 'Report generation')
-    .addTag('Audit Logs', 'System activity tracking')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-
   const port = process.env.APP_PORT || 3000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api/v1`);
-  console.log(`Swagger docs available at: http://localhost:${port}/api/docs`);
 }
 bootstrap();
 // Rebuild trigger

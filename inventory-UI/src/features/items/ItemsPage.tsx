@@ -284,35 +284,35 @@ export default function ItemsPage() {
           </p>
         </div>
         <div className="items-header-actions" style={{ display: 'flex', gap: 12 }}>
+          {hasPermission(AdminPermission.VIEW_LICENSES) && (
+            <NavLink
+              to="/licenses"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+                borderRadius: 12, border: '1px solid var(--border-dark)', 
+                background: 'rgba(16, 185, 129, 0.05)', color: '#10b981',
+                fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s'
+              }}
+              className="hover-card"
+            >
+              <Key size={18} strokeWidth={2.5} />
+              Manage Licenses
+            </NavLink>
+          )}
           {hasPermission(AdminPermission.VIEW_CATEGORIES) && (
-            <>
-              <NavLink
-                to="/licenses"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-                  borderRadius: 12, border: '1px solid var(--border-dark)', 
-                  background: 'rgba(16, 185, 129, 0.05)', color: '#10b981',
-                  fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s'
-                }}
-                className="hover-card"
-              >
-                <Key size={18} strokeWidth={2.5} />
-                Manage Licenses
-              </NavLink>
-              <NavLink
-                to="/categories"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-                  borderRadius: 12, border: '1px solid var(--border-dark)', 
-                  background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-main)',
-                  fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s'
-                }}
-                className="hover-card"
-              >
-                <Tags size={18} strokeWidth={2.5} />
-                Manage Categories
-              </NavLink>
-            </>
+            <NavLink
+              to="/categories"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+                borderRadius: 12, border: '1px solid var(--border-dark)', 
+                background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-main)',
+                fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s'
+              }}
+              className="hover-card"
+            >
+              <Tags size={18} strokeWidth={2.5} />
+              Manage Categories
+            </NavLink>
           )}
           {hasPermission(AdminPermission.CREATE_ITEMS) && (
             <button

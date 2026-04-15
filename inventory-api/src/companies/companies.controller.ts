@@ -12,7 +12,6 @@ import {
   ParseFilePipeBuilder,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/create-company.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -25,8 +24,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
-@ApiTags('Companies')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('companies')
 export class CompaniesController {
@@ -35,7 +34,6 @@ export class CompaniesController {
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.CREATE_COMPANIES)
-  @ApiOperation({ summary: 'Create a new company' })
   create(@Body() dto: CreateCompanyDto) {
     return this.companiesService.create(dto);
   }
@@ -43,7 +41,6 @@ export class CompaniesController {
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES)
-  @ApiOperation({ summary: 'List all companies' })
   findAll(@Query('page') page?: number, @Query('limit') limit?: number, @Query('search') search?: string) {
     return this.companiesService.findAll({ page, limit, search });
   }
@@ -51,7 +48,6 @@ export class CompaniesController {
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES)
-  @ApiOperation({ summary: 'Get details of a specific company' })
   findOne(@Param('id') id: string) {
     return this.companiesService.findOne(id);
   }
@@ -59,7 +55,6 @@ export class CompaniesController {
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_COMPANIES)
-  @ApiOperation({ summary: 'Update company details' })
   update(@Param('id') id: string, @Body() dto: UpdateCompanyDto) {
     return this.companiesService.update(id, dto);
   }
@@ -67,9 +62,6 @@ export class CompaniesController {
   @Post(':id/logo')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_COMPANIES)
-  @ApiOperation({ summary: 'Upload a new company logo image' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

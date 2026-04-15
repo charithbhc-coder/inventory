@@ -6,7 +6,7 @@ import {
   Send, CalendarClock, Filter, Key,
   Building2, Layers, X, Edit2
 } from 'lucide-react';
-import { licenseService, LicenseStatus } from '@/services/license.service';
+import { LicenseStatus } from '@/services/license.service';
 import { companyService } from '@/services/company.service';
 import { categoryService } from '@/services/category.service';
 import { departmentService } from '@/services/department.service';
@@ -169,7 +169,7 @@ function ReportBuilderTab({ canExport }: { canExport: boolean }) {
     setTimeout(() => setIsGenerating(''), 2500);
   };
 
-  const showFilter = (f: string) => currentType.filters.includes(f as any);
+  const showFilter = (f: string) => (currentType.filters as readonly string[]).includes(f);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'clamp(200px, 25%, 260px) 1fr', gap: 24 }}

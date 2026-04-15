@@ -3,28 +3,32 @@ import { LicensesService } from './licenses.service';
 import { CreateLicenseDto } from './dto/create-license.dto';
 import { UpdateLicenseDto } from './dto/update-license.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { LicenseStatus } from './entities/license.entity';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { AdminPermission } from '../common/enums';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('Licenses')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+
+
+
+
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('licenses')
 export class LicensesController {
   constructor(private readonly licensesService: LicensesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new software license' })
-  create(@Body() createLicenseDto: CreateLicenseDto) {
-    return this.licensesService.create(createLicenseDto);
+  @Permissions(AdminPermission.CREATE_LICENSES)
+  create(
+    @Body() createLicenseDto: CreateLicenseDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.licensesService.create(createLicenseDto, userId);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all software licenses (paginated)' })
-  @ApiQuery({ name: 'status', enum: LicenseStatus, required: false })
-  @ApiQuery({ name: 'search', required: false })
-  @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'limit', required: false })
+  @Permissions(AdminPermission.VIEW_LICENSES)
   findAll(
     @Query('status') status?: LicenseStatus,
     @Query('search') search?: string,
@@ -40,19 +44,23 @@ export class LicensesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a software license by ID' })
+  @Permissions(AdminPermission.VIEW_LICENSES)
   findOne(@Param('id') id: string) {
     return this.licensesService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a software license' })
-  update(@Param('id') id: string, @Body() updateLicenseDto: UpdateLicenseDto) {
-    return this.licensesService.update(id, updateLicenseDto);
+  @Permissions(AdminPermission.UPDATE_LICENSES)
+  update(
+    @Param('id') id: string, 
+    @Body() updateLicenseDto: UpdateLicenseDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.licensesService.update(id, updateLicenseDto, userId);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a software license' })
+  @Permissions(AdminPermission.DELETE_LICENSES)
   remove(@Param('id') id: string) {
     return this.licensesService.remove(id);
   }

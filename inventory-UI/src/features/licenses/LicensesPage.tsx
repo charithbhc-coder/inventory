@@ -120,12 +120,10 @@ export default function LicensesPage() {
         );
       },
     }),
-    {
-      header: 'SEATS',
-      accessorKey: 'maxUsers',
-      cell: info => info.getValue() ? <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-main)' }}>{info.getValue() as any}</span> : <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Unlimited</span>,
-      isVisible: !isMobile,
-    },
+    columnHelper.accessor('category', {
+      header: 'CATEGORY',
+      cell: info => info.getValue() ? <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-main)' }}>{info.getValue()}</span> : <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Uncategorized</span>,
+    }),
     columnHelper.accessor('status', {
       header: 'STATUS',
       cell: info => {

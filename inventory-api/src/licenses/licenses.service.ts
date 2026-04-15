@@ -5,6 +5,7 @@ import { License, LicenseStatus } from './entities/license.entity';
 import { CreateLicenseDto } from './dto/create-license.dto';
 import { UpdateLicenseDto } from './dto/update-license.dto';
 import { differenceInDays } from 'date-fns';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 export interface PaginatedLicenses {
   data: License[];
@@ -16,12 +17,21 @@ export class LicensesService {
   constructor(
     @InjectRepository(License)
     private readonly licensesRepository: Repository<License>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async create(createLicenseDto: CreateLicenseDto): Promise<License> {
+  async create(createLicenseDto: CreateLicenseDto, userId?: string): Promise<License> {
     const license = this.licensesRepository.create(createLicenseDto);
     this.updateStatusBasedOnExpiry(license);
-    return this.licensesRepository.save(license);
+    const saved = await this.licensesRepository.save(license);
+    
+    this.eventEmitter.emit('license.added', {
+      licenseId: saved.id,
+      softwareName: saved.softwareName,
+      userId,
+    });
+
+    return saved;
   }
 
   async findAll(
@@ -66,11 +76,21 @@ export class LicensesService {
     return license;
   }
 
-  async update(id: string, updateLicenseDto: UpdateLicenseDto): Promise<License> {
+  async update(id: string, updateLicenseDto: UpdateLicenseDto, userId?: string): Promise<License> {
     const license = await this.findOne(id);
     this.licensesRepository.merge(license, updateLicenseDto);
     this.updateStatusBasedOnExpiry(license);
-    return this.licensesRepository.save(license);
+    const saved = await this.licensesRepository.save(license);
+
+    if (userId) { // Using userId present check as proxy for 'was manually edited' vs scheduler if needed
+      this.eventEmitter.emit('license.updated', {
+        licenseId: saved.id,
+        softwareName: saved.softwareName,
+        userId,
+      });
+    }
+
+    return saved;
   }
 
   async remove(id: string): Promise<void> {

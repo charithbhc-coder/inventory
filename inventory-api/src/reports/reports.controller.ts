@@ -1,5 +1,4 @@
 import { Controller, Get, Post, Patch, Delete, Res, UseGuards, Query, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -15,8 +14,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 import { UsersService } from '../users/users.service';
 
-@ApiTags('Reports')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('reports')
 export class ReportsController {
@@ -38,7 +37,6 @@ export class ReportsController {
   @Get('assets/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Master Asset Register to Excel' })
   async exportAssetsExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDetailedAssetExcel(filters, context);
@@ -50,7 +48,6 @@ export class ReportsController {
   @Get('assets/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Master Asset Register to PDF' })
   async exportAssetsPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDetailedAssetPdf(filters, context);
@@ -63,7 +60,6 @@ export class ReportsController {
   @Get('summary/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Inventory Summary to Excel' })
   async exportSummaryExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportSummaryExcel(filters, context);
@@ -75,7 +71,6 @@ export class ReportsController {
   @Get('summary/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Inventory Summary to PDF' })
   async exportSummaryPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportSummaryPdf(filters, context);
@@ -88,7 +83,6 @@ export class ReportsController {
   @Get('department/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Department Asset Report to Excel' })
   async exportDepartmentExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDepartmentExcel(filters, context);
@@ -100,7 +94,6 @@ export class ReportsController {
   @Get('department/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Department Asset Report to PDF' })
   async exportDepartmentPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDepartmentPdf(filters, context);
@@ -113,7 +106,6 @@ export class ReportsController {
   @Get('activity/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Activity Log to Excel' })
   async exportActivityExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportActivityExcel(filters, context);
@@ -125,7 +117,6 @@ export class ReportsController {
   @Get('activity/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Activity Log to PDF' })
   async exportActivityPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportActivityPdf(filters, context);
@@ -138,7 +129,6 @@ export class ReportsController {
   @Get('repair/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Repair History to Excel' })
   async exportRepairExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportRepairExcel(filters, context);
@@ -150,7 +140,6 @@ export class ReportsController {
   @Get('repair/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Repair History to PDF' })
   async exportRepairPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportRepairPdf(filters, context);
@@ -163,7 +152,6 @@ export class ReportsController {
   @Get('licenses/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Software Licenses to Excel' })
   async exportLicensesExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportLicensesExcel(filters, context);
@@ -175,7 +163,6 @@ export class ReportsController {
   @Get('licenses/pdf')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Export Software Licenses to PDF' })
   async exportLicensesPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportLicensesPdf(filters, context);
@@ -188,7 +175,6 @@ export class ReportsController {
   @Post('send-email')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS, AdminPermission.EXPORT_DATA)
-  @ApiOperation({ summary: 'Send a report or custom message via email' })
   async sendEmail(@Body() dto: SendReportEmailDto, @CurrentUser() jwt: JwtPayload) {
     const context = await this.getUserContext(jwt.sub);
     return this.reportsService.sendEmailDispatch(dto, context);
@@ -198,7 +184,6 @@ export class ReportsController {
   @Get('schedules')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'List all scheduled report jobs' })
   getSchedules() {
     return this.reportsService.findAllSchedules();
   }
@@ -206,7 +191,6 @@ export class ReportsController {
   @Post('schedules')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Create a new scheduled report job' })
   createSchedule(@Body() dto: CreateScheduledReportDto, @CurrentUser() user: JwtPayload) {
     return this.reportsService.createSchedule(dto, user.sub);
   }
@@ -214,7 +198,6 @@ export class ReportsController {
   @Patch('schedules/:id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Update a scheduled report (incl. toggle active)' })
   updateSchedule(@Param('id') id: string, @Body() dto: UpdateScheduledReportDto) {
     return this.reportsService.updateSchedule(id, dto);
   }
@@ -222,7 +205,6 @@ export class ReportsController {
   @Delete('schedules/:id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS)
-  @ApiOperation({ summary: 'Delete a scheduled report job' })
   deleteSchedule(@Param('id') id: string) {
     return this.reportsService.deleteSchedule(id);
   }

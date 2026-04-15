@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User } from '../users/entities/user.entity';
 import { AuditLog } from '../audit-logs/entities/audit-log.entity';
 import { JwtPayload } from '../common/interfaces';
@@ -36,6 +37,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async login(
@@ -320,6 +322,12 @@ export class AuthService {
     const savedUser = await this.usersRepository.save(user);
     console.log('[DEBUG] updateMe - After:', { first: savedUser.firstName, last: savedUser.lastName });
 
+    this.eventEmitter.emit('user.updated', {
+      userId: savedUser.id,
+      firstName: savedUser.firstName,
+      lastName: savedUser.lastName,
+    });
+
     return this.sanitizeUser(savedUser);
   }
 
@@ -343,6 +351,12 @@ export class AuthService {
 
     // Return the full updated user object
     const updatedUser = await this.usersRepository.findOne({ where: { id: user.id } });
+    
+    this.eventEmitter.emit('user.updated', {
+      userId: user.id,
+      avatarUrl,
+    });
+
     return this.sanitizeUser(updatedUser as User);
   }
 

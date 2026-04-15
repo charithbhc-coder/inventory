@@ -35,10 +35,6 @@ export class License {
   @Column({ type: 'date' })
   expiryDate: Date;
 
-  // --- Capacity ---
-  @Column({ type: 'int', nullable: true })
-  maxUsers: number | null; // How many users/devices covered (optional)
-
   // --- Status ---
   @Column({
     type: 'enum',

@@ -289,4 +289,101 @@ export class NotificationsService {
       actionUrl: '/profile',
     });
   }
+
+  @OnEvent('license.added')
+  async handleLicenseAdded(payload: { licenseId: string; softwareName: string; userId?: string }) {
+    const enabled = await this.settingsService.getSetting('notify_on_license_activity', true);
+    if (!enabled) return;
+
+    if (payload.userId) {
+      await this.create({
+        recipientUserId: payload.userId,
+        type: NotificationType.LICENSE_ADDED,
+        priority: NotificationPriority.LOW,
+        title: 'License Registered',
+        message: `${payload.softwareName} license has been added to the system.`,
+        entityType: 'License',
+        entityId: payload.licenseId,
+        actionUrl: `/licenses`,
+      });
+    }
+
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_LICENSES, {
+      type: NotificationType.LICENSE_ADDED,
+      priority: NotificationPriority.LOW,
+      title: 'New License Registered',
+      message: `${payload.softwareName} license has been added to the system.`,
+      entityType: 'License',
+      entityId: payload.licenseId,
+      actionUrl: `/licenses`,
+    });
+  }
+
+  @OnEvent('license.updated')
+  async handleLicenseUpdated(payload: { licenseId: string; softwareName: string; userId?: string }) {
+    const enabled = await this.settingsService.getSetting('notify_on_license_activity', true);
+    if (!enabled) return;
+
+    if (payload.userId) {
+      await this.create({
+        recipientUserId: payload.userId,
+        type: NotificationType.LICENSE_UPDATED,
+        priority: NotificationPriority.LOW,
+        title: 'License Details Updated',
+        message: `${payload.softwareName} license information was modified by you.`,
+        entityType: 'License',
+        entityId: payload.licenseId,
+        actionUrl: `/licenses`,
+      });
+    }
+
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_LICENSES, {
+      type: NotificationType.LICENSE_UPDATED,
+      priority: NotificationPriority.LOW,
+      title: 'License Details Updated',
+      message: `${payload.softwareName} license information was modified.`,
+      entityType: 'License',
+      entityId: payload.licenseId,
+      actionUrl: `/licenses`,
+    });
+  }
+
+  @OnEvent('license.expiring')
+  async handleLicenseExpiring(payload: { licenseId: string; softwareName: string; daysRemaining: number }) {
+    // Expirations are high priority and shouldn't be disabled by generic activity toggle
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_LICENSES, {
+      type: NotificationType.LICENSE_EXPIRING,
+      priority: NotificationPriority.HIGH,
+      title: 'Software License Expiring',
+      message: `${payload.softwareName} license will expire in ${payload.daysRemaining} days!`,
+      entityType: 'License',
+      entityId: payload.licenseId,
+      actionUrl: `/licenses`,
+    });
+  }
+
+  @OnEvent('license.expired')
+  async handleLicenseExpired(payload: { licenseId: string; softwareName: string; daysRemaining: number }) {
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_LICENSES, {
+      type: NotificationType.LICENSE_EXPIRED,
+      priority: NotificationPriority.HIGH,
+      title: '🚨 Software License Expired',
+      message: `${payload.softwareName} license has officially expired.`,
+      entityType: 'License',
+      entityId: payload.licenseId,
+      actionUrl: `/licenses`,
+    });
+  }
+
+  @OnEvent('user.updated')
+  async handleUserUpdated(payload: { userId: string; firstName?: string; lastName?: string; avatarUrl?: string }) {
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_USERS, {
+      type: NotificationType.USER_UPDATED,
+      priority: NotificationPriority.LOW,
+      title: 'Profile Synchronized',
+      message: `${payload.firstName || 'A user'} updated their account details.`,
+      entityType: 'User',
+      entityId: payload.userId,
+    });
+  }
 }

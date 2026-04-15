@@ -1,5 +1,4 @@
 import { Controller, Get, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuditLogsService } from './audit-logs.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -10,15 +9,14 @@ import { UserRole, AdminPermission } from '../common/enums';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
 
-@ApiTags('Audit Logs')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('audit-logs')
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Query audit logs' })
   findAll(
     @CurrentUser() user: JwtPayload,
     @Query('page') page?: number,

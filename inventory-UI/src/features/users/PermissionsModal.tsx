@@ -61,6 +61,15 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    category: 'Software Licenses',
+    permissions: [
+      { id: AdminPermission.VIEW_LICENSES, label: 'View', type: 'view' },
+      { id: AdminPermission.CREATE_LICENSES, label: 'Create', type: 'create' },
+      { id: AdminPermission.UPDATE_LICENSES, label: 'Edit', type: 'edit' },
+      { id: AdminPermission.DELETE_LICENSES, label: 'Delete', type: 'delete' },
+    ],
+  },
+  {
     category: 'Specialized Operations',
     permissions: [
       { id: AdminPermission.MANAGE_REPAIRS, label: 'Repairs', type: 'special' },

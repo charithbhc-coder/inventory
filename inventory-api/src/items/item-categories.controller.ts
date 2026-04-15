@@ -1,5 +1,4 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ItemCategoriesService } from './item-categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/create-category.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -9,8 +8,8 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { UserRole, AdminPermission } from '../common/enums';
 
-@ApiTags('Categories')
-@ApiBearerAuth()
+
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('categories')
 export class ItemCategoriesController {
@@ -19,7 +18,6 @@ export class ItemCategoriesController {
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_CATEGORIES)
-  @ApiOperation({ summary: 'Create a new item category' })
   create(@Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);
   }
@@ -27,7 +25,6 @@ export class ItemCategoriesController {
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_CATEGORIES, AdminPermission.MANAGE_CATEGORIES, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS)
-  @ApiOperation({ summary: 'List all active categories' })
   findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -39,7 +36,6 @@ export class ItemCategoriesController {
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_CATEGORIES, AdminPermission.MANAGE_CATEGORIES, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_DEPARTMENTS)
-  @ApiOperation({ summary: 'Get category by ID' })
   findOne(@Param('id') id: string) {
     return this.categoriesService.findOne(id);
   }
@@ -47,7 +43,6 @@ export class ItemCategoriesController {
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_CATEGORIES)
-  @ApiOperation({ summary: 'Update a category' })
   update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.categoriesService.update(id, dto);
   }
@@ -55,7 +50,6 @@ export class ItemCategoriesController {
   @Delete(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_CATEGORIES)
-  @ApiOperation({ summary: 'Deactivate a category (soft delete)' })
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(id);
   }
