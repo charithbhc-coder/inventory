@@ -9,7 +9,7 @@ import {
 import { departmentService, Department } from '@/services/department.service';
 import { companyService, Company } from '@/services/company.service';
 import { itemService, Item } from '@/services/item.service';
-import { Plus, Edit, Search, Building2, ShieldAlert, ShieldCheck, MapPin, LayoutGrid, ChevronLeft, ChevronRight, X, Package, Tag, Trash2 } from 'lucide-react';
+import { Plus, Edit, Search, Building2, ShieldAlert, ShieldCheck, MapPin, LayoutGrid, ChevronLeft, ChevronRight, X, Package, Tag } from 'lucide-react';
 import DepartmentModal from './DepartmentModal';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -151,16 +151,7 @@ export default function DepartmentsPage() {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => departmentService.deleteDepartment(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast.success('Department deleted successfully');
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Failed to delete department (it may have items or history)');
-    }
-  });
+
 
   const handleSave = (formData: any) => {
     if (selectedDept) {
@@ -257,8 +248,7 @@ export default function DepartmentsPage() {
       header: 'ACTIONS',
       cell: info => {
         const canEdit = hasPermission(AdminPermission.UPDATE_DEPARTMENTS);
-        const canDelete = hasPermission(AdminPermission.DELETE_DEPARTMENTS);
-        if (!canEdit && !canDelete) return null;
+        if (!canEdit) return null;
         return (
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <button
@@ -293,26 +283,6 @@ export default function DepartmentsPage() {
                 }}
               >
                 {info.row.original.isActive ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
-              </button>
-            )}
-            {canDelete && (
-              <button
-                title="Delete Department"
-                onClick={e => {
-                  e.stopPropagation();
-                  if (window.confirm(`Are you sure you want to delete ${info.row.original.name}? This action is irreversible.`)) {
-                    deleteMutation.mutate(info.row.original.id);
-                  }
-                }}
-                style={{
-                  background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)',
-                  borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#ef4444',
-                  display: 'flex', alignItems: 'center', transition: 'all 0.2s', height: 32, width: 32, justifyContent: 'center',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; }}
-              >
-                <Trash2 size={16} />
               </button>
             )}
           </div>
