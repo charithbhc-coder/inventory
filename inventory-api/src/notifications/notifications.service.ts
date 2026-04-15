@@ -55,7 +55,7 @@ export class NotificationsService {
             user.email,
             saved.title,
             saved.message,
-            saved.actionUrl
+            saved.actionUrl ?? undefined
           ).catch(err => {
             this.logger.error(`Failed to send email notification to ${user.email}: ${err.message}`);
           });
