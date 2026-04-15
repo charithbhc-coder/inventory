@@ -47,10 +47,22 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
   return (
     <aside className={sidebarClass}>
       <div style={{ padding: isCollapsed ? '24px 0' : '24px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 80 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', width: isCollapsed ? '100%' : 'auto' }}>
+        <NavLink 
+          to="/dashboard" 
+          onClick={onCloseMobile}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 12, 
+            justifyContent: 'center', 
+            width: isCollapsed ? '100%' : 'auto',
+            textDecoration: 'none',
+            cursor: 'pointer'
+          }}
+        >
           <img src={logo} alt="Logo" style={{ height: 48, width: 48, objectFit: 'contain' }} />
           {!isCollapsed && <h1 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '1px', margin: 0, color: 'var(--accent-yellow)' }}>{systemName}</h1>}
-        </div>
+        </NavLink>
         
         {/* Mobile close button inside sidebar */}
         <button className="nav-btn mobile-toggle" onClick={onCloseMobile} style={{ display: isMobileOpen ? 'flex' : 'none' }}>
