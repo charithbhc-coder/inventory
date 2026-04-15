@@ -8,10 +8,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -36,7 +36,7 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USERNAME || 'ubuntu' }}
+          username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           source: "inventory-api/dist,inventory-api/package.json,inventory-api/package-lock.json,inventory-api/ecosystem.config.js,inventory-UI/dist/*"
           target: "~/deploy-tmp"
@@ -46,7 +46,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USERNAME || 'ubuntu' }}
+          username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script: |
             # Prepare API directory
