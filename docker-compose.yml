@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: inventory-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-inventory}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: 
+      context: ./inventory-api
+    container_name: inventory-api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./inventory-api/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-inventory}
+    volumes:
+      - ./inventory-api/uploads:/app/uploads
+    ports:
+      - "3000:3000"
+
+  ui:
+    build:
+      context: ./inventory-UI
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://apps.myblockchainbpo.com/api/v1}
+    container_name: inventory-ui
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:

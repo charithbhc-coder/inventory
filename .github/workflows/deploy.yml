@@ -1,113 +1,33 @@
-name: Deploy to AWS Lightsail
+name: Deploy to AWS Lightsail (Docker)
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: './inventory-api/package-lock.json'
-
-      - name: Build API
-        run: |
-          cd inventory-api
-          npm install
-          npm run build
-
-      - name: Build UI
-        run: |
-          cd inventory-UI
-          npm install
-          VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" npm run build
-
-      - name: Prepare Staging
-        run: |
-          mkdir staging
-          cp -r inventory-api/dist staging/inventory-api-dist
-          cp inventory-api/package.json staging/
-          cp inventory-api/package-lock.json staging/
-          cp inventory-api/ecosystem.config.js staging/
-          cp -r inventory-UI/dist staging/inventory-UI-dist
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-package
-          path: staging/
-
   deploy:
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && ${{ secrets.LIGHTSAIL_SSH_KEY != '' }}
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-package
-          path: .
-
-      - name: Deploy to Server (SCP)
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
-          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-          source: "staging/*"
-          target: "~/deploy-tmp"
-          strip_components: 1
-
-      - name: Post-deployment Commands (SSH)
+      - name: Remote SSH Deployment
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script: |
-            # Source profile and bashrc to ensure npm and pm2 are in PATH
-            [ -f ~/.profile ] && source ~/.profile
-            [ -f ~/.bashrc ] && source ~/.bashrc
-            export PATH=$PATH:/usr/bin:/usr/local/bin
+            # Navigate to project directory
+            cd ~/inventory
 
-            # Prepare API directory
-            mkdir -p ~/ktmg-inventory/api
-            cp -r ~/deploy-tmp/inventory-api-dist/* ~/ktmg-inventory/api/
-            cp ~/deploy-tmp/package.json ~/ktmg-inventory/api/
-            cp ~/deploy-tmp/package-lock.json ~/ktmg-inventory/api/
-            cp ~/deploy-tmp/ecosystem.config.js ~/ktmg-inventory/api/
-            
-            cd ~/ktmg-inventory/api
-            npm install --omit=dev
-            
-            # Ensure PM2 is available
-            if ! command -v pm2 &> /dev/null; then
-              sudo npm install -g pm2
-            fi
+            # Fetch latest changes
+            git pull origin main
 
-            # Restart API with PM2
-            pm2 delete ktmg-inventory-api || true
-            pm2 start ecosystem.config.js --env production
-            pm2 save
+            # Update build-time environment variable for UI build
+            export VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}"
 
-            # Prepare UI directory (Nginx)
-            sudo mkdir -p /var/www/html/inventory
-            sudo cp -r ~/deploy-tmp/inventory-UI-dist/* /var/www/html/inventory/
-            
-            # Clean up tmp
-            rm -rf ~/deploy-tmp
-            
-            # Reload Nginx
-            if systemctl is-active --quiet nginx; then
-              sudo systemctl reload nginx
-            else
-              echo "Nginx is not running. Please run setup-server.sh on the server."
-              exit 1
-            fi
+            # Build and restart containers
+            # Using --build to ensure UI picks up new VITE_API_BASE_URL if it changed
+            sudo VITE_API_BASE_URL=$VITE_API_BASE_URL docker-compose up -d --build
+
+            # Prune old images to save space
+            sudo docker image prune -f
