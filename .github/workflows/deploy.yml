@@ -49,12 +49,22 @@ jobs:
           username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script: |
+            # Source profile and bashrc to ensure npm and pm2 are in PATH
+            [ -f ~/.profile ] && source ~/.profile
+            [ -f ~/.bashrc ] && source ~/.bashrc
+            export PATH=$PATH:/usr/bin:/usr/local/bin
+
             # Prepare API directory
             mkdir -p ~/ktmg-inventory/api
             cp -r ~/deploy-tmp/inventory-api/* ~/ktmg-inventory/api/
             cd ~/ktmg-inventory/api
             npm install --omit=dev
             
+            # Ensure PM2 is available
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
             # Restart API with PM2
             pm2 delete ktmg-inventory-api || true
             pm2 start ecosystem.config.js --env production
@@ -67,5 +77,10 @@ jobs:
             # Clean up tmp
             rm -rf ~/deploy-tmp
             
-            # Reload Nginx (Assuming config is already set up on server manually or via script)
-            sudo systemctl reload nginx
+            # Reload Nginx
+            if systemctl is-active --quiet nginx; then
+              sudo systemctl reload nginx
+            else
+              echo "Nginx is not running. Please run setup-server.sh on the server."
+              exit 1
+            fi
