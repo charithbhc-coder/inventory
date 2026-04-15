@@ -8,6 +8,7 @@ import { firstLoginTemplate } from './templates/first-login.mjml';
 import { passwordChangedTemplate } from './templates/password-changed.mjml';
 import { welcomeTemplate } from './templates/welcome.mjml';
 import { accountProvisionedTemplate } from './templates/account-provisioned.mjml';
+import { systemNotificationTemplate } from './templates/system-notification.mjml';
 import { reportNewsletterTemplate } from './templates/report-newsletter.mjml';
 import { licenseExpirationTemplate } from './templates/license-expiration.mjml';
 
@@ -155,5 +156,18 @@ export class MailService {
       if (!recipient) continue;
       await this.sendMail(recipient, subject, html);
     }
+  }
+
+  // 🔔 SYSTEM COMPONENT NOTIFICATIONS
+  async sendSystemNotificationEmail(to: string, title: string, message: string, actionUrl?: string) {
+    let fullUrl = actionUrl;
+    if (actionUrl && actionUrl.startsWith('/')) {
+      fullUrl = `${this.configService.get('FRONTEND_URL')}${actionUrl}`;
+    }
+
+    const mjmlContent = systemNotificationTemplate(title, message, fullUrl);
+    const { html } = mjml2html(mjmlContent);
+
+    await this.sendMail(to, title, html);
   }
 }

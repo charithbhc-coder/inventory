@@ -9,6 +9,7 @@ import { ItemCategory } from './entities/item-category.entity';
 import { ItemEvent } from './entities/item-event.entity';
 import { Company } from '../companies/entities/company.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ItemsScheduler } from './items.scheduler';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [ItemsController, ItemCategoriesController],
-  providers: [ItemsService, ItemCategoriesService],
+  providers: [ItemsService, ItemCategoriesService, ItemsScheduler],
   exports: [ItemsService, ItemCategoriesService],
 })
 export class ItemsModule {}

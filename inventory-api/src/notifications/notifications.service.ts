@@ -47,6 +47,22 @@ export class NotificationsService {
     // Push real-time WebSocket notification to recipient's room
     this.gateway.sendNotification(saved.recipientUserId, saved);
 
+    // Auto-dispatch email notification
+    this.userRepo.findOne({ where: { id: saved.recipientUserId }, select: ['id', 'email', 'isActive'] })
+      .then(user => {
+        if (user && user.email && user.isActive) {
+          this.mailService.sendSystemNotificationEmail(
+            user.email,
+            saved.title,
+            saved.message,
+            saved.actionUrl
+          ).catch(err => {
+            this.logger.error(`Failed to send email notification to ${user.email}: ${err.message}`);
+          });
+        }
+      })
+      .catch(err => this.logger.error(`Failed to fetch user for email dispatch: ${err.message}`));
+
     return saved;
   }
 
@@ -384,6 +400,34 @@ export class NotificationsService {
       message: `${payload.firstName || 'A user'} updated their account details.`,
       entityType: 'User',
       entityId: payload.userId,
+    });
+  }
+
+  @OnEvent('item.warranty_expiring')
+  async handleItemWarrantyExpiring(payload: { itemId: string; barcode: string; itemName: string; companyId: string; daysRemaining: number }) {
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_ITEMS, {
+      companyId: payload.companyId,
+      type: NotificationType.ITEM_WARRANTY_EXPIRING,
+      priority: NotificationPriority.HIGH,
+      title: 'Asset Warranty Expiring',
+      message: `${payload.itemName} (${payload.barcode}) warranty will expire in ${payload.daysRemaining} days!`,
+      entityType: 'Item',
+      entityId: payload.itemId,
+      actionUrl: `/items?search=${payload.barcode}`,
+    });
+  }
+
+  @OnEvent('item.warranty_expired')
+  async handleItemWarrantyExpired(payload: { itemId: string; barcode: string; itemName: string; companyId: string; daysRemaining: number }) {
+    await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_ITEMS, {
+      companyId: payload.companyId,
+      type: NotificationType.ITEM_WARRANTY_EXPIRED,
+      priority: NotificationPriority.HIGH,
+      title: '🚨 Asset Warranty Expired',
+      message: `${payload.itemName} (${payload.barcode}) warranty has officially expired.`,
+      entityType: 'Item',
+      entityId: payload.itemId,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 }
