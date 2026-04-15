@@ -4,7 +4,8 @@ export function reportNewsletterTemplate(
   subject: string,
   body: string,
   attachmentNote: string,
-  systemName = 'KTMG-Vault',
+  systemName = 'System',
+  systemOrg = 'System',
 ): string {
   const year = new Date().getFullYear();
   const timestamp = new Date().toLocaleString('en-US', {
@@ -80,7 +81,7 @@ export function reportNewsletterTemplate(
           <mj-section background-color="#fffce8" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#64748b" align="center">
-                © ${year} ${systemName} · This is an automated administrative email.
+                © ${year} ${systemOrg} · This is an automated administrative email.
               </mj-text>
             </mj-column>
           </mj-section>

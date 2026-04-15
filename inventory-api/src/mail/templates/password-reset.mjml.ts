@@ -1,6 +1,6 @@
 import { EmailTheme } from './email.theme';
 
-export const passwordResetTemplate = (name: string, link: string, time: string) => `
+export const passwordResetTemplate = (name: string, link: string, time: string, systemName = 'System', systemOrg = 'System') => `
 <mjml>
   <mj-head>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter:wght@400;700;800" />
@@ -24,7 +24,7 @@ export const passwordResetTemplate = (name: string, link: string, time: string) 
           <mj-section background-color="${EmailTheme.warningBg}" padding="30px 20px">
             <mj-column>
               <mj-text align="center" padding="0">
-                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">KTMG-VAULT</span>
+                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">${systemName}</span>
               </mj-text>
               <mj-text align="center" font-size="10px" color="#64748b" font-weight="700" letter-spacing="1px" padding="5px 0 0">
                 SECURE ENTERPRISE LAYER
@@ -43,7 +43,7 @@ export const passwordResetTemplate = (name: string, link: string, time: string) 
                 Hi ${name},
               </mj-text>
               <mj-text font-size="15px">
-                We received a request to reset your password for your <strong>KTMG-Vault</strong> account.
+                We received a request to reset your password for your <strong>${systemName}</strong> account.
               </mj-text>
             </mj-column>
           </mj-section>
@@ -82,7 +82,7 @@ export const passwordResetTemplate = (name: string, link: string, time: string) 
           <mj-section background-color="#f8fafc" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#94a3b8" align="center">
-                © 2026 KTMG Systems. Vault Security Notification.
+                © ${new Date().getFullYear()} ${systemOrg}. Security Notification.
               </mj-text>
             </mj-column>
           </mj-section>

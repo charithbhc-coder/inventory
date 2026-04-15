@@ -4,6 +4,7 @@ import { Notification, notificationsService } from '../services/notifications.se
 import { useAuthStore } from './auth.store';
 import { queryClient } from '../App';
 import { NotificationType } from '../types';
+import { API_ROOT_URL } from '@/lib/config';
 
 interface NotificationState {
   notifications: Notification[];
@@ -39,11 +40,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     // Initial fetch
     get().fetchNotifications();
 
-    // Use environment variable, stripping /api/v1
-    const rawApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
-    const baseUrl = rawApiUrl.replace(/\/api\/v1\/?$/, '');
-
-    const socket = io(baseUrl, {
+    const socket = io(API_ROOT_URL, {
       extraHeaders: {
         Authorization: `Bearer ${accessToken}`,
       },

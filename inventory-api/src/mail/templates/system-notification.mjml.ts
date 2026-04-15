@@ -1,6 +1,6 @@
 import { EmailTheme } from './email.theme';
 
-export const systemNotificationTemplate = (title: string, message: string, actionUrl: string | undefined) => `
+export const systemNotificationTemplate = (title: string, message: string, actionUrl: string | undefined, systemName = 'System', systemOrg = 'System') => `
 <mjml>
   <mj-head>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter:wght@400;700;800" />
@@ -24,7 +24,7 @@ export const systemNotificationTemplate = (title: string, message: string, actio
           <mj-section background-color="${EmailTheme.skyBlueBg}" padding="30px 20px">
             <mj-column vertical-align="middle">
               <mj-text align="center" padding="0">
-                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">KTMG-VAULT</span>
+                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">${systemName}</span>
               </mj-text>
               <mj-text align="center" font-size="10px" color="#64748b" font-weight="700" letter-spacing="1px" padding="5px 0 0">
                 SYSTEM NOTIFICATION
@@ -59,7 +59,7 @@ export const systemNotificationTemplate = (title: string, message: string, actio
           <mj-section background-color="#f8fafc" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#94a3b8" align="center">
-                © ${new Date().getFullYear()} KTMG Systems. This is an automated notification.
+                © ${new Date().getFullYear()} ${systemOrg}. This is an automated notification.
               </mj-text>
             </mj-column>
           </mj-section>

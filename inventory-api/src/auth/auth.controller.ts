@@ -128,7 +128,6 @@ export class AuthController {
     file: Express.Multer.File,
     
   ) {
-    console.log(file.mimetype);
     return this.authService.updateAvatar(user.sub, file.filename);
   }
 

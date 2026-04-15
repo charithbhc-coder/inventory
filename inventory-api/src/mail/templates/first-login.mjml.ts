@@ -1,6 +1,6 @@
 import { EmailTheme } from './email.theme';
 
-export const firstLoginTemplate = (name: string, dashboardLink: string, time: string) => `
+export const firstLoginTemplate = (name: string, dashboardLink: string, time: string, systemName = 'System', systemOrg = 'System') => `
 <mjml>
   <mj-head>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter:wght@400;700;800" />
@@ -24,7 +24,7 @@ export const firstLoginTemplate = (name: string, dashboardLink: string, time: st
           <mj-section background-color="${EmailTheme.skyBlueBg}" padding="30px 20px">
             <mj-column vertical-align="middle">
               <mj-text align="center" padding="0">
-                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">KTMG-VAULT</span>
+                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">${systemName}</span>
               </mj-text>
               <mj-text align="center" font-size="10px" color="#64748b" font-weight="700" letter-spacing="1px" padding="5px 0 0">
                 SECURE ENTERPRISE LAYER
@@ -42,7 +42,7 @@ export const firstLoginTemplate = (name: string, dashboardLink: string, time: st
                 Hi ${name},
               </mj-text>
               <mj-text font-size="15px">
-                Your <strong>KTMG-Vault</strong> account was successfully accessed for the first time.
+                Your <strong>${systemName}</strong> account was successfully accessed for the first time.
               </mj-text>
               <mj-text font-size="15px">
                 This automated notification confirms your initial session activation.
@@ -85,7 +85,7 @@ export const firstLoginTemplate = (name: string, dashboardLink: string, time: st
           <mj-section background-color="#f8fafc" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#94a3b8" align="center">
-                © 2026 KTMG Systems. Enterprise Security Alert.
+                © ${new Date().getFullYear()} ${systemOrg}. Enterprise Security Alert.
               </mj-text>
             </mj-column>
           </mj-section>

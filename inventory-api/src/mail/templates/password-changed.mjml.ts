@@ -1,6 +1,6 @@
 import { EmailTheme } from './email.theme';
 
-export const passwordChangedTemplate = (name: string, time: string) => `
+export const passwordChangedTemplate = (name: string, time: string, systemName = 'System', systemOrg = 'System') => `
 <mjml>
   <mj-head>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter:wght@400;700;800" />
@@ -24,7 +24,7 @@ export const passwordChangedTemplate = (name: string, time: string) => `
           <mj-section background-color="${EmailTheme.successBg}" padding="30px 20px">
             <mj-column>
               <mj-text align="center" padding="0">
-                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">KTMG-VAULT</span>
+                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">${systemName}</span>
               </mj-text>
               <mj-text align="center" font-size="10px" color="#64748b" font-weight="700" letter-spacing="1px" padding="5px 0 0">
                 SECURE ENTERPRISE LAYER
@@ -43,7 +43,7 @@ export const passwordChangedTemplate = (name: string, time: string) => `
                 Hi ${name},
               </mj-text>
               <mj-text font-size="15px">
-                Your <strong>KTMG-Vault</strong> account password was modified successfully.
+                Your <strong>${systemName}</strong> account password was modified successfully.
               </mj-text>
             </mj-column>
           </mj-section>
@@ -74,7 +74,7 @@ export const passwordChangedTemplate = (name: string, time: string) => `
           <mj-section background-color="#f8fafc" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#94a3b8" align="center">
-                © 2026 KTMG Systems. Automated Security Alert.
+                © ${new Date().getFullYear()} ${systemOrg}. Automated Security Alert.
               </mj-text>
             </mj-column>
           </mj-section>

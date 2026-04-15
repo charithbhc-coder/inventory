@@ -1,6 +1,6 @@
 import { EmailTheme } from './email.theme';
 
-export const licenseExpirationTemplate = (licenseName: string, daysRemaining: number, expiryDateStr: string, dashboardLink: string) => `
+export const licenseExpirationTemplate = (licenseName: string, daysRemaining: number, expiryDateStr: string, dashboardLink: string, systemName = 'System', systemOrg = 'System') => `
 <mjml>
   <mj-head>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter:wght@400;700;800" />
@@ -24,7 +24,7 @@ export const licenseExpirationTemplate = (licenseName: string, daysRemaining: nu
           <mj-section background-color="${daysRemaining <= 3 ? EmailTheme.warningBg : EmailTheme.skyBlueBg}" padding="30px 20px">
             <mj-column vertical-align="middle">
               <mj-text align="center" padding="0">
-                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">KTMG-VAULT</span>
+                <span style="font-size: 24px; font-weight: 800; color: ${EmailTheme.title}; letter-spacing: 2px;">${systemName}</span>
               </mj-text>
               <mj-text align="center" font-size="10px" color="#64748b" font-weight="700" letter-spacing="1px" padding="5px 0 0">
                 LICENSE MANAGEMENT SYSTEM
@@ -41,7 +41,7 @@ export const licenseExpirationTemplate = (licenseName: string, daysRemaining: nu
                 Action Required: License Expiring
               </mj-text>
               <mj-text font-size="15px">
-                A software license registered in KTMG-Vault is approaching its expiration date:
+                A software license registered in ${systemName} is approaching its expiration date:
               </mj-text>
             </mj-column>
           </mj-section>
@@ -83,7 +83,7 @@ export const licenseExpirationTemplate = (licenseName: string, daysRemaining: nu
           <mj-section background-color="#f8fafc" padding="20px 40px">
             <mj-column>
               <mj-text font-size="11px" color="#94a3b8" align="center">
-                © 2026 KTMG Systems. This is an automated software license management communication.
+                © ${new Date().getFullYear()} ${systemOrg}. This is an automated software license management communication.
               </mj-text>
             </mj-column>
           </mj-section>

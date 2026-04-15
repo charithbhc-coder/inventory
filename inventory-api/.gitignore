@@ -45,3 +45,12 @@ lerna-debug.log*
 
 # dotenv env types
 *env.d.ts
+
+# Debug/Dev artifacts
+*.txt
+!README.md
+temp.js
+reset-db.js
+test_*.js
+openapi-spec.json
+uploads/

@@ -33,6 +33,7 @@ import ReturnFromRepairModal from './ReturnFromRepairModal';
 import RecoverItemModal from './RecoverItemModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission, ItemStatus } from '@/types';
+import { getUploadUrl } from '@/lib/config';
 
 interface DrawerProps {
   item: Item;
@@ -57,9 +58,6 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
 
   if (!isOpen) return null;
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1').replace('/api/v1', '');
-  const getFullUrl = (url: string) => url ? `${apiBaseUrl}${url}` : '';
-
   return (
     <div className="drawer-overlay" onClick={onClose}>
       <div className="drawer" onClick={e => e.stopPropagation()}>
@@ -69,7 +67,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             <div className="flex items-center gap-3">
               {item.imageUrl ? (
                 <img 
-                  src={getFullUrl(item.imageUrl)} 
+                  src={getUploadUrl(item.imageUrl)} 
                   alt={item.name} 
                   className="asset-image-preview" 
                 />
@@ -256,7 +254,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             </h4>
             <div className="flex flex-col gap-2">
                 {item.warrantyCardUrls?.length ? item.warrantyCardUrls.map((url: string, i: number) => (
-                  <div key={i} onClick={() => setPreviewUrl(getFullUrl(url))} className="doc-item" style={{ cursor: 'pointer' }}>
+                  <div key={i} onClick={() => setPreviewUrl(getUploadUrl(url))} className="doc-item" style={{ cursor: 'pointer' }}>
                     <div className="flex items-center gap-3">
                       <ShieldCheck size={18} className="text-accent" />
                       <span>Warranty Certificate {i + 1}</span>
@@ -267,7 +265,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   <div className="doc-empty">No warranty documents uploaded</div>
                 )}
                 {item.invoiceUrls?.length ? item.invoiceUrls.map((url: string, i: number) => (
-                  <div key={i} onClick={() => setPreviewUrl(getFullUrl(url))} className="doc-item" style={{ cursor: 'pointer' }}>
+                  <div key={i} onClick={() => setPreviewUrl(getUploadUrl(url))} className="doc-item" style={{ cursor: 'pointer' }}>
                     <div className="flex items-center gap-3">
                       <FileText size={18} className="text-secondary" />
                       <span>Invoice {format(new Date(item.purchaseDate || Date.now()), 'yyyy')}</span>

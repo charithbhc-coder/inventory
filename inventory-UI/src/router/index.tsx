@@ -58,7 +58,7 @@ const router = createBrowserRouter([
   },
   // Fallback
   { path: '*', element: <Navigate to="/" replace /> },
-]);
+], { basename: '/inventory' });
 
 export default function AppRouter() {
   return (

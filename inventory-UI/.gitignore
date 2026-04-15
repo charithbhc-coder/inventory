@@ -28,3 +28,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Debug/Dev artifacts
+build_output.txt
+npm_error*.txt
+tsc_output.txt
+activity_sample.json
+logs_debug.json

@@ -309,18 +309,11 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    console.log('[DEBUG] updateMe - DTO Received:', dto);
-    console.log('[DEBUG] updateMe - Before:', { first: user.firstName, last: user.lastName });
-
-    // Only apply changes for fields that were explicitly provided in the request
-    // This allows partial updates (e.g. only changing phone without touching name)
-    // It also allows clearing a value by sending an empty string e.g. { "phone": "" }
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.phone !== undefined) user.phone = dto.phone;
 
     const savedUser = await this.usersRepository.save(user);
-    console.log('[DEBUG] updateMe - After:', { first: savedUser.firstName, last: savedUser.lastName });
 
     this.eventEmitter.emit('user.updated', {
       userId: savedUser.id,

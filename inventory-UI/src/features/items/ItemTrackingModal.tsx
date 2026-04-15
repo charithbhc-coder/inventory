@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   MapPin
 } from 'lucide-react';
+import { API_ROOT_URL } from '@/lib/config';
 
 interface ItemTrackingModalProps {
   item: Item | null;
@@ -84,8 +85,7 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
   const getResolvedImageUrl = (url?: string | null) => {
     if (!url) return undefined;
     if (url.startsWith('http') || url.startsWith('data:')) return url;
-    const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
-    return `${baseUrl}/${url.replace(/^\//, '')}`;
+    return `${API_ROOT_URL}/${url.replace(/^\//, '')}`;
   };
 
   const resolvedImage = getResolvedImageUrl(item.imageUrl);

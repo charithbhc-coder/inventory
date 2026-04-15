@@ -1,5 +1,6 @@
 import api from '@/services/api.client';
 import { useAuthStore } from '@/store/auth.store';
+import { API_BASE_URL } from '@/lib/config';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,6 @@ export interface CreateSchedulePayload {
 
 export function downloadReport(reportType: string, format: 'excel' | 'pdf', filters: ReportFilters = {}) {
   const token = useAuthStore.getState().accessToken;
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
   const params = new URLSearchParams();
 
   if (filters.companyId)    params.append('companyId', filters.companyId);
@@ -71,7 +71,7 @@ export function downloadReport(reportType: string, format: 'excel' | 'pdf', filt
   if (filters.search)       params.append('search', filters.search);
   if (token)                params.append('token', token);
 
-  window.open(`${baseUrl}/reports/${reportType}/${format}?${params.toString()}`, '_blank');
+  window.open(`${API_BASE_URL}/reports/${reportType}/${format}?${params.toString()}`, '_blank');
 }
 
 // ─── API calls ──────────────────────────────────────────────────────────────

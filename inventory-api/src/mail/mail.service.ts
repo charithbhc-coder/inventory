@@ -56,8 +56,9 @@ export class MailService {
       ? `${attachments.length} file(s) attached: ${attachments.map(a => a.filename).join(', ')}`
       : '';
 
-    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'KTMG-Vault';
-    const mjmlContent = reportNewsletterTemplate(subject, body, attachmentNote, systemName);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = reportNewsletterTemplate(subject, body, attachmentNote, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
     for (const to of recipients) {
@@ -86,20 +87,24 @@ export class MailService {
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
     const timestamp = new Date().toLocaleString();
 
-    const mjmlContent = passwordResetTemplate(name, resetLink, timestamp);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = passwordResetTemplate(name, resetLink, timestamp, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
-    await this.sendMail(to, 'Password Reset Request', html);
+    await this.sendMail(to, `${systemName}: Password Reset Request`, html);
   }
 
   // 🟢 PASSWORD CHANGED
   async sendPasswordChangedEmail(to: string, name: string) {
     const timestamp = new Date().toLocaleString();
 
-    const mjmlContent = passwordChangedTemplate(name, timestamp);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = passwordChangedTemplate(name, timestamp, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
-    await this.sendMail(to, 'Your Password Has Been Changed', html);
+    await this.sendMail(to, `${systemName}: Password Changed`, html);
   }
 
   // 🔵 FIRST LOGIN (Security Alert)
@@ -107,30 +112,36 @@ export class MailService {
     const dashboardLink = `${this.configService.get('FRONTEND_URL')}/dashboard`;
     const timestamp = new Date().toLocaleString();
 
-    const mjmlContent = firstLoginTemplate(name, dashboardLink, timestamp);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = firstLoginTemplate(name, dashboardLink, timestamp, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
-    await this.sendMail(to, 'Security Alert: First Time Login from Your Account', html);
+    await this.sendMail(to, `${systemName}: Security Alert - First Time Login`, html);
   }
 
   // 🟡 ACCOUNT PROVISIONED (Initial Access)
   async sendAccountProvisionedEmail(to: string, name: string, tempPassword: string) {
     const loginLink = `${this.configService.get('FRONTEND_URL')}/login`;
 
-    const mjmlContent = accountProvisionedTemplate(name, to, tempPassword, loginLink);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = accountProvisionedTemplate(name, to, tempPassword, loginLink, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
-    await this.sendMail(to, 'Account Provisioned: Your Access Credentials', html);
+    await this.sendMail(to, `${systemName}: Account Provisioned`, html);
   }
 
   // ✨ WELCOME EMAIL (Onboarding Complete)
   async sendWelcomeEmail(to: string, name: string) {
     const dashboardLink = `${this.configService.get('FRONTEND_URL')}/dashboard`;
 
-    const mjmlContent = welcomeTemplate(name, dashboardLink);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = welcomeTemplate(name, dashboardLink, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
-    await this.sendMail(to, 'Welcome to KTMG-Vault Engineering', html);
+    await this.sendMail(to, `Welcome to ${systemName}`, html);
   }
 
   // ⚠️ Deprecated - please use sendAccountProvisionedEmail
@@ -144,7 +155,9 @@ export class MailService {
     // Format date beautifully
     const expiryDateStr = expiryDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    const mjmlContent = licenseExpirationTemplate(licenseName, daysRemaining, expiryDateStr, dashboardLink);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = licenseExpirationTemplate(licenseName, daysRemaining, expiryDateStr, dashboardLink, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
     const subject = daysRemaining <= 0 
@@ -165,7 +178,9 @@ export class MailService {
       fullUrl = `${this.configService.get('FRONTEND_URL')}${actionUrl}`;
     }
 
-    const mjmlContent = systemNotificationTemplate(title, message, fullUrl);
+    const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
+    const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
+    const mjmlContent = systemNotificationTemplate(title, message, fullUrl, systemName, systemOrg);
     const { html } = mjml2html(mjmlContent);
 
     await this.sendMail(to, title, html);
