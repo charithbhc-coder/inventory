@@ -58,7 +58,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
         </button>
       </div>
 
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: isCollapsed ? '0 12px' : '0 16px', marginTop: 12 }}>
+      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: isCollapsed ? '0 12px' : '0 16px', marginTop: 12 }}>
         {MENU_ITEMS.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
           <NavLink
             key={item.path}
@@ -68,12 +68,12 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
             onClick={onCloseMobile}
           >
             <item.icon size={20} style={{ flexShrink: 0 }} />
-            {!isCollapsed && <span style={{ fontSize: 13, fontWeight: 600 }}>{item.label}</span>}
+            {!isCollapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      <div style={{ padding: isCollapsed ? '16px 12px' : '16px', display: 'flex', flexDirection: 'column', gap: 4, borderTop: '1px solid var(--border-dark)' }}>
+      <div style={{ padding: isCollapsed ? '16px 12px' : '16px', display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--border-dark)' }}>
         {FOOTER_ITEMS.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
           <NavLink
             key={item.path}
@@ -83,7 +83,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
             onClick={onCloseMobile}
           >
             <item.icon size={20} style={{ flexShrink: 0 }} />
-            {!isCollapsed && <span style={{ fontSize: 13, fontWeight: 600 }}>{item.label}</span>}
+            {!isCollapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</span>}
           </NavLink>
         ))}
         
