@@ -8,8 +8,6 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { UserRole, AdminPermission } from '../common/enums';
 
-
-
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('categories')
 export class ItemCategoriesController {
@@ -29,8 +27,9 @@ export class ItemCategoriesController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
+    @Query('isActive') isActive?: string,
   ) {
-    return this.categoriesService.findAll({ page, limit, search });
+    return this.categoriesService.findAll({ page, limit, search, isActive });
   }
 
   @Get(':id')

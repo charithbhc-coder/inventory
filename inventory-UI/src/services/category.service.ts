@@ -12,8 +12,8 @@ export interface Category {
 export const categoryService = {
   getCategories: async (params?: any) => {
     const { data } = await apiClient.get('/categories', { params });
-    // Handle pagination if needed, but for simple dropdowns we often just want the list
-    return data?.items || data || [];
+    // Handle the backend's paginated response format
+    return data;
   },
 
   getCategory: async (id: string) => {

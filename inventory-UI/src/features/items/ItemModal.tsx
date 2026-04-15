@@ -87,7 +87,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   });
 
   const companiesList = useMemo(() => Array.isArray(companies) ? companies : (companies as any)?.data || [], [companies]);
-  const categoriesList = useMemo(() => Array.isArray(categories) ? categories : (categories as any)?.data || [], [categories]);
+  const categoriesList = useMemo(() => {
+    const raw = Array.isArray(categories) ? categories : (categories as any)?.data || [];
+    // Show active categories, plus the currently selected one (in case it's archived)
+    return raw.filter((c: any) => c.isActive !== false || c.id === formData.categoryId);
+  }, [categories, formData.categoryId]);
   const departmentsList = useMemo(() => Array.isArray(departments) ? departments : (departments as any)?.data || [], [departments]);
   const itemsList = useMemo(() => Array.isArray(companyItems) ? companyItems : (companyItems as any)?.data || (companyItems as any)?.items || [], [companyItems]);
 

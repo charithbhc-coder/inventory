@@ -21,7 +21,7 @@ export class ItemCategoriesService {
     return this.categoriesRepository.save(category);
   }
 
-  async findAll(query: { page?: number; limit?: number; search?: string }) {
+  async findAll(query: { page?: number; limit?: number; search?: string; isActive?: string | boolean }) {
     const { page, limit, skip } = getPaginationOptions(query);
 
     const qb = this.categoriesRepository.createQueryBuilder('cat')
@@ -31,7 +31,15 @@ export class ItemCategoriesService {
       qb.where('cat.name ILIKE :search OR cat.code ILIKE :search', { search: `%${query.search}%` });
     }
 
-    qb.andWhere('cat.isActive = :isActive', { isActive: true });
+    if (query.isActive !== undefined) {
+      const activeFlag = query.isActive === 'true' || query.isActive === true;
+      if (query.search) {
+        qb.andWhere('cat.isActive = :isActive', { isActive: activeFlag });
+      } else {
+        qb.where('cat.isActive = :isActive', { isActive: activeFlag });
+      }
+    }
+
     qb.orderBy('parent.name', 'ASC', 'NULLS FIRST')
       .addOrderBy('cat.name', 'ASC')
       .skip(skip).take(limit);

@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Plus, Search, Tag, Edit, Layers, ChevronRight, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Tag, Edit, Layers, ChevronRight, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { categoryService } from '@/services/category.service';
 import CategoryModal from './CategoryModal';
 import { useSearchParams } from 'react-router-dom';
@@ -37,19 +37,17 @@ export default function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-  // const user = useAuthStore(s => s.user); // Removed unused variable
   const queryClient = useQueryClient();
   const hasPermission = useAuthStore((s: any) => s.hasPermission);
 
-  const deleteMutation = useMutation({
-    mutationFn: categoryService.deleteCategory,
-    onSuccess: () => {
+  const toggleStatusMutation = useMutation({
+    mutationFn: (cat: Category) => categoryService.updateCategory(cat.id, { isActive: !cat.isActive }),
+    onSuccess: (_, cat) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Category deleted successfully');
+      toast.success(`Category ${cat.isActive ? 'deactivated' : 'activated'} successfully`);
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Failed to delete category');
+      toast.error(err?.response?.data?.message || 'Failed to update category status');
     }
   });
 
@@ -62,9 +60,12 @@ export default function CategoriesPage() {
 
   const categories: Category[] = useMemo(() => {
     const raw = catData;
-    if (Array.isArray(raw)) return raw;
-    return (raw as any)?.data || (raw as any)?.items || [];
+    const items = Array.isArray(raw) ? raw : (raw as any)?.data || (raw as any)?.items || [];
+    return items;
   }, [catData]);
+
+  const activeCategories = useMemo(() => categories.filter(c => c.isActive !== false), [categories]);
+  const inactiveCategories = useMemo(() => categories.filter(c => c.isActive === false), [categories]);
 
   // Combined Deep Link & Search Sync
   useEffect(() => {
@@ -188,19 +189,21 @@ export default function CategoriesPage() {
               <Edit size={15} />
             </button>
           )}
-          {canDelete && (
+          {canEdit && (
             <button
-              title="Delete Category"
-              onClick={() => setCategoryToDelete(info.row.original)}
+              title={info.row.original.isActive ? "Deactivate Category" : "Activate Category"}
+              onClick={() => toggleStatusMutation.mutate(info.row.original)}
               style={{
-                background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)',
-                borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#ef4444',
+                background: info.row.original.isActive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                border: `1px solid ${info.row.original.isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}`,
+                borderRadius: 8, padding: '7px', cursor: 'pointer',
+                color: info.row.original.isActive ? '#ef4444' : '#10b981',
                 display: 'flex', alignItems: 'center', transition: 'all 0.2s', height: 32, width: 32, justifyContent: 'center'
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'; }}
             >
-              <Trash2 size={15} />
+              {info.row.original.isActive ? <ShieldAlert size={15} /> : <ShieldCheck size={15} />}
             </button>
           )}
         </div>
@@ -209,7 +212,8 @@ export default function CategoriesPage() {
     }),
   ], []);
 
-  const table = useReactTable({ data: categories, columns, getCoreRowModel: getCoreRowModel() });
+  const activeTable = useReactTable({ data: activeCategories, columns, getCoreRowModel: getCoreRowModel() });
+  const inactiveTable = useReactTable({ data: inactiveCategories, columns, getCoreRowModel: getCoreRowModel() });
 
   const topLevelCount = categories.filter(c => !c.parentCategoryId).length;
   const subCategoryCount = categories.filter(c => !!c.parentCategoryId).length;
@@ -275,7 +279,7 @@ export default function CategoriesPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              {table.getHeaderGroups().map(hg => (
+              {activeTable.getHeaderGroups().map(hg => (
                 <tr key={hg.id} style={{ borderBottom: '1px solid var(--border-dark)', background: 'rgba(0,0,0,0.04)' }}>
                   {hg.headers.map(header => (
                     <th key={header.id} style={{
@@ -301,16 +305,16 @@ export default function CategoriesPage() {
                     <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-muted)' }}>Loading categories...</p>
                   </td>
                 </tr>
-              ) : categories.length === 0 ? (
+              ) : activeCategories.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ padding: 80, textAlign: 'center', color: 'var(--text-muted)' }}>
                     <Tag size={48} style={{ opacity: 0.1, margin: '0 auto 16px', display: 'block' }} />
-                    <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>No categories yet</p>
-                    <p style={{ margin: '6px 0 0', fontSize: 13, opacity: 0.6 }}>Add your first category to get started</p>
+                    <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>No active categories</p>
+                    <p style={{ margin: '6px 0 0', fontSize: 13, opacity: 0.6 }}>Add a category or search for something else</p>
                   </td>
                 </tr>
               ) : (
-                table.getRowModel().rows.map(row => (
+                activeTable.getRowModel().rows.map(row => (
                   <tr key={row.id} style={{ borderBottom: '1px solid var(--border-dark)' }} className="table-row-hover">
                     {row.getVisibleCells().map(cell => (
                       <td key={cell.id} style={{
@@ -327,9 +331,8 @@ export default function CategoriesPage() {
           </table>
         </div>
       </div>
-
       {/* Footer Pagination */}
-      <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+      <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px 24px' }}>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
           <strong>{catMeta.total}</strong> categories total &nbsp;•&nbsp; Page {page} of {catMeta.lastPage}
         </p>
@@ -351,6 +354,34 @@ export default function CategoriesPage() {
         )}
       </div>
 
+      {inactiveCategories.length > 0 && (
+        <div className="dark-card" style={{ marginTop: 32, padding: '24px 0 0', overflow: 'hidden' }}>
+          <div style={{ padding: '0 24px 20px', borderBottom: '1px solid var(--border-dark)' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.2px' }}>
+              Archived / Inactive Categories
+            </h3>
+          </div>
+          <div style={{ overflowX: 'auto', opacity: 0.7 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {inactiveTable.getRowModel().rows.map(row => (
+                  <tr key={row.id} style={{ borderBottom: '1px solid var(--border-dark)' }} className="table-row-hover">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} style={{
+                        padding: '14px 24px', fontSize: 13, color: 'var(--text-main)', verticalAlign: 'middle',
+                        textAlign: cell.column.id === 'actions' ? 'center' : 'left',
+                      }}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       <CategoryModal
         category={selectedCategory}
         isOpen={isModalOpen}
@@ -367,65 +398,7 @@ export default function CategoriesPage() {
         }}
       />
 
-      {/* Delete Confirmation Modal */}
-      {categoryToDelete && (
-        <>
-          <div 
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999 }}
-            onClick={() => setCategoryToDelete(null)}
-          />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            background: 'var(--bg-surface)', border: '1px solid var(--border-dark)',
-            borderRadius: 16, width: '100%', maxWidth: 420, zIndex: 10000,
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-            overflow: 'hidden',
-            animation: 'modalPopover 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border-dark)', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-              <div style={{ 
-                width: 48, height: 48, borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0
-              }}>
-                <AlertTriangle size={24} />
-              </div>
-              <div>
-                <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>Delete Category</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  Are you sure you want to delete <strong>{categoryToDelete.name}</strong>? This action cannot be undone.
-                </p>
-              </div>
-            </div>
-            <div style={{ padding: '16px 24px', background: 'var(--bg-card)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button
-                onClick={() => setCategoryToDelete(null)}
-                style={{ 
-                  padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-dark)', 
-                  background: 'transparent', color: 'var(--text-main)', cursor: 'pointer',
-                  fontSize: 13, fontWeight: 600
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  deleteMutation.mutate(categoryToDelete.id);
-                  setCategoryToDelete(null);
-                }}
-                disabled={deleteMutation.isPending}
-                style={{ 
-                  padding: '8px 16px', borderRadius: 8, border: 'none', 
-                  background: '#ef4444', color: '#fff', cursor: 'pointer',
-                  fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
-                  opacity: deleteMutation.isPending ? 0.7 : 1
-                }}
-              >
-                {deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete Category'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+
 
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

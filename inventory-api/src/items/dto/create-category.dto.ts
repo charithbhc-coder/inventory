@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsBoolean } from 'class-validator';
 
 export class CreateCategoryDto {
   
@@ -20,6 +20,10 @@ export class CreateCategoryDto {
   @IsUUID()
   @IsOptional()
   parentCategoryId?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class UpdateCategoryDto {
@@ -37,4 +41,8 @@ export class UpdateCategoryDto {
   @IsUUID()
   @IsOptional()
   parentCategoryId?: string | null;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
