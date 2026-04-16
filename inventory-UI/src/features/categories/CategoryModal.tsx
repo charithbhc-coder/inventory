@@ -65,8 +65,9 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
         parentCategoryId: isMainCategory ? null : (data.parentCategoryId || null),
         code: data.code.toUpperCase(),
       };
+      const { code: _unusedCode, ...updatePayload } = payload;
       return isEdit
-        ? (categoryService as any).updateCategory(category.id, payload)
+        ? (categoryService as any).updateCategory(category.id, updatePayload)
         : (categoryService as any).createCategory(payload);
     },
     onSuccess: (res: any) => {
@@ -166,7 +167,9 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
                   placeholder="e.g. LAP, SRV, DSK"
                   value={formData.code}
                   maxLength={6}
+                  disabled={isEdit}
                   onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  style={{ ...s.input, opacity: isEdit ? 0.6 : 1, cursor: isEdit ? 'not-allowed' : 'text' }}
                 />
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>

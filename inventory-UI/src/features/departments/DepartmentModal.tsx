@@ -189,7 +189,7 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
           </div>
 
           {/* Actions */}
-          <div style={{ marginTop: 8, display: 'flex', gap: 12, justifyContent: 'center', paddingTop: 20, borderTop: '1px solid var(--border-dark)' }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid var(--border-dark)' }}>
             <button type="button" onClick={onClose} className="outline-btn">Cancel</button>
             <button type="submit" className="primary-btn" disabled={isSaving}>
               {isSaving ? 'Saving…' : isEdit ? 'Update Department' : 'Create Department'}
