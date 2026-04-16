@@ -14,9 +14,9 @@ async function bootstrap() {
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
-    username: process.env.DB_USER || 'inventory_user',
-    password: process.env.DB_PASSWORD || 'inventory_pass_2025',
-    database: process.env.DB_NAME || 'inventory_db',
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'inventory',
     entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
     synchronize: true, // Let it sync schemas first time
   });
@@ -26,10 +26,10 @@ async function bootstrap() {
 
   const usersRepo = dataSource.getRepository('User');
 
-  const email = process.env.SUPER_ADMIN_EMAIL || 'superadmin@inventory.com';
-  const tempPass = process.env.SUPER_ADMIN_TEMP_PASS || 'TempAdmin@2025!';
-  const firstName = process.env.SUPER_ADMIN_FIRST_NAME || 'Super';
-  const lastName = process.env.SUPER_ADMIN_LAST_NAME || 'Admin';
+  const email = process.env.SUPER_ADMIN_EMAIL || 'charith.bhc@gmail.com';
+  const tempPass = process.env.SUPER_ADMIN_TEMP_PASS || 'Admin@123';
+  const firstName = process.env.SUPER_ADMIN_FIRST_NAME || 'Charith';
+  const lastName = process.env.SUPER_ADMIN_LAST_NAME || 'SiteAdmin';
 
   const existing = await usersRepo.findOne({ where: { email } });
 
