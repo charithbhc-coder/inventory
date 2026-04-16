@@ -38,7 +38,7 @@ async function bootstrap() {
 
   // Serve static uploads (avatars, logos, warranties, invoices)
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
+    prefix: '/inventory-api/v1/uploads/',
   });
 
   // Global prefixes and pipes
