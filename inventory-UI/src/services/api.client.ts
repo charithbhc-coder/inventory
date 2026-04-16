@@ -18,17 +18,19 @@ api.interceptors.request.use((config) => {
 });
 
 // Auto-logout on 401 — do not attempt refresh
+// Skip intercept for login endpoint: a 401 there means wrong credentials, not expired session
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginRequest) {
       toast.error('Your session has expired. Please sign in again.', {
         duration: 4000,
         icon: '🔒',
         id: 'session-expired', // Prevent duplicate toasts
       });
       useAuthStore.getState().logout();
-      setTimeout(() => { window.location.href = '/login'; }, 1000);
+      setTimeout(() => { window.location.href = '/inventory/login'; }, 1000);
     }
     return Promise.reject(error);
   }
