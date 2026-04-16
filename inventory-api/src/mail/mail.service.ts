@@ -18,6 +18,12 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
 
   constructor(private configService: ConfigService) {
+    const host = this.configService.get<string>('MAIL_HOST');
+    if (!host) {
+      this.logger.warn('SMTP Mail Host not configured. Email service will be disabled.');
+      return;
+    }
+
     const authType = this.configService.get<string>('MAIL_AUTH_TYPE');
     const auth: any = {
       user: this.configService.get<string>('MAIL_USER'),
@@ -33,15 +39,24 @@ export class MailService {
     }
 
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('MAIL_HOST'),
+      host,
       port: this.configService.get<number>('MAIL_PORT'),
       secure: this.configService.get<string>('MAIL_SECURE') === 'true',
       auth,
     });
   }
 
+  // 🛡️ Safe check for transporter
+  private isConfigured(): boolean {
+    return !!this.transporter;
+  }
+
   // 🔧 Common sender
   private async sendMail(to: string, subject: string, html: string) {
+    if (!this.isConfigured()) {
+      this.logger.warn(`Skipping email to ${to} (Mail not configured)`);
+      return;
+    }
     try {
       await this.transporter.sendMail({
         from: this.configService.get<string>('MAIL_FROM'),
@@ -74,6 +89,10 @@ export class MailService {
 
     for (const to of recipients) {
       try {
+        if (!this.isConfigured()) {
+          this.logger.warn(`Skipping report email to ${to} (Mail not configured)`);
+          continue;
+        }
         await this.transporter.sendMail({
           from: this.configService.get<string>('MAIL_FROM'),
           to,
