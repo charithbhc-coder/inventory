@@ -435,7 +435,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-yellow)', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, overflow: 'hidden' }}>
             {user?.avatarUrl ? (
               <img
-                src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`}
+                src={`${import.meta.env.VITE_API_BASE_URL}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`}
                 alt="Profile"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

@@ -5,8 +5,8 @@
 
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/inventory-api/v1';
 
-// The root URL for the API (without the /inventory-api/v1 prefix) for static file serving
-export const API_ROOT_URL = VITE_API_BASE_URL.replace('/inventory-api/v1', '');
+// The root URL for the API for static file serving (matches the API base)
+export const API_ROOT_URL = VITE_API_BASE_URL;
 
 // The full base URL for API requests
 export const API_BASE_URL = VITE_API_BASE_URL;

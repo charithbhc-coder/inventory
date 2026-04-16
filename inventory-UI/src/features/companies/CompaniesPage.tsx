@@ -522,9 +522,7 @@ export default function CompaniesPage() {
                     <img 
                       src={drawerCompany.logoUrl.startsWith('http') 
                         ? drawerCompany.logoUrl 
-                        : `${(import.meta.env.VITE_API_BASE_URL || '').startsWith('http') 
-                           ? new URL(import.meta.env.VITE_API_BASE_URL).origin 
-                           : window.location.origin}${drawerCompany.logoUrl}`
+                        : `${import.meta.env.VITE_API_BASE_URL}${drawerCompany.logoUrl}`
                       } 
                       alt="" 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} 

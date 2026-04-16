@@ -58,7 +58,7 @@ export default function CompanyDetailPage() {
     );
   }
 
-  const logoUrlStr = company.logoUrl ? `${import.meta.env.VITE_API_BASE_URL?.replace('/inventory-api/v1', '')}${company.logoUrl}` : null;
+  const logoUrlStr = company.logoUrl ? `${import.meta.env.VITE_API_BASE_URL}${company.logoUrl}` : null;
 
   return (
     <div style={{ padding: '0 0 40px' }} className="company-detail-responsive">

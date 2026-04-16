@@ -140,7 +140,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
   const avatarUrl = user.avatarUrl
     ? `${baseUrl}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`
     : '';
