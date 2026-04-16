@@ -247,7 +247,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
               <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
                 <button
-                  onClick={() => itemService.downloadLabel(lastCreatedItem.id, lastCreatedItem.barcode)}
+                  onClick={() => itemService.printLabel(lastCreatedItem.id)}
                   className="primary-btn"
                   style={{ padding: '14px 28px', display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}
                 >

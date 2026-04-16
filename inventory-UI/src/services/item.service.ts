@@ -130,22 +130,65 @@ export const itemService = {
   },
 
   downloadLabel: async (id: string, barcode?: string) => {
-    const { data } = await apiClient.get(`/labels/generate/${id}`, {
-      responseType: 'blob'
-    });
-    const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `label-${barcode || id}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    try {
+      const { data } = await apiClient.get(`/labels/generate/${id}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `label-${barcode || id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   },
 
-  printLabel: (id: string) => {
-    const token = (useAuthStore.getState() as any).accessToken;
-    const url = `${API_BASE_URL}/labels/generate/${id}${token ? `?token=${token}` : ''}`;
-    window.open(url, '_blank');
+  printLabel: async (id: string) => {
+    try {
+      // Fetch the PDF blob
+      const { data } = await apiClient.get(`/labels/generate/${id}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create hidden iframe for printing
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      iframe.src = url;
+      
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
+          // Cleanup after printing dialog is closed (approximation)
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            window.URL.revokeObjectURL(url);
+          }, 2000);
+        }, 500);
+      };
+    } catch (error) {
+      console.error('Direct print failed:', error);
+      // Fallback: Open in new window if iframe print fails
+      const token = (useAuthStore.getState() as any).accessToken;
+      const url = `${API_BASE_URL}/labels/generate/${id}${token ? `?token=${token}` : ''}`;
+      window.open(url, '_blank');
+    }
   }
 };
+

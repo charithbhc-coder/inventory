@@ -69,9 +69,38 @@ export function downloadReport(reportType: string, format: 'excel' | 'pdf', filt
   if (filters.dateFrom)     params.append('dateFrom', filters.dateFrom);
   if (filters.dateTo)       params.append('dateTo', filters.dateTo);
   if (filters.search)       params.append('search', filters.search);
-  if (token)                params.append('token', token);
+  
+  const url = `${API_BASE_URL}/reports/${reportType}/${format}?${params.toString()}${token ? `&token=${token}` : ''}`;
 
-  window.open(`${API_BASE_URL}/reports/${reportType}/${format}?${params.toString()}`, '_blank');
+  if (format === 'pdf') {
+    // Direct Print for PDF
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    
+    iframe.onload = () => {
+      setTimeout(() => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 2000);
+      }, 500);
+    };
+  } else {
+    // Normal download for Excel
+    window.open(url, '_blank');
+  }
 }
 
 // ─── API calls ──────────────────────────────────────────────────────────────
