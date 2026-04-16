@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import mjml2html from 'mjml';
@@ -13,14 +13,16 @@ import { reportNewsletterTemplate } from './templates/report-newsletter.mjml';
 import { licenseExpirationTemplate } from './templates/license-expiration.mjml';
 
 @Injectable()
-export class MailService {
+export class MailService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
 
   constructor(private configService: ConfigService) {
     const host = this.configService.get<string>('MAIL_HOST');
-    if (!host) {
-      this.logger.warn('SMTP Mail Host not configured. Email service will be disabled.');
+    const service = this.configService.get<string>('MAIL_SERVICE');
+    
+    if (!host && !service) {
+      this.logger.warn('SMTP Mail configuration missing. Email service will be disabled.');
       return;
     }
 
@@ -39,11 +41,30 @@ export class MailService {
     }
 
     this.transporter = nodemailer.createTransport({
+      service,
       host,
       port: this.configService.get<number>('MAIL_PORT'),
       secure: this.configService.get<string>('MAIL_SECURE') === 'true',
       auth,
+      tls: {
+        // Necessary for some variants of Office 365 / Outlook
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+      }
     });
+  }
+
+  async onModuleInit() {
+    if (this.transporter) {
+      this.logger.log('📧 Mail configuration detected. Verifying connection...');
+      try {
+        await this.transporter.verify();
+        this.logger.log('✅ SMTP Connection verified. Ready to send emails.');
+      } catch (error) {
+        this.logger.error(`❌ SMTP Connection failed: ${error.message}`);
+        this.logger.warn('Email delivery might be unavailable until settings are corrected.');
+      }
+    }
   }
 
   // 🛡️ Safe check for transporter
