@@ -163,7 +163,6 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
                 <Hash style={s.inputIcon} size={16} />
                 <input
                   id="cat-code"
-                  style={s.input}
                   placeholder="e.g. LAP, SRV, DSK"
                   value={formData.code}
                   maxLength={6}
