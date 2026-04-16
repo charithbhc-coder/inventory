@@ -28,8 +28,8 @@ export default function CompanyDetailPage() {
 
   const updateMutation = useMutation({
     mutationFn: (payload: any) => companyService.updateCompany(id!, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company', id] });
+    onSuccess: (updatedCompany) => {
+      queryClient.setQueryData(['company', id], updatedCompany);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsEditModalOpen(false);
     }

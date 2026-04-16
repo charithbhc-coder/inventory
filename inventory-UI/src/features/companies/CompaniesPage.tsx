@@ -103,9 +103,10 @@ export default function CompaniesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string, payload: Partial<Company> }) => companyService.updateCompany(id, payload),
-    onSuccess: () => {
+    onSuccess: (updatedCompany, variables) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsModalOpen(false);
+      setDrawerCompany(prev => prev?.id === variables.id ? { ...prev, ...updatedCompany } as Company : prev);
       toast.success('Company details updated');
     },
     onError: (err: any) => {
@@ -118,8 +119,9 @@ export default function CompaniesPage() {
       const comp = companies.find(c => c.id === id);
       return companyService.updateCompany(id, { isActive: !comp?.isActive });
     },
-    onSuccess: (_, id) => {
+    onSuccess: (updatedCompany, id) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setDrawerCompany(prev => prev?.id === id ? { ...prev, ...updatedCompany } as Company : prev);
       const comp = companies.find(c => c.id === id);
       toast.success(`Company ${comp?.isActive ? 'deactivated' : 'activated'} successfully`);
     },
