@@ -66,16 +66,7 @@ export default function LicensesPage() {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: licenseService.deleteLicense,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      toast.success('License permanently deleted');
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Failed to delete license');
-    }
-  });
+
 
   const handleSave = (formData: Partial<License>) => {
     if (selectedLicense) {
@@ -188,29 +179,13 @@ export default function LicensesPage() {
               <Edit size={16} />
             </button>
 
-            <button 
-              title="Delete License"
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to permanently delete the license for ${info.row.original.softwareName}?`)) {
-                  deleteMutation.mutate(info.row.original.id);
-                }
-              }}
-              style={{ 
-                background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', 
-                borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#ef4444', 
-                display: 'flex', alignItems: 'center', transition: 'all 0.2s', height: 32, width: 32, justifyContent: 'center'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; }}
-            >
-              <Trash2 size={16} />
-            </button>
+
 
           </div>
         );
       },
     }),
-  ], [isMobile, updateMutation, deleteMutation]);
+  ], [isMobile, updateMutation]);
 
   const visibleColumns = useMemo(() => {
     return columns.filter((col: any) => col.isVisible !== false);

@@ -32,7 +32,7 @@ export class LabelsController {
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="label-${item.barcode || item.id}.pdf"`,
+      'Content-Disposition': `inline; filename="label-${item.barcode || item.id}.pdf"`,
       'Content-Length': pdfBuffer.length,
     });
 

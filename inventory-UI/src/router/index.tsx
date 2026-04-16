@@ -2,23 +2,23 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react';
 import { RequireAuth, RequireGuest } from './guards';
 
-const LoginPage        = lazy(() => import('@/features/auth/LoginPage'));
+import LoginPage from '@/features/auth/LoginPage';
 const ForgotPassword   = lazy(() => import('@/features/auth/ForgotPasswordPage'));
 const ResetPassword    = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const ChangePassword   = lazy(() => import('@/features/auth/ChangePasswordPage'));
-const DashboardPage    = lazy(() => import('@/features/dashboard/DashboardPage'));
-const CompaniesPage    = lazy(() => import('@/features/companies/CompaniesPage'));
-const CompanyDetailPage = lazy(() => import('@/features/companies/CompanyDetailPage'));
-const UsersPage        = lazy(() => import('@/features/users/UsersPage'));
-const AdminLayout      = lazy(() => import('@/components/layout/AdminLayout'));
+import DashboardPage    from '@/features/dashboard/DashboardPage';
+import CompaniesPage    from '@/features/companies/CompaniesPage';
+import CompanyDetailPage from '@/features/companies/CompanyDetailPage';
+import UsersPage        from '@/features/users/UsersPage';
+import AdminLayout      from '@/components/layout/AdminLayout';
 const SettingsPage     = lazy(() => import('@/features/settings/SettingsPage'));
 const ReportsPage      = lazy(() => import('@/features/reports/ReportsPage'));
-const DepartmentsPage  = lazy(() => import('@/features/departments/DepartmentsPage'));
-const ItemsPage        = lazy(() => import('@/features/items/ItemsPage'));
-const CategoriesPage   = lazy(() => import('@/features/categories/CategoriesPage'));
+import DepartmentsPage  from '@/features/departments/DepartmentsPage';
+import ItemsPage        from '@/features/items/ItemsPage';
+import CategoriesPage   from '@/features/categories/CategoriesPage';
 const ProfilePage      = lazy(() => import('@/features/profile/ProfilePage'));
 const AuditLogsPage    = lazy(() => import('@/features/audit-logs/AuditLogsPage'));
-const LicensesPage     = lazy(() => import('@/features/licenses/LicensesPage'));
+import LicensesPage     from '@/features/licenses/LicensesPage';
 
 const router = createBrowserRouter([
   // Public / Guest routes

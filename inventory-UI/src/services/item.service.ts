@@ -1,4 +1,6 @@
 import apiClient from './api.client';
+import { useAuthStore } from '@/store/auth.store';
+import { API_BASE_URL } from '@/lib/config';
 
 export interface Item {
   id: string;
@@ -141,31 +143,9 @@ export const itemService = {
     window.URL.revokeObjectURL(url);
   },
 
-  printLabel: async (id: string) => {
-    const { data } = await apiClient.get(`/labels/generate/${id}`, {
-      responseType: 'blob'
-    });
-    const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
-    
-    // Create a hidden iframe to trigger the print dialog directly
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.src = url;
-    
-    document.body.appendChild(iframe);
-    
-    iframe.onload = () => {
-      iframe.contentWindow?.print();
-      // Cleanup after print dialog is closed (or after a timeout)
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        window.URL.revokeObjectURL(url);
-      }, 1000);
-    };
+  printLabel: (id: string) => {
+    const token = (useAuthStore.getState() as any).accessToken;
+    const url = `${API_BASE_URL}/labels/generate/${id}${token ? `?token=${token}` : ''}`;
+    window.open(url, '_blank');
   }
 };

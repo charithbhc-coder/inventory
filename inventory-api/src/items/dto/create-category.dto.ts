@@ -42,6 +42,10 @@ export class UpdateCategoryDto {
   @IsOptional()
   parentCategoryId?: string | null;
 
+  @IsString()
+  @IsOptional()
+  code?: string;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

@@ -65,9 +65,8 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
         parentCategoryId: isMainCategory ? null : (data.parentCategoryId || null),
         code: data.code.toUpperCase(),
       };
-      const { code: _unusedCode, ...updatePayload } = payload;
       return isEdit
-        ? (categoryService as any).updateCategory(category.id, updatePayload)
+        ? (categoryService as any).updateCategory(category.id, payload)
         : (categoryService as any).createCategory(payload);
     },
     onSuccess: (res: any) => {
@@ -166,9 +165,8 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
                   placeholder="e.g. LAP, SRV, DSK"
                   value={formData.code}
                   maxLength={6}
-                  disabled={isEdit}
                   onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  style={{ ...s.input, opacity: isEdit ? 0.6 : 1, cursor: isEdit ? 'not-allowed' : 'text' }}
+                  style={s.input}
                 />
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>
@@ -250,13 +248,7 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
               type="button" 
               onClick={onClose} 
               className="outline-btn" 
-              style={{ 
-                padding: '10px 24px', 
-                flex: isMobile ? 'none' : '1 1 auto', 
-                minWidth: 100,
-                display: 'flex',
-                justifyContent: 'center'
-              }}
+              style={{ padding: '10px 24px', minWidth: 100 }}
             >
               Cancel
             </button>
@@ -264,15 +256,7 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
               type="submit"
               className="primary-btn"
               disabled={mutation.isPending}
-              style={{ 
-                padding: '10px 32px', 
-                fontWeight: 800, 
-                opacity: mutation.isPending ? 0.7 : 1, 
-                flex: isMobile ? 'none' : '2 1 auto', 
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
+              style={{ padding: '10px 32px', fontWeight: 800, opacity: mutation.isPending ? 0.7 : 1 }}
             >
               {mutation.isPending ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Category'}
             </button>
