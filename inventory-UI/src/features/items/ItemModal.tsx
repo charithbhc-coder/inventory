@@ -271,10 +271,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               {/* Left Column: Basic Info */}
               <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div>
-                  <label style={styles.label}>ASSET NAME <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+                  <label htmlFor="item-name" style={styles.label}>ASSET NAME <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                   <div style={styles.inputWrap}>
                     <Package style={styles.inputIcon} size={16} />
                     <input
+                      id="item-name"
                       style={styles.input}
                       placeholder="e.g. Dell Latitude 5540"
                       value={formData.name}
@@ -286,7 +287,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 150px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <label style={{ ...styles.label, marginBottom: 0 }}>CATEGORY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+                      <label htmlFor="item-category" style={{ ...styles.label, marginBottom: 0 }}>CATEGORY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                       <button 
                         type="button" 
                         onClick={() => setIsCategoryModalOpen(true)}
@@ -298,6 +299,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     <div style={styles.inputWrap}>
                       <Cpu style={styles.inputIcon} size={16} />
                       <select
+                        id="item-category"
                         style={styles.input}
                         value={formData.categoryId}
                         onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
@@ -309,10 +311,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   </div>
                   {isEdit && (
                     <div style={{ flex: '1 1 150px' }}>
-                      <label style={styles.label}>CONDITION</label>
+                      <label htmlFor="item-condition" style={styles.label}>CONDITION</label>
                       <div style={styles.inputWrap}>
                         <ShieldCheck style={styles.inputIcon} size={16} />
                         <select
+                          id="item-condition"
                           style={styles.input}
                           value={formData.condition}
                           onChange={e => setFormData({ ...formData, condition: e.target.value })}
@@ -328,10 +331,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 </div>
 
                 <div>
-                  <label style={styles.label}>COMPANY SUBSIDIARY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+                  <label htmlFor="item-company" style={styles.label}>COMPANY SUBSIDIARY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                   <div style={styles.inputWrap}>
                     <Globe style={styles.inputIcon} size={16} />
                     <select
+                      id="item-company"
                       style={styles.input}
                       value={formData.companyId}
                       onChange={e => setFormData({ ...formData, companyId: e.target.value })}
@@ -345,10 +349,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 </div>
 
                 <div>
-                  <label style={styles.label}>DEPARTMENT / WING</label>
+                  <label htmlFor="item-department" style={styles.label}>DEPARTMENT / WING</label>
                   <div style={styles.inputWrap}>
                     <Building style={styles.inputIcon} size={16} />
                     <select
+                      id="item-department"
                       style={styles.input}
                       value={formData.departmentId}
                       onChange={e => setFormData({ ...formData, departmentId: e.target.value })}
@@ -364,8 +369,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 150px' }}>
-                    <label style={styles.label} title="Manufacturer unique hardware tracking number">SERIAL NUMBER</label>
+                    <label htmlFor="item-serial" style={styles.label} title="Manufacturer unique hardware tracking number">SERIAL NUMBER</label>
                     <input
+                      id="item-serial"
                       style={styles.inputSimple}
                       placeholder="e.g. SN-12003X"
                       value={formData.serialNumber}
@@ -373,10 +379,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     />
                   </div>
                   <div style={{ flex: '1 1 150px' }}>
-                    <label style={styles.label}>PURCHASE PRICE (LKR)</label>
+                    <label htmlFor="item-price" style={styles.label}>PURCHASE PRICE (LKR)</label>
                     <div style={styles.inputWrap}>
                       <BadgeDollarSign style={styles.inputIcon} size={16} />
                       <input
+                        id="item-price"
                         type="number"
                         className="hide-spinners"
                         min="0"
@@ -391,10 +398,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 </div>
 
                 <div>
-                  <label style={styles.label}>LOCATION / ROOM</label>
+                  <label htmlFor="item-location" style={styles.label}>LOCATION / ROOM</label>
                   <div style={styles.inputWrap}>
                     <MapPin style={styles.inputIcon} size={16} />
                     <input
+                      id="item-location"
                       style={styles.input}
                       placeholder="e.g. Server Room, Floor 2"
                       value={formData.location}
@@ -447,13 +455,14 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 {/* Parent Asset (Edit Mode Only) */}
                 {isEdit && (
                   <div style={{ padding: '0 4px' }}>
-                    <label style={styles.label}>
+                    <label htmlFor="item-parent" style={styles.label}>
                       PARENT ASSET
                       <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 8, fontWeight: 500, textTransform: 'none' }}>(e.g. Install RAM in a Server)</span>
                     </label>
                     <div style={styles.inputWrap}>
                       <Package style={styles.inputIcon} size={16} />
                       <select
+                        id="item-parent"
                         style={styles.input}
                         value={formData.parentItemId}
                         onChange={e => setFormData({ ...formData, parentItemId: e.target.value })}
@@ -469,10 +478,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 120px' }}>
-                    <label style={styles.label}>PURCHASE DATE</label>
+                    <label htmlFor="item-purchase-date" style={styles.label}>PURCHASE DATE</label>
                     <div style={styles.inputWrap}>
                       <Calendar style={styles.inputIcon} size={16} />
                       <input
+                        id="item-purchase-date"
                         type="date"
                         style={styles.input}
                         value={formData.purchaseDate}
@@ -482,10 +492,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   </div>
 
                   <div style={{ flex: '1 1 120px' }}>
-                    <label style={styles.label}>WARRANTY EXPIRES</label>
+                    <label htmlFor="item-warranty" style={styles.label}>WARRANTY EXPIRES</label>
                     <div style={styles.inputWrap}>
                       <ShieldCheck style={styles.inputIcon} size={16} />
                       <input
+                        id="item-warranty"
                         type="date"
                         style={styles.input}
                         value={formData.warrantyExpiresAt}
@@ -526,8 +537,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <label style={styles.label}>TECHNICAL NOTES</label>
+                  <label htmlFor="item-notes" style={styles.label}>TECHNICAL NOTES</label>
                   <textarea
+                    id="item-notes"
                     style={{ ...styles.inputSimple, flex: 1, minHeight: 80, resize: 'none', padding: '12px' }}
                     placeholder="Internal notes about this unit..."
                     value={formData.notes}

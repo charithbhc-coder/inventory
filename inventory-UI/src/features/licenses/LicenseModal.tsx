@@ -111,8 +111,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
           {/* Row 1: Software Name + Vendor */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>SOFTWARE NAME *</label>
+              <label htmlFor="lic-software" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>SOFTWARE NAME *</label>
               <input
+                id="lic-software"
                 {...register('softwareName')}
                 placeholder="e.g. AWS Business Support"
                 style={inputStyle(!!errors.softwareName)}
@@ -121,8 +122,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
             </div>
 
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>VENDOR *</label>
+              <label htmlFor="lic-vendor" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>VENDOR *</label>
               <input
+                id="lic-vendor"
                 {...register('vendor')}
                 placeholder="e.g. Amazon Web Services"
                 style={inputStyle(!!errors.vendor)}
@@ -133,8 +135,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
 
           {/* Row 2: License Key */}
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>LICENSE KEY (OPTIONAL)</label>
+            <label htmlFor="lic-key" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>LICENSE KEY (OPTIONAL)</label>
             <input
+              id="lic-key"
               {...register('licenseKey')}
               placeholder="XXXX-YYYY-ZZZZ-1234"
               style={inputStyle(!!errors.licenseKey)}
@@ -144,16 +147,18 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
           {/* Row 3: Purchase Date + Expiry Date */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>PURCHASE DATE</label>
+              <label htmlFor="lic-purchase" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>PURCHASE DATE</label>
               <input
+                id="lic-purchase"
                 type="date"
                 {...register('purchaseDate')}
                 style={inputStyle(false)}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EXPIRY DATE *</label>
+              <label htmlFor="lic-expiry" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EXPIRY DATE *</label>
               <input
+                id="lic-expiry"
                 type="date"
                 {...register('expiryDate')}
                 style={inputStyle(!!errors.expiryDate)}
@@ -165,8 +170,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
           {/* Row 4: Category */}
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>CATEGORY</label>
+              <label htmlFor="lic-cat" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>CATEGORY</label>
               <input
+                id="lic-cat"
                 {...register('category')}
                 placeholder="e.g. Security, Cloud"
                 style={inputStyle(false)}
@@ -177,8 +183,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
 
           {/* Row 5: Contact Email */}
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>CONTACT EMAIL (FOR NOTIFICATIONS)</label>
+            <label htmlFor="lic-contact" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>CONTACT EMAIL (FOR NOTIFICATIONS)</label>
             <input
+              id="lic-contact"
               {...register('contactEmail')}
               placeholder="e.g. it-admin@company.com"
               style={inputStyle(!!errors.contactEmail)}
@@ -188,8 +195,9 @@ export default function LicenseModal({ isOpen, onClose, license, onSave }: Props
 
           {/* Row 6: Notes */}
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>NOTES</label>
+            <label htmlFor="lic-notes" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>NOTES</label>
             <textarea
+              id="lic-notes"
               {...register('notes')}
               placeholder="Additional details..."
               rows={3}

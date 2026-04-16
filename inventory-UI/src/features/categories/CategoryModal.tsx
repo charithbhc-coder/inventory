@@ -139,10 +139,11 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
 
             {/* Name */}
             <div>
-              <label style={s.label}>CATEGORY NAME <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+              <label htmlFor="cat-name" style={s.label}>CATEGORY NAME <span style={{ color: 'var(--accent-red)' }}>*</span></label>
               <div style={s.inputWrap}>
                 <Tag style={s.inputIcon} size={16} />
                 <input
+                  id="cat-name"
                   style={s.input}
                   placeholder="e.g. Laptop, Server, Desk Chair"
                   value={formData.name}
@@ -153,13 +154,14 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
 
             {/* Code */}
             <div>
-              <label style={s.label}>
+              <label htmlFor="cat-code" style={s.label}>
                 CATEGORY CODE (PREFIX) <span style={{ color: 'var(--accent-red)' }}>*</span>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>2–6 chars, auto-uppercased</span>
               </label>
               <div style={s.inputWrap}>
                 <Hash style={s.inputIcon} size={16} />
                 <input
+                  id="cat-code"
                   style={s.input}
                   placeholder="e.g. LAP, SRV, DSK"
                   value={formData.code}
@@ -196,10 +198,11 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
             {/* Parent Category (conditional) */}
             {!isMainCategory && (
               <div style={{ animation: 'fadeIn 0.2s ease forwards' }}>
-                <label style={s.label}>PARENT GROUP <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+                <label htmlFor="cat-parent" style={s.label}>PARENT GROUP <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                 <div style={s.inputWrap}>
                   <Layers style={s.inputIcon} size={16} />
                   <select
+                    id="cat-parent"
                     value={formData.parentCategoryId}
                     onChange={e => setFormData({ ...formData, parentCategoryId: e.target.value })}
                     style={{ ...s.input, borderColor: 'var(--accent-yellow)', boxShadow: '0 0 0 1px rgba(255, 224, 83, 0.2)' }}
@@ -219,8 +222,9 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
 
             {/* Description */}
             <div>
-              <label style={s.label}>DESCRIPTION</label>
+              <label htmlFor="cat-desc" style={s.label}>DESCRIPTION</label>
               <textarea
+                id="cat-desc"
                 style={{ ...s.inputSimple, minHeight: 80, resize: 'none' }}
                 placeholder="Brief description of this category..."
                 value={formData.description}

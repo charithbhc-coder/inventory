@@ -123,10 +123,11 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
           {/* Company selector – hidden when a fixed company is provided */}
           {!fixedCompanyId && (
             <div>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+              <label htmlFor="dept-company" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                 COMPANY
               </label>
               <select
+                id="dept-company"
                 {...register('companyId')}
                 disabled={isEdit}
                 style={{ ...inputStyle(!!errors.companyId), appearance: 'none', cursor: isEdit ? 'not-allowed' : 'pointer', opacity: isEdit ? 0.5 : 1 }}
@@ -143,10 +144,11 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
           {/* Name + Code row */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+              <label htmlFor="dept-name" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                 DEPARTMENT NAME
               </label>
               <input
+                id="dept-name"
                 {...register('name')}
                 placeholder="e.g. Human Resources"
                 style={inputStyle(!!errors.name)}
@@ -154,10 +156,11 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
               {errors.name && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.name.message}</span>}
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+              <label htmlFor="dept-code" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                 CODE
               </label>
               <input
+                id="dept-code"
                 {...register('code')}
                 placeholder="HR"
                 disabled={isEdit}
@@ -174,10 +177,11 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
 
           {/* Location */}
           <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            <label htmlFor="dept-location" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
               LOCATION <span style={{ fontWeight: 400, opacity: 0.6, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
             </label>
             <input
+              id="dept-location"
               {...register('location')}
               placeholder="e.g. Floor 2, Building A"
               style={inputStyle(false)}

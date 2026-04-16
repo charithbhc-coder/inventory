@@ -184,8 +184,9 @@ export default function SettingsPage() {
               <div style={styles.formSection}>
                 <h3 style={styles.sectionTitle}>Global Configuration</h3>
                 <div style={styles.inputGroup}>
-                  <label style={styles.label}>System Branding Name</label>
+                  <label htmlFor="settings-sysname" style={styles.label}>System Branding Name</label>
                   <input 
+                    id="settings-sysname"
                     style={styles.input} 
                     value={localSettings.system_name || ''} 
                     onChange={e => updateField('system_name', e.target.value)}
@@ -193,8 +194,9 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div style={styles.inputGroup}>
-                  <label style={styles.label}>System Master Timezone</label>
+                  <label htmlFor="settings-timezone" style={styles.label}>System Master Timezone</label>
                   <select 
+                    id="settings-timezone"
                     style={styles.select} 
                     value={localSettings.system_timezone || 'UTC'} 
                     onChange={e => updateField('system_timezone', e.target.value)}

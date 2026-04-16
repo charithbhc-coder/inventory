@@ -220,9 +220,10 @@ export default function ProfilePage() {
 
                 <div className="form-responsive-grid" style={styles.formGrid}>
                   <div style={{ ...styles.fieldGroup, flexDirection: 'column' as const }}>
-                    <label style={styles.label}>FIRST NAME</label>
+                    <label htmlFor="profile-first-name" style={styles.label}>FIRST NAME</label>
                     <div style={styles.inputWrapper}>
                       <input
+                        id="profile-first-name"
                         {...regProfile('firstName')}
                         style={styles.input}
                         placeholder="Enter first name"
@@ -232,9 +233,10 @@ export default function ProfilePage() {
                   </div>
 
                   <div style={{ ...styles.fieldGroup, flexDirection: 'column' as const }}>
-                    <label style={styles.label}>LAST NAME</label>
+                    <label htmlFor="profile-last-name" style={styles.label}>LAST NAME</label>
                     <div style={styles.inputWrapper}>
                       <input
+                        id="profile-last-name"
                         {...regProfile('lastName')}
                         style={styles.input}
                         placeholder="Enter last name"
@@ -244,10 +246,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="full-width-field" style={{ ...styles.fieldGroup, gridColumn: 'span 2', flexDirection: 'column' as const }}>
-                    <label style={styles.label}>EMAIL ADDRESS</label>
+                    <label htmlFor="profile-email" style={styles.label}>EMAIL ADDRESS</label>
                     <div style={{ ...styles.inputWrapper, opacity: 0.7, background: 'var(--bg-dark)' }}>
                       <Mail size={16} color="var(--text-muted)" style={styles.inputIcon} />
                       <input
+                        id="profile-email"
                         defaultValue={user.email}
                         disabled
                         style={{ ...styles.input, cursor: 'not-allowed' }}
@@ -257,10 +260,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="full-width-field" style={{ ...styles.fieldGroup, gridColumn: 'span 2', flexDirection: 'column' as const }}>
-                    <label style={styles.label}>PHONE NUMBER</label>
+                    <label htmlFor="profile-phone" style={styles.label}>PHONE NUMBER</label>
                     <div style={styles.inputWrapper}>
                       <Phone size={16} color="var(--text-muted)" style={styles.inputIcon} />
                       <input
+                        id="profile-phone"
                         {...regProfile('phone')}
                         style={styles.input}
                         placeholder="+1 (555) 000-0000"
@@ -306,10 +310,11 @@ export default function ProfilePage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   <div style={{ ...styles.fieldGroup, flexDirection: 'column' as const }}>
-                    <label style={styles.label}>CURRENT PASSWORD</label>
+                    <label htmlFor="current-password" style={styles.label}>CURRENT PASSWORD</label>
                     <div style={styles.inputWrapper}>
                       <Lock size={16} color="var(--text-muted)" style={styles.inputIcon} />
                       <input
+                        id="current-password"
                         type={showPass.current ? 'text' : 'password'}
                         {...regPass('currentPassword')}
                         style={styles.input}
@@ -324,10 +329,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div style={{ ...styles.fieldGroup, flexDirection: 'column' as const }}>
-                    <label style={styles.label}>NEW PASSWORD</label>
+                    <label htmlFor="new-password" style={styles.label}>NEW PASSWORD</label>
                     <div style={styles.inputWrapper}>
                       <Lock size={16} color="var(--text-muted)" style={styles.inputIcon} />
                       <input
+                        id="new-password"
                         type={showPass.new ? 'text' : 'password'}
                         {...regPass('newPassword')}
                         style={styles.input}
@@ -342,10 +348,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div style={{ ...styles.fieldGroup, flexDirection: 'column' as const }}>
-                    <label style={styles.label}>CONFIRM NEW PASSWORD</label>
+                    <label htmlFor="confirm-password" style={styles.label}>CONFIRM NEW PASSWORD</label>
                     <div style={styles.inputWrapper}>
                       <Lock size={16} color="var(--text-muted)" style={styles.inputIcon} />
                       <input
+                        id="confirm-password"
                         type={showPass.confirm ? 'text' : 'password'}
                         {...regPass('confirmPassword')}
                         style={styles.input}
