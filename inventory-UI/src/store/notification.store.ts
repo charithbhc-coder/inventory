@@ -40,7 +40,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     // Initial fetch
     get().fetchNotifications();
 
-    const socket = io(API_ROOT_URL, {
+    const socketOrigin = API_ROOT_URL.startsWith('http') 
+      ? new URL(API_ROOT_URL).origin 
+      : window.location.origin;
+
+    const socket = io(socketOrigin, {
       extraHeaders: {
         Authorization: `Bearer ${accessToken}`,
       },

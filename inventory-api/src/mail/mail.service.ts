@@ -18,14 +18,25 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
 
   constructor(private configService: ConfigService) {
+    const authType = this.configService.get<string>('MAIL_AUTH_TYPE');
+    const auth: any = {
+      user: this.configService.get<string>('MAIL_USER'),
+    };
+
+    if (authType === 'OAuth2') {
+      auth.type = 'OAuth2';
+      auth.clientId = this.configService.get<string>('OAUTH_CLIENT_ID');
+      auth.clientSecret = this.configService.get<string>('OAUTH_CLIENT_SECRET');
+      auth.refreshToken = this.configService.get<string>('OAUTH_REFRESH_TOKEN');
+    } else {
+      auth.pass = this.configService.get<string>('MAIL_PASS');
+    }
+
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST'),
       port: this.configService.get<number>('MAIL_PORT'),
       secure: this.configService.get<string>('MAIL_SECURE') === 'true',
-      auth: {
-        user: this.configService.get<string>('MAIL_USER'),
-        pass: this.configService.get<string>('MAIL_PASS'),
-      },
+      auth,
     });
   }
 
