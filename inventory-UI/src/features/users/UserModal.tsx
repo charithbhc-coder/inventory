@@ -97,8 +97,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
         <form onSubmit={handleSubmit(onSave)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>FIRST NAME</label>
+              <label htmlFor="firstName" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>FIRST NAME</label>
               <input 
+                id="firstName"
                 {...register('firstName')}
                 placeholder="e.g. John"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.firstName ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: 'var(--text-main)' }}
@@ -107,8 +108,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
             </div>
             
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>LAST NAME</label>
+              <label htmlFor="lastName" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>LAST NAME</label>
               <input 
+                id="lastName"
                 {...register('lastName')}
                 placeholder="e.g. Doe"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.lastName ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: 'var(--text-main)' }}
@@ -119,8 +121,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
 
           <div style={{ display: 'flex', gap: 16 }}>
              <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EMAIL</label>
+              <label htmlFor="email" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EMAIL</label>
               <input 
+                id="email"
                 {...register('email')}
                 placeholder="john@company.com"
                 disabled={!!user} // Email usually acts as unchangeable username
@@ -129,8 +132,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
               {errors.email && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.email.message}</span>}
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>PHONE</label>
+              <label htmlFor="phone" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>PHONE</label>
               <input 
+                id="phone"
                 {...register('phone')}
                 placeholder="+1 234 567 8900"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--search-bg)', color: 'var(--text-main)' }}
@@ -140,8 +144,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
 
           <div style={{ display: 'flex', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>ROLE</label>
+              <label htmlFor="role" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>ROLE</label>
               <select 
+                id="role"
                 value={isCustomRole ? 'CUSTOM' : currentRoleValue}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -165,6 +170,7 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
               {isCustomRole && (
                 <div style={{ position: 'relative' }}>
                   <input 
+                    id="customRole"
                     placeholder="Type custom role name..."
                     {...register('role')} 
                     autoFocus
@@ -182,8 +188,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
             </div>
 
             <div style={{ flex: 1, opacity: currentRoleValue === 'SUPER_ADMIN' ? 0.3 : 1, pointerEvents: currentRoleValue === 'SUPER_ADMIN' ? 'none' : 'auto' }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>ASSIGNED AFFILIATE</label>
+              <label htmlFor="companyId" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>ASSIGNED AFFILIATE</label>
               <select 
+                id="companyId"
                 {...register('companyId')}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.companyId ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: 'var(--text-main)', appearance: 'none' }}
               >

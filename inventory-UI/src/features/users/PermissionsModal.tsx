@@ -218,6 +218,7 @@ export default function PermissionsModal({ isOpen, onClose, user, onSave }: Prop
 
                           return (
                             <label 
+                              htmlFor={`perm-${perm.id}`}
                               key={perm.id} 
                               style={{ 
                                 display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', 
@@ -228,6 +229,7 @@ export default function PermissionsModal({ isOpen, onClose, user, onSave }: Prop
                               }}
                             >
                               <input 
+                                id={`perm-${perm.id}`}
                                 type="checkbox" 
                                 value={perm.id}
                                 {...register('selectedPerms')}

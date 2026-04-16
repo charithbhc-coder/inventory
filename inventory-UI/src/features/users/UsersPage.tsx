@@ -330,6 +330,9 @@ export default function UsersPage() {
           <div style={{ position: 'relative', width: 300 }}>
             <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
+              id="search-users"
+              name="search"
+              aria-label="Search staff by name or email"
               type="text" 
               placeholder="Search staff by name or email..." 
               value={search}

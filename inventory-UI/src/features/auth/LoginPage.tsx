@@ -65,15 +65,16 @@ export default function LoginPage() {
 
         {/* Email */}
         <div style={styles.fieldGroup}>
-          <label style={styles.label}>EMAIL</label>
+          <label htmlFor="login-email" style={styles.label}>EMAIL</label>
           <div style={{
             ...styles.inputWrap,
             boxShadow: emailFocus ? styles.inputWrapFocusShadow : styles.inputWrapShadow,
           }}>
             <AtSign size={15} color={emailFocus ? '#F5C518' : '#aaa'} style={styles.inputIcon} />
             <input
+              id="login-email"
               placeholder="Email or Username"
-              autoComplete="off"
+              autoComplete="email"
               style={styles.input}
               {...register('email')}
               onFocus={() => setEmailFocus(true)}
@@ -85,16 +86,17 @@ export default function LoginPage() {
 
         {/* Password */}
         <div style={styles.fieldGroup}>
-          <label style={styles.label}>PASSWORD</label>
+          <label htmlFor="login-password" style={styles.label}>PASSWORD</label>
           <div style={{
             ...styles.inputWrap,
             boxShadow: passFocus ? styles.inputWrapFocusShadow : styles.inputWrapShadow,
           }}>
             <Lock size={15} color={passFocus ? '#F5C518' : '#aaa'} style={styles.inputIcon} />
             <input
+              id="login-password"
               type={showPass ? 'text' : 'password'}
               placeholder="••••••••••"
-              autoComplete="off"
+              autoComplete="current-password"
               style={{ ...styles.input, paddingRight: 44 }}
               {...register('password')}
               onFocus={() => setPassFocus(true)}
