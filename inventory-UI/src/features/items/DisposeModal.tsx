@@ -103,22 +103,19 @@ export default function DisposeModal({ item, isOpen, onClose }: DisposeModalProp
           </div>
 
           <div style={styles.footer}>
-            <button type="button" onClick={onClose} className="outline-btn" style={{ padding: '10px 20px' }}>Cancel</button>
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="btn btn-secondary" 
+              style={{ fontSize: '14px' }}
+            >
+              Cancel
+            </button>
             <button 
               type="submit" 
-              className="primary-btn-red" 
+              className="btn btn-danger" 
               disabled={mutation.isPending}
-              style={{ 
-                padding: '10px 30px', 
-                fontWeight: 800, 
-                background: 'var(--accent-red)', 
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)',
-                transition: 'all 0.2s'
-              }}
+              style={{ minWidth: 160 }}
             >
               {mutation.isPending ? 'Disposing...' : 'Confirm Disposal'}
             </button>
@@ -136,44 +133,44 @@ const styles = {
     justifyContent: 'center', zIndex: 1100
   },
   modal: {
-    width: '100%', maxWidth: 480, background: 'var(--bg-card)', 
-    borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
+    width: '100%', maxWidth: 480, background: 'var(--color-surface)', 
+    borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-lg)'
   },
   header: {
-    padding: '20px 24px', background: '#111827', color: '#fff',
+    padding: '20px 24px', background: 'var(--color-sidebar)', color: '#fff',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
   },
   iconBox: {
-    width: 40, height: 40, borderRadius: 10, background: 'var(--accent-red)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+    width: 40, height: 40, borderRadius: 10, background: 'var(--color-danger-bg)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-danger)'
   },
   title: { margin: 0, fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' },
   subtitle: { margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 },
   closeBtn: { background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.6 },
   form: { padding: 24 },
   alert: {
-    padding: '12px 16px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: 8,
-    border: '1px solid rgba(239, 68, 68, 0.2)', color: '#b91c1c',
+    padding: '12px 16px', background: 'var(--color-danger-bg)', borderRadius: 8,
+    border: '1px solid var(--color-border)', color: 'var(--color-danger)',
     fontSize: 12, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4,
     fontWeight: 600
   },
-  label: { display: 'block', marginBottom: 8, fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em' },
+  label: { display: 'block', marginBottom: 8, fontSize: 10, fontWeight: 800, color: 'var(--color-text-muted)', letterSpacing: '0.05em' },
   inputWrap: { position: 'relative' as const },
-  inputIcon: { position: 'absolute' as const, left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' },
+  inputIcon: { position: 'absolute' as const, left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' },
   input: {
-    width: '100%', padding: '12px 14px 12px 42px', background: 'var(--bg-dark)', 
-    border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, 
-    color: 'var(--text-main)', outline: 'none'
+    width: '100%', padding: '12px 14px 12px 42px', background: 'var(--color-surface-2)', 
+    border: '1px solid var(--color-border)', borderRadius: 10, fontSize: 13, 
+    color: 'var(--color-text-primary)', outline: 'none'
   },
   inputSimple: {
-    width: '100%', padding: '12px 14px', background: 'var(--bg-dark)', 
-    border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, 
-    color: 'var(--text-main)', outline: 'none'
+    width: '100%', padding: '12px 14px', background: 'var(--color-surface-2)', 
+    border: '1px solid var(--color-border)', borderRadius: 10, fontSize: 13, 
+    color: 'var(--color-text-primary)', outline: 'none'
   },
   textarea: {
-    width: '100%', padding: 12, background: 'var(--bg-dark)', 
-    border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, 
-    color: 'var(--text-main)', outline: 'none', minHeight: 100, resize: 'none' as const
+    width: '100%', padding: 12, background: 'var(--color-surface-2)', 
+    border: '1px solid var(--color-border)', borderRadius: 10, fontSize: 13, 
+    color: 'var(--color-text-primary)', outline: 'none', minHeight: 100, resize: 'none' as const
   },
-  footer: { marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border-dark)', display: 'flex', justifyContent: 'flex-end', gap: 12 }
+  footer: { marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: 12 }
 };
