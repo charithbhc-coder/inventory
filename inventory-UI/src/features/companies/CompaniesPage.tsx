@@ -152,8 +152,9 @@ export default function CompaniesPage() {
           if (!url) return null;
           if (url.startsWith('http')) return url;
           const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-          const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
-          return `${origin}${url}`;
+          const safeUrl = url.startsWith('/') ? url : `/${url}`;
+          const safeBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+          return `${safeBase}${safeUrl}`;
         };
 
         const logoUrl = resolveImageUrl(rawLogoUrl);
