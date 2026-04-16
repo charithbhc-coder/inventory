@@ -7,8 +7,8 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const mailService = app.get(MailService);
   
-  const targetEmail = 'charith.bhc@gmail.com';
-  const name = 'Charith';
+  const targetEmail = 'KTMG-Vault@ktdoctor.com';
+  const name = 'Admin';
   
   try {
     console.log('1. Sending Password Reset Email...');

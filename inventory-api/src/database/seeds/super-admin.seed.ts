@@ -26,10 +26,10 @@ async function bootstrap() {
 
   const usersRepo = dataSource.getRepository('User');
 
-  const email = process.env.SUPER_ADMIN_EMAIL || 'charith.bhc@gmail.com';
+  const email = process.env.SUPER_ADMIN_EMAIL || 'KTMG-Vault@ktdoctor.com';
   const tempPass = process.env.SUPER_ADMIN_TEMP_PASS || 'Admin@123';
-  const firstName = process.env.SUPER_ADMIN_FIRST_NAME || 'Charith';
-  const lastName = process.env.SUPER_ADMIN_LAST_NAME || 'SiteAdmin';
+  const firstName = process.env.SUPER_ADMIN_FIRST_NAME || 'Super';
+  const lastName = process.env.SUPER_ADMIN_LAST_NAME || 'Admin';
 
   const existing = await usersRepo.findOne({ where: { email } });
 
