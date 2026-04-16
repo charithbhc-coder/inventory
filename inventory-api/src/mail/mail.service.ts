@@ -26,19 +26,10 @@ export class MailService implements OnModuleInit {
       return;
     }
 
-    const authType = this.configService.get<string>('MAIL_AUTH_TYPE');
-    const auth: any = {
+    const auth = {
       user: this.configService.get<string>('MAIL_USER'),
+      pass: this.configService.get<string>('MAIL_PASS'),
     };
-
-    if (authType === 'OAuth2') {
-      auth.type = 'OAuth2';
-      auth.clientId = this.configService.get<string>('OAUTH_CLIENT_ID');
-      auth.clientSecret = this.configService.get<string>('OAUTH_CLIENT_SECRET');
-      auth.refreshToken = this.configService.get<string>('OAUTH_REFRESH_TOKEN');
-    } else {
-      auth.pass = this.configService.get<string>('MAIL_PASS');
-    }
 
     this.transporter = nodemailer.createTransport({
       service,
