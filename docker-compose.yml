@@ -6,11 +6,9 @@ services:
     container_name: inventory-db
     restart: always
     environment:
-      POSTGRES_DB: inventory
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5433:5432"
+      POSTGRES_DB: ${DB_NAME:-inventory}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
@@ -44,7 +42,7 @@ services:
     build:
       context: ./inventory-UI
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://apps.myblockchainbpo.com/inventory-api/v1}
+        VITE_API_BASE_URL: https://apps.myblockchainbpo.com/inventory-api/v1
     container_name: inventory-ui
     restart: always
     depends_on:
