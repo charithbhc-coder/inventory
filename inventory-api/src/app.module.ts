@@ -27,6 +27,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { SettingsModule } from './settings/settings.module';
 import { SearchModule } from './search/search.module';
 import { LicensesModule } from './licenses/licenses.module';
+import { BootstrapModule } from './bootstrap/bootstrap.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { LicensesModule } from './licenses/licenses.module';
     ReportsModule,
     SearchModule,
     LicensesModule,
+    BootstrapModule,
   ],
   controllers: [],
   providers: [
