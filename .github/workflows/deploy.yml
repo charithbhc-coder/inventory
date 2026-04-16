@@ -6,22 +6,27 @@ on:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Remote SSH Deployment
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ${{ secrets.LIGHTSAIL_USER || 'ubuntu' }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script: |
-            set -e
-
+            # Navigate to project directory
             cd ~/inventory
+
+            # Fetch latest changes
             git pull origin main
 
+            # Update build-time environment variable for UI build
             export VITE_API_BASE_URL="https://apps.myblockchainbpo.com/inventory-api/v1"
 
-            sudo -E docker compose up -d --build
+            # Build and restart containers
+            sudo VITE_API_BASE_URL=$VITE_API_BASE_URL docker-compose up -d --build
 
+            # Prune old images to save space
             sudo docker image prune -f
