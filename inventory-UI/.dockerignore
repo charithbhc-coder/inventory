@@ -1,0 +1,19 @@
+# Exclude local environment files — production env vars are injected via docker-compose.yml build args
+.env
+.env.local
+.env.*.local
+.env.development
+.env.development.local
+
+# Exclude node_modules — installed fresh inside the container
+node_modules
+
+# Exclude local dev/build artifacts
+dist
+.vite
+
+# Exclude OS/editor files
+.DS_Store
+Thumbs.db
+.idea
+.vscode
