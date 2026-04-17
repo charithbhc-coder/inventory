@@ -169,9 +169,6 @@ export default function CategoryModal({ category, isOpen, onClose, onSuccessCall
                   style={s.input}
                 />
               </div>
-              <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>
-                Used in auto-generated barcodes: <strong>ACME-{formData.code || 'LAP'}-20250615-0042</strong>
-              </p>
             </div>
 
             {/* Category Type Toggle */}

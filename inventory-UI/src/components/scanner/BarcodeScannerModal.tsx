@@ -27,7 +27,10 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
               Html5QrcodeSupportedFormats.CODE_39,
               Html5QrcodeSupportedFormats.EAN_13,
               Html5QrcodeSupportedFormats.EAN_8
-            ]
+            ],
+            videoConstraints: {
+              facingMode: "environment"
+            }
           },
           /* verbose= */ false
         );
@@ -64,8 +67,17 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             <Camera size={20} color="var(--accent-yellow)" />
             <h3 style={styles.title}>Scan Barcode</h3>
           </div>
-          <button onClick={onClose} style={styles.closeBtn}>
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            style={{ 
+              ...styles.closeBtn, 
+              width: 48, height: 48, 
+              background: 'var(--accent-red)', 
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+              border: '2px solid rgba(255,255,255,0.2)'
+            }}
+          >
+            <X size={28} />
           </button>
         </div>
 

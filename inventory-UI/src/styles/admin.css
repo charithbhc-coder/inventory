@@ -92,6 +92,7 @@ body {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
+  border-radius: 0 20px 20px 0;
 }
 
 .admin-sidebar.expanded { width: 260px; }

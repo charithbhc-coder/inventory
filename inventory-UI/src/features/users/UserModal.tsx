@@ -6,6 +6,8 @@ import { X, Users } from 'lucide-react';
 import { User } from '@/services/user.service';
 import { useQuery } from '@tanstack/react-query';
 import { companyService, Company } from '@/services/company.service';
+import { useAuthStore } from '@/store/auth.store';
+import { UserRole } from '@/types';
 
 const userSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -26,6 +28,9 @@ interface Props {
 }
 
 export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
+  const { user: currentUser } = useAuthStore();
+  const isSuperAdmin = currentUser?.role === UserRole.SUPER_ADMIN;
+
   const { data: companyData, isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies-all'],
     queryFn: () => companyService.getCompanies({ limit: 100 }),
@@ -121,15 +126,23 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
 
           <div style={{ display: 'flex', gap: 16 }}>
              <div style={{ flex: 1 }}>
-              <label htmlFor="email" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EMAIL</label>
-              <input 
-                id="email"
-                {...register('email')}
-                placeholder="john@company.com"
-                disabled={!!user} // Email usually acts as unchangeable username
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.email ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: user ? 'var(--text-muted)' : 'var(--text-main)', cursor: user ? 'not-allowed' : 'text' }}
-              />
-              {errors.email && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.email.message}</span>}
+               <label htmlFor="email" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>EMAIL</label>
+               <input 
+                 id="email"
+                 {...register('email')}
+                 placeholder="john@company.com"
+                 disabled={!!user && !isSuperAdmin}
+                 style={{ 
+                   width: '100%', 
+                   padding: '10px 14px', 
+                   borderRadius: 8, 
+                   border: `1px solid ${errors.email ? 'var(--accent-red)' : 'var(--border-dark)'}`, 
+                   background: 'var(--search-bg)', 
+                   color: (!!user && !isSuperAdmin) ? 'var(--text-muted)' : 'var(--text-main)',
+                   cursor: (!!user && !isSuperAdmin) ? 'not-allowed' : 'text'
+                 }}
+               />
+               {errors.email && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.email.message}</span>}
             </div>
             <div style={{ flex: 1 }}>
               <label htmlFor="phone" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>PHONE</label>

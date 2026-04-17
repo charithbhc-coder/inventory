@@ -34,6 +34,10 @@ export class UpdateCompanyDto {
   @IsOptional()
   name?: string;
 
+  @IsString()
+  @IsOptional()
+  code?: string;
+
   
   @IsString()
   @IsOptional()

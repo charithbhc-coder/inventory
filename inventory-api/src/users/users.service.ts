@@ -166,6 +166,16 @@ export class UsersService {
       throw new ForbiddenException('Cannot assign Super Admin role via API');
     }
 
+    if (dto.email && dto.email.toLowerCase() !== user.email.toLowerCase()) {
+      const existing = await this.usersRepository.findOne({
+        where: { email: dto.email.toLowerCase() },
+      });
+      if (existing) {
+        throw new ConflictException('A user with that email already exists');
+      }
+      user.email = dto.email.toLowerCase();
+    }
+
     // Validate permissions if provided
     if (dto.permissions) {
       const validPermissions = Object.values(AdminPermission);

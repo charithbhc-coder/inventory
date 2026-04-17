@@ -33,6 +33,7 @@ export default function CategoriesPage() {
   const urlOpen = searchParams.get('open');
 
   const [search, setSearch] = useState('');
+  const [parentFilter, setParentFilter] = useState('');
 
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,8 +65,16 @@ export default function CategoriesPage() {
     return items;
   }, [catData]);
 
-  const activeCategories = useMemo(() => categories.filter(c => c.isActive !== false), [categories]);
-  const inactiveCategories = useMemo(() => categories.filter(c => c.isActive === false), [categories]);
+  const topLevelCategories = useMemo(() => categories.filter(c => !c.parentCategoryId), [categories]);
+
+  const filteredCategories = useMemo(() => {
+    if (!parentFilter) return categories;
+    if (parentFilter === '__top__') return categories.filter(c => !c.parentCategoryId);
+    return categories.filter(c => c.parentCategoryId === parentFilter);
+  }, [categories, parentFilter]);
+
+  const activeCategories = useMemo(() => filteredCategories.filter(c => c.isActive !== false), [filteredCategories]);
+  const inactiveCategories = useMemo(() => filteredCategories.filter(c => c.isActive === false), [filteredCategories]);
 
   // Combined Deep Link & Search Sync
   useEffect(() => {
@@ -259,7 +268,7 @@ export default function CategoriesPage() {
       <div className="dark-card" style={{ padding: '24px 0 0', overflow: 'hidden' }}>
         {/* Search Toolbar */}
         <div style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: '0 0 320px', minWidth: 280 }}>
+          <div style={{ position: 'relative', flex: '0 0 280px', minWidth: 220 }}>
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 16, top: 12 }} />
             <input
               type="text"
@@ -272,6 +281,24 @@ export default function CategoriesPage() {
                 background: 'var(--search-bg)', color: 'var(--text-main)', fontSize: 13, outline: 'none',
               }}
             />
+          </div>
+          {/* Parent Category Filter */}
+          <div style={{ position: 'relative', flex: '0 0 220px', minWidth: 180 }}>
+            <select
+              value={parentFilter}
+              onChange={e => { setParentFilter(e.target.value); setPage(1); }}
+              style={{
+                width: '100%', padding: '10px 16px',
+                borderRadius: 8, border: '1px solid var(--border-dark)',
+                background: 'var(--search-bg)', color: 'var(--text-main)', fontSize: 13, outline: 'none', cursor: 'pointer'
+              }}
+            >
+              <option value="">All Categories</option>
+              <option value="__top__">Top-Level Only</option>
+              {topLevelCategories.map(c => (
+                <option key={c.id} value={c.id}>{c.name} (sub-categories)</option>
+              ))}
+            </select>
           </div>
         </div>
 

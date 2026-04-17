@@ -84,8 +84,7 @@ export default function CompanyModal({ isOpen, onClose, company, onSave }: Props
             <input 
               {...register('code')}
               placeholder="e.g. ACM"
-              disabled={!!company}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.code ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: company ? 'var(--text-muted)' : 'var(--text-main)', textTransform: 'uppercase', cursor: company ? 'not-allowed' : 'text' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${errors.code ? 'var(--accent-red)' : 'var(--border-dark)'}`, background: 'var(--search-bg)', color: 'var(--text-main)', textTransform: 'uppercase' }}
             />
             {errors.code && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.code.message}</span>}
           </div>

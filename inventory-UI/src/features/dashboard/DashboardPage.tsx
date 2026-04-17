@@ -308,6 +308,27 @@ export default function DashboardPage() {
               CREATE_SCHEDULED_REPORTS: 'Report Scheduled',
               GENERATE_EXCEL: 'Report Exported (Excel)',
               GENERATE_PDF: 'Report Exported (PDF)',
+              
+              // Administrative Actions
+              CREATE_CATEGORIES: 'Category Created',
+              UPDATE_CATEGORIES: 'Category Updated',
+              DELETE_CATEGORIES: 'Category Deleted',
+              
+              CREATE_COMPANIES: 'Subsidiary Created',
+              UPDATE_COMPANIES: 'Subsidiary Updated',
+              DELETE_COMPANIES: 'Subsidiary Deleted',
+              
+              CREATE_DEPARTMENTS: 'Department Created',
+              UPDATE_DEPARTMENTS: 'Department Updated',
+              DELETE_DEPARTMENTS: 'Department Deleted',
+              
+              CREATE_USERS: 'User Profile Created',
+              UPDATE_USERS: 'User Profile Updated',
+              DELETE_USERS: 'User Profile Deleted',
+              
+              CREATE_ITEMS: 'New Asset Registered',
+              UPDATE_ITEMS: 'Asset Record Updated',
+              DELETE_ITEMS: 'Asset Record Deleted',
             };
 
             const normalizedEventType = String(item.eventType || '').toUpperCase().replace(/-/g, '_');
