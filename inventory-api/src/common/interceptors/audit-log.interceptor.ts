@@ -23,7 +23,9 @@ export class AuditLogInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const { method, url, user, ip, headers } = request;
 
-    if (!WRITE_METHODS.includes(method) || !user) {
+    const isReportDownload = method === 'GET' && url.includes('/reports/') && (url.endsWith('/excel') || url.endsWith('/pdf'));
+
+    if ((!WRITE_METHODS.includes(method) && !isReportDownload) || !user) {
       return next.handle();
     }
 
@@ -110,6 +112,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       PUT: 'UPDATE',
       PATCH: 'UPDATE',
       DELETE: 'DELETE',
+      GET: 'GENERATE',
     };
 
     return `${methodMap[method] || method}_${resource.toUpperCase().replace(/-/g, '_')}`;

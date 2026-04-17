@@ -121,7 +121,8 @@ export class AnalyticsService {
   }
 
   async getRecentActivity(limit = 20, userId?: string, canViewAll = true) {
-    let query = `
+    // Query 1: Item-level events
+    let itemEventsQuery = `
       SELECT 
         ie."eventType",
         ie."createdAt"::timestamptz as "createdAt",
@@ -130,22 +131,61 @@ export class AnalyticsService {
         ie."fromPersonName",
         i.name as "itemName",
         i.barcode,
-        u."firstName" || ' ' || u."lastName" as "performedBy"
+        u."firstName" || ' ' || u."lastName" as "performedBy",
+        'item' as "source"
       FROM item_events ie
       JOIN items i ON i.id = ie."itemId"
       JOIN users u ON u.id = ie."performedByUserId"
     `;
 
-    const params: any[] = [limit];
+    const itemParams: any[] = [];
+    if (!canViewAll && userId) {
+      itemEventsQuery += ` WHERE ie."performedByUserId" = $1 `;
+      itemParams.push(userId);
+    }
+    itemEventsQuery += ` ORDER BY ie."createdAt" DESC LIMIT ${limit} `;
+
+    // Query 2: Report/System events from audit_logs
+    const reportActions = [
+      'CREATE_SEND_EMAIL', 'CREATE_SCHEDULED', 'UPDATE_SCHEDULED', 'DELETE_SCHEDULED',
+      'CREATE_SCHEDULES', 'UPDATE_SCHEDULES', 'DELETE_SCHEDULES',
+      'SEND_EMAIL', 'UPDATE_SCHEDULED_REPORTS', 'CREATE_SCHEDULED_REPORTS',
+      'GENERATE_EXCEL', 'GENERATE_PDF'
+    ];
+    const actionsList = reportActions.map(a => `'${a}'`).join(', ');
+
+    let auditQuery = `
+      SELECT 
+        al.action as "eventType",
+        al."createdAt"::timestamptz as "createdAt",
+        al.action as notes,
+        NULL::text as "toPersonName",
+        NULL::text as "fromPersonName",
+        'System' as "itemName",
+        NULL::text as barcode,
+        u."firstName" || ' ' || u."lastName" as "performedBy",
+        'audit' as "source"
+      FROM audit_logs al
+      JOIN users u ON u.id = al."userId"
+      WHERE al.action IN (${actionsList})
+    `;
 
     if (!canViewAll && userId) {
-      query += ` WHERE ie."performedByUserId" = $2 `;
-      params.push(userId);
+      auditQuery += ` AND al."userId" = '${userId}' `;
     }
+    auditQuery += ` ORDER BY al."createdAt" DESC LIMIT ${limit} `;
 
-    query += ` ORDER BY ie."createdAt" DESC LIMIT $1 `;
+    const [itemEvents, auditEvents] = await Promise.all([
+      this.dataSource.query(itemEventsQuery, itemParams),
+      this.dataSource.query(auditQuery),
+    ]);
 
-    return this.dataSource.query(query, params);
+    // Merge, sort by date, return top N
+    const merged = [...itemEvents, ...auditEvents].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return merged.slice(0, limit);
   }
 
   async getSystemAuditHeatmap() {

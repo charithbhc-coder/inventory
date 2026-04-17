@@ -30,11 +30,13 @@ export default function DashboardPage() {
   const { data: activity = [], isLoading: loadingActivity } = useQuery({
     queryKey: ['analytics', 'activity'],
     queryFn: () => analyticsService.getRecentActivity(10),
+    refetchInterval: 30000, // fallback: also poll every 30s
   });
 
-  // Real-time refresh listener
+  const socket = useNotificationStore((state) => state.socket);
+
+  // Real-time refresh listener — subscribes reactively when socket connects
   useEffect(() => {
-    const socket = useNotificationStore.getState().socket;
     if (!socket) return;
 
     const handleUpdate = () => {
@@ -45,7 +47,7 @@ export default function DashboardPage() {
     return () => {
       socket.off('audit_log_updated', handleUpdate);
     };
-  }, []);
+  }, [socket]);
 
   const totalAssets = companies.reduce((acc: number, c: any) => acc + parseInt(c.total, 10), 0);
   const needsRepair = companies.reduce((acc: number, c: any) => acc + parseInt(c.needsRepair || 0, 10), 0);
@@ -292,10 +294,20 @@ export default function DashboardPage() {
               REPORT_LOST: 'Reported Missing',
               STATUS_CHANGE: 'Status Modified',
               TRANSFERRED: 'Asset Transferred',
+              // Report scheduling (stored by interceptor as CREATE_SCHEDULES etc.)
               CREATE_SCHEDULED: 'Report Scheduled',
               UPDATE_SCHEDULED: 'Report Schedule Updated',
               DELETE_SCHEDULED: 'Report Schedule Deleted',
-              CREATE_SEND_EMAIL: 'Report Email Dispatched'
+              CREATE_SEND_EMAIL: 'Report Email Dispatched',
+              // Interceptor-generated variations (path-based)
+              CREATE_SCHEDULES: 'Report Scheduled',
+              UPDATE_SCHEDULES: 'Report Schedule Updated',
+              DELETE_SCHEDULES: 'Report Schedule Deleted',
+              SEND_EMAIL: 'Report Email Dispatched',
+              UPDATE_SCHEDULED_REPORTS: 'Report Schedule Updated',
+              CREATE_SCHEDULED_REPORTS: 'Report Scheduled',
+              GENERATE_EXCEL: 'Report Exported (Excel)',
+              GENERATE_PDF: 'Report Exported (PDF)',
             };
 
             const normalizedEventType = String(item.eventType || '').toUpperCase().replace(/-/g, '_');

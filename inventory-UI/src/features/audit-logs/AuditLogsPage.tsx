@@ -56,7 +56,15 @@ const ACTION_MAP: Record<string, string> = {
   CREATE_SCHEDULED: 'Report Scheduled',
   UPDATE_SCHEDULED: 'Report Schedule Updated',
   DELETE_SCHEDULED: 'Report Schedule Deleted',
-  CREATE_SEND_EMAIL: 'Report Email Dispatched'
+  CREATE_SEND_EMAIL: 'Report Email Dispatched',
+  CREATE_SCHEDULES: 'Report Scheduled',
+  UPDATE_SCHEDULES: 'Report Schedule Updated',
+  DELETE_SCHEDULES: 'Report Schedule Deleted',
+  SEND_EMAIL: 'Report Email Dispatched',
+  UPDATE_SCHEDULED_REPORTS: 'Report Schedule Updated',
+  CREATE_SCHEDULED_REPORTS: 'Report Scheduled',
+  GENERATE_EXCEL: 'Report Exported (Excel)',
+  GENERATE_PDF: 'Report Exported (PDF)',
 };
 
 export default function AuditLogsPage() {
@@ -65,10 +73,10 @@ export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
   const queryClient = useQueryClient();
+  const socket = useNotificationStore((state) => state.socket);
 
-  // Real-time refresh listener
+  // Real-time refresh listener — subscribes reactively when socket connects
   useEffect(() => {
-    const socket = useNotificationStore.getState().socket;
     if (!socket) return;
 
     const handleUpdate = () => {
@@ -79,7 +87,7 @@ export default function AuditLogsPage() {
     return () => {
       socket.off('audit_log_updated', handleUpdate);
     };
-  }, [queryClient]);
+  }, [socket, queryClient]);
 
   // Fetch Companies for mapping IDs to names (if needed)
   const { data: companiesData } = useQuery({
