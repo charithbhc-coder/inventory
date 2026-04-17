@@ -165,9 +165,9 @@ export class AnalyticsService {
           COALESCE(u."firstName" || ' ' || u."lastName", 'System') AS "performedBy",
           'audit'::text           AS "source"
         FROM audit_logs al
-        LEFT JOIN users u ON u.id = al."userId"
+        LEFT JOIN users u ON u.id = al."userId"::uuid
         WHERE al.action IN (${actionsList})
-        ${!canViewAll && userId ? 'AND al."userId" = $2' : ''}
+        ${!canViewAll && userId ? 'AND al."userId"::uuid = $2' : ''}
         ORDER BY al."createdAt" DESC
         LIMIT $1)
       ) sub
