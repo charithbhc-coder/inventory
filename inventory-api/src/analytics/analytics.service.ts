@@ -132,21 +132,22 @@ export class AnalyticsService {
     const params: any[] = [limit];
     if (!canViewAll && userId) params.push(userId);
 
+    // NOTE: ie."eventType" is a PostgreSQL enum — must cast to ::text for UNION compatibility
     const query = `
       SELECT * FROM (
         (SELECT 
-          ie."eventType",
-          ie."createdAt"::timestamptz as "createdAt",
-          ie.notes,
-          ie."toPersonName",
-          ie."fromPersonName",
-          i.name as "itemName",
-          i.barcode,
-          u."firstName" || ' ' || u."lastName" as "performedBy",
-          'item' as "source"
+          ie."eventType"::text    AS "eventType",
+          ie."createdAt"::timestamptz AS "createdAt",
+          ie.notes::text          AS notes,
+          ie."toPersonName"::text AS "toPersonName",
+          ie."fromPersonName"::text AS "fromPersonName",
+          i.name::text            AS "itemName",
+          i.barcode::text         AS barcode,
+          COALESCE(u."firstName" || ' ' || u."lastName", 'Unknown') AS "performedBy",
+          'item'::text            AS "source"
         FROM item_events ie
         INNER JOIN items i ON i.id = ie."itemId"
-        INNER JOIN users u ON u.id = ie."performedByUserId"
+        LEFT JOIN users u ON u.id = ie."performedByUserId"
         ${!canViewAll && userId ? 'WHERE ie."performedByUserId" = $2' : ''}
         ORDER BY ie."createdAt" DESC
         LIMIT $1)
@@ -154,17 +155,17 @@ export class AnalyticsService {
         UNION ALL
         
         (SELECT 
-          al.action as "eventType",
-          al."createdAt"::timestamptz as "createdAt",
-          al.action as notes,
-          NULL::text as "toPersonName",
-          NULL::text as "fromPersonName",
-          'System' as "itemName",
-          NULL::text as barcode,
-          u."firstName" || ' ' || u."lastName" as "performedBy",
-          'audit' as "source"
+          al.action::text         AS "eventType",
+          al."createdAt"::timestamptz AS "createdAt",
+          al.action::text         AS notes,
+          NULL::text              AS "toPersonName",
+          NULL::text              AS "fromPersonName",
+          'System'::text          AS "itemName",
+          NULL::text              AS barcode,
+          COALESCE(u."firstName" || ' ' || u."lastName", 'System') AS "performedBy",
+          'audit'::text           AS "source"
         FROM audit_logs al
-        INNER JOIN users u ON u.id = al."userId"
+        LEFT JOIN users u ON u.id = al."userId"
         WHERE al.action IN (${actionsList})
         ${!canViewAll && userId ? 'AND al."userId" = $2' : ''}
         ORDER BY al."createdAt" DESC
