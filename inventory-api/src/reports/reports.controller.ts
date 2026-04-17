@@ -52,7 +52,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDetailedAssetPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Asset_Register.pdf');
     res.send(buffer);
   }
 
@@ -75,7 +75,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportSummaryPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Inventory_Summary.pdf');
     res.send(buffer);
   }
 
@@ -98,7 +98,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportDepartmentPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Department_Report.pdf');
     res.send(buffer);
   }
 
@@ -121,7 +121,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportActivityPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Activity_Log.pdf');
     res.send(buffer);
   }
 
@@ -144,7 +144,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportRepairPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Repair_History.pdf');
     res.send(buffer);
   }
 
@@ -167,7 +167,7 @@ export class ReportsController {
     const context = await this.getUserContext(jwt.sub);
     const buffer = await this.reportsService.exportLicensesPdf(filters, context);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Disposition', 'attachment; filename=Software_Licenses.pdf');
     res.send(buffer);
   }
 
