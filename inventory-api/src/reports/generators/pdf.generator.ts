@@ -9,9 +9,10 @@ export class PdfGenerator {
     const t0 = Date.now();
     this.logger.debug('Launching Puppeteer instance...');
     
-    // Use --no-sandbox to avoid issues in some environments (like Docker if added later)
+    // Use system Chromium if available (required for Docker)
     const browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
