@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { searchService, GlobalSearchResult } from '@/services/search.service';
 
+import { authService } from '@/services/auth.service';
 import BarcodeScannerModal from '@/components/scanner/BarcodeScannerModal';
 import logo from '@/assets/logo-sidebar.png';
 import { itemService } from '@/services/item.service';
