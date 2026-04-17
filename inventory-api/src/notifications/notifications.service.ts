@@ -430,4 +430,43 @@ export class NotificationsService {
       actionUrl: `/items?search=${payload.barcode}`,
     });
   }
+
+  @OnEvent('report.scheduled')
+  async handleReportScheduled(payload: { schedule: any; userId: string }) {
+    await this.create({
+      recipientUserId: payload.userId,
+      type: NotificationType.REPORT_SCHEDULED,
+      title: 'Report Scheduled',
+      message: `Automatic delivery for "${payload.schedule.reportType}" has been configured.`,
+      actionUrl: '/reports',
+    });
+  }
+
+  @OnEvent('report.email_sent')
+  async handleReportEmailSent(payload: { recipientEmails: string[]; reportType: string; userContext?: string }) {
+    // If we have a user context (actor), notify them
+    if (payload.userContext) {
+      // Find user by email if possible, or just skip if context is just a string
+      // For now, we'll assume the person who clicked 'send' knows, but 
+      // broadcast to admins if it's a manual dispatch
+      await this.broadcastToPrivilegedUsers(AdminPermission.VIEW_REPORTS, {
+        type: NotificationType.REPORT_DISPATCHED,
+        title: 'Report Dispatched',
+        message: `A "${payload.reportType}" report was manually sent to ${payload.recipientEmails.length} recipient(s).`,
+        actionUrl: '/reports',
+      });
+    }
+  }
+
+  @OnEvent('report.deleted')
+  async handleReportDeleted(payload: { scheduleId: string; reportType: string }) {
+    // We don't necessarily need a notification for deletion, but 
+    // we should broadcast the audit log update.
+  }
+
+  @OnEvent('audit.log_created')
+  handleAuditLogCreated(payload: any) {
+    // This is the heart of the real-time refresh
+    this.gateway.broadcastAuditLog(payload);
+  }
 }

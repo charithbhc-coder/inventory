@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { DataSource } from 'typeorm';
@@ -13,7 +14,10 @@ const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    private dataSource: DataSource,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -53,6 +57,9 @@ export class AuditLogInterceptor implements NestInterceptor {
           });
 
           await this.dataSource.getRepository(AuditLog).save(auditLog);
+          
+          // Emit internal event for notification system (e.g. to broadbast WebSocket updates)
+          this.eventEmitter.emit('audit.log_created', auditLog);
         } catch (error) {
           console.error('[AuditLogInterceptor Error]:', error.message);
           // Never let audit logging crash the main flow
@@ -105,7 +112,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       DELETE: 'DELETE',
     };
 
-    return `${methodMap[method] || method}_${resource.toUpperCase()}`;
+    return `${methodMap[method] || method}_${resource.toUpperCase().replace(/-/g, '_')}`;
   }
 
   private extractResponseMetadata(data: any): any {

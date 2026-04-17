@@ -9,6 +9,7 @@ import { ScheduledReport, ReportFrequency, FileFormat } from './entities/schedul
 import { CreateScheduledReportDto, UpdateScheduledReportDto } from './dto/create-scheduled-report.dto';
 import { SendReportEmailDto } from './dto/send-email.dto';
 import { MailService } from '../mail/mail.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ReportsService {
@@ -19,6 +20,7 @@ export class ReportsService {
     @InjectRepository(ScheduledReport)
     private scheduledReportRepo: Repository<ScheduledReport>,
     private mailService: MailService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // ─── DATA QUERIES ─────────────────────────────────────────────────
@@ -389,6 +391,13 @@ export class ReportsService {
     }
 
     await this.mailService.sendReportEmail(dto.recipientEmails, dto.subject, dto.body, attachments);
+    
+    this.eventEmitter.emit('report.email_sent', { 
+      recipientEmails: dto.recipientEmails, 
+      reportType: dto.reportType,
+      userContext 
+    });
+
     return { sent: dto.recipientEmails.length, message: `Email dispatched to ${dto.recipientEmails.length} recipient(s)` };
   }
 
@@ -406,7 +415,9 @@ export class ReportsService {
       nextRunAt,
       recipientUserIds: [],
     });
-    return this.scheduledReportRepo.save(schedule);
+    const saved = await this.scheduledReportRepo.save(schedule);
+    this.eventEmitter.emit('report.scheduled', { schedule: saved, userId });
+    return saved;
   }
 
   async updateSchedule(id: string, dto: UpdateScheduledReportDto): Promise<ScheduledReport> {
@@ -418,13 +429,16 @@ export class ReportsService {
         schedule.frequency, schedule.timeOfDay, schedule.dayOfWeek, schedule.dayOfMonth, schedule.specificDate,
       );
     }
-    return this.scheduledReportRepo.save(schedule);
+    const saved = await this.scheduledReportRepo.save(schedule);
+    this.eventEmitter.emit('report.updated', { schedule: saved });
+    return saved;
   }
 
   async deleteSchedule(id: string): Promise<void> {
     const schedule = await this.scheduledReportRepo.findOne({ where: { id } });
     if (!schedule) throw new NotFoundException('Scheduled report not found');
     await this.scheduledReportRepo.remove(schedule);
+    this.eventEmitter.emit('report.deleted', { scheduleId: id, reportType: schedule.reportType });
   }
 
   // Compute the next run timestamp given frequency, time, and day settings

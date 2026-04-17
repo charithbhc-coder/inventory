@@ -52,4 +52,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   sendNotification(userId: string, payload: any) {
     this.server.to(`user_${userId}`).emit('new_notification', payload);
   }
+
+  // Broadbast audit log update to all connected clients (triggers UI refresh)
+  broadcastAuditLog(payload?: any) {
+    this.server.emit('audit_log_updated', payload);
+  }
 }

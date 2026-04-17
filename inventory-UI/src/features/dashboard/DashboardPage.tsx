@@ -4,7 +4,9 @@ import { analyticsService } from '@/services/analytics.service';
 import { formatDistanceToNow } from 'date-fns';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNotificationStore } from '@/store/notification.store';
+import { queryClient } from '@/App';
 
 import ItemModal from '../items/ItemModal';
 import AssignModal from '../items/AssignModal';
@@ -29,6 +31,21 @@ export default function DashboardPage() {
     queryKey: ['analytics', 'activity'],
     queryFn: () => analyticsService.getRecentActivity(10),
   });
+
+  // Real-time refresh listener
+  useEffect(() => {
+    const socket = useNotificationStore.getState().socket;
+    if (!socket) return;
+
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    };
+
+    socket.on('audit_log_updated', handleUpdate);
+    return () => {
+      socket.off('audit_log_updated', handleUpdate);
+    };
+  }, []);
 
   const totalAssets = companies.reduce((acc: number, c: any) => acc + parseInt(c.total, 10), 0);
   const needsRepair = companies.reduce((acc: number, c: any) => acc + parseInt(c.needsRepair || 0, 10), 0);
@@ -274,7 +291,11 @@ export default function DashboardPage() {
               RETURNED_FROM_REPAIR: 'Returned from Repair',
               REPORT_LOST: 'Reported Missing',
               STATUS_CHANGE: 'Status Modified',
-              TRANSFERRED: 'Asset Transferred'
+              TRANSFERRED: 'Asset Transferred',
+              CREATE_SCHEDULED: 'Report Scheduled',
+              UPDATE_SCHEDULED: 'Report Schedule Updated',
+              DELETE_SCHEDULED: 'Report Schedule Deleted',
+              CREATE_SEND_EMAIL: 'Report Email Dispatched'
             };
 
             let title = ACTION_MAP[item.eventType] || item.eventType.replace(/_/g, ' ');

@@ -12,6 +12,7 @@ import { itemService, Item } from '@/services/item.service';
 import { Plus, Edit, Search, Building2, ShieldAlert, ShieldCheck, MapPin, LayoutGrid, ChevronLeft, ChevronRight, X, Package, Tag } from 'lucide-react';
 import DepartmentModal from './DepartmentModal';
 import { useSearchParams } from 'react-router-dom';
+import { getUploadUrl } from '@/lib/config';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
@@ -680,7 +681,7 @@ export default function DepartmentsPage() {
                     >
                       {item.imageUrl ? (
                         <img
-                          src={item.imageUrl}
+                          src={getUploadUrl(item.imageUrl)}
                           alt={item.name}
                           style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
                         />

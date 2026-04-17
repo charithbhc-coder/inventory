@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store/notification.store';
 import {
   createColumnHelper,
   flexRender,
@@ -51,7 +52,11 @@ const ACTION_MAP: Record<string, string> = {
   ASSIGN_ITEM: 'Assigned to User',
   UNASSIGN_ITEM: 'Returned to Custody',
   REPAIR_ITEM: 'Repair Initiated',
-  CREATE_ASSIGN: 'Assigned to User'
+  CREATE_ASSIGN: 'Assigned to User',
+  CREATE_SCHEDULED: 'Report Scheduled',
+  UPDATE_SCHEDULED: 'Report Schedule Updated',
+  DELETE_SCHEDULED: 'Report Schedule Deleted',
+  CREATE_SEND_EMAIL: 'Report Email Dispatched'
 };
 
 export default function AuditLogsPage() {
@@ -59,6 +64,22 @@ export default function AuditLogsPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState('');
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
+  const queryClient = useQueryClient();
+
+  // Real-time refresh listener
+  useEffect(() => {
+    const socket = useNotificationStore.getState().socket;
+    if (!socket) return;
+
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+    };
+
+    socket.on('audit_log_updated', handleUpdate);
+    return () => {
+      socket.off('audit_log_updated', handleUpdate);
+    };
+  }, [queryClient]);
 
   // Fetch Companies for mapping IDs to names (if needed)
   const { data: companiesData } = useQuery({
