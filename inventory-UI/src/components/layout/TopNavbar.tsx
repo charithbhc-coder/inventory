@@ -317,7 +317,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           </button>
 
           {notifOpen && (
-            <div className="premium-glass-card" style={{
+            <div className="premium-glass-card notification-dropdown" style={{
               position: 'absolute', top: 48, right: 0, width: 320, padding: 0,
               zIndex: 9999, border: '1px solid var(--border-dark)', background: 'var(--bg-card)',
               overflow: 'hidden', boxShadow: 'var(--card-shadow)'

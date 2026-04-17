@@ -17,39 +17,47 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
   useEffect(() => {
     if (isOpen) {
-      // Small delay to ensure the DOM element is ready
+      // Snapshot the onScan function to avoid dependency issues during the async start
+      const handleScan = (text: string) => {
+        if (qrCodeRef.current && qrCodeRef.current.isScanning) {
+          qrCodeRef.current.stop().then(() => {
+            onScan(text);
+          }).catch(() => {
+            onScan(text);
+          });
+        }
+      };
+
+      // Shorter delay for faster responsiveness
       const timer = setTimeout(async () => {
         try {
           const html5QrCode = new Html5Qrcode(containerId);
           qrCodeRef.current = html5QrCode;
 
           const config = {
-            fps: 15,
-            qrbox: { width: 250, height: 250 },
+            fps: 24, // Higher FPS for faster movement tracking
+            qrbox: { width: 280, height: 180 }, // Rectangle optimized for barcodes
             aspectRatio: 1.0,
             formatsToSupport: [
               Html5QrcodeSupportedFormats.QR_CODE,
               Html5QrcodeSupportedFormats.CODE_128,
               Html5QrcodeSupportedFormats.CODE_39,
               Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8
+              Html5QrcodeSupportedFormats.EAN_8,
+              Html5QrcodeSupportedFormats.UPC_A,
+              Html5QrcodeSupportedFormats.UPC_E,
             ]
           };
 
           await html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            (decodedText) => {
-              // Success! Stop and return
-              html5QrCode.stop().then(() => {
-                onScan(decodedText);
-              }).catch(() => {
-                onScan(decodedText);
-              });
+            { 
+              facingMode: "environment",
+              // Optional but often helps on Android
+              focusMode: "continuous" as any, 
             },
-            () => {
-              // Parse error, ignore
-            }
+            config,
+            handleScan,
+            () => { /* Parse error, ignore */ }
           );
           setIsCameraStarted(true);
         } catch (err: any) {
@@ -57,7 +65,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           setError("Camera access denied or mapping failed. Please check permissions.");
           toast.error("Camera permission is required for scanning.");
         }
-      }, 500);
+      }, 300);
 
       return () => {
         clearTimeout(timer);
@@ -69,7 +77,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
       setIsCameraStarted(false);
       setError(null);
     }
-  }, [isOpen, onScan]);
+  }, [isOpen]); // Only re-run when isOpen changes
 
   if (!isOpen) return null;
 
@@ -92,7 +100,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             </div>
             <div>
               <h3 style={styles.title}>Asset Scanner</h3>
-              <p style={styles.subtitle}>Point at a barcode or QR code</p>
+              <p style={styles.subtitle}>Center the barcode in the highlight area</p>
             </div>
           </div>
         </div>
@@ -101,7 +109,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           {!isCameraStarted && !error && (
             <div style={styles.loadingContainer}>
               <RefreshCw size={40} className="spin" color="var(--accent-yellow)" />
-              <span style={{ marginTop: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Initializing Camera...</span>
+              <span style={{ marginTop: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Connecting Camera...</span>
             </div>
           )}
 
@@ -132,7 +140,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
               <div style={styles.scanFrame}></div>
               <div style={styles.hint}>
                 <AlertCircle size={16} />
-                <span>Keep the code within the frame</span>
+                <span>Move closer to focus better</span>
               </div>
             </div>
           )}
@@ -168,53 +176,54 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '20px',
+    padding: '24px',
   },
   floatingClose: {
     position: 'absolute',
-    top: 30,
-    right: 30,
+    top: 40,
+    right: 40,
     width: 60,
     height: 60,
     borderRadius: '50%',
-    background: 'rgba(239, 68, 68, 0.9)',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
+    background: 'rgba(239, 68, 68, 0.95)',
+    border: '2px solid rgba(255, 255, 255, 0.4)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
     zIndex: 10001,
-    boxShadow: '0 10px 30px rgba(239, 68, 68, 0.4)',
+    boxShadow: '0 10px 40px rgba(239, 68, 68, 0.6)',
     transition: 'transform 0.2s',
   },
   modal: {
     width: '100%',
-    maxWidth: 500,
+    maxWidth: 480,
     background: 'var(--bg-surface)',
     borderRadius: 32,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
-    border: '1px solid rgba(255,255,255,0.05)',
+    boxShadow: '0 30px 100px rgba(0,0,0,1)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    margin: 'auto 0', // Crucial for vertical centering
   },
   header: {
-    padding: '24px 24px',
+    padding: '28px 24px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid rgba(255,255,255,0.05)',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
   },
   iconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    background: 'rgba(255, 224, 83, 0.1)',
+    borderRadius: 14,
+    background: 'rgba(255, 224, 83, 0.15)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: '1px solid rgba(255, 224, 83, 0.2)',
+    border: '1px solid rgba(255, 224, 83, 0.3)',
   },
   title: {
     margin: 0,
@@ -224,18 +233,18 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.3px',
   },
   subtitle: {
-    margin: '2px 0 0',
+    margin: '4px 0 0',
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.5)',
     fontWeight: 500,
   },
   body: {
-    padding: '12px 24px 32px',
+    padding: '24px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     position: 'relative',
-    minHeight: 350,
+    minHeight: 380, // Slightly taller for more room
     justifyContent: 'center',
   },
   loadingContainer: {
@@ -253,17 +262,15 @@ const styles: Record<string, React.CSSProperties> = {
   reader: {
     width: '100%',
     aspectRatio: '1',
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
     background: '#000',
-    boxShadow: 'inset 0 0 20px rgba(0,0,0,1)',
+    boxShadow: 'inset 0 0 40px rgba(0,0,0,1)',
+    border: '1px solid rgba(255,255,255,0.1)',
   },
   scanOverlay: {
     position: 'absolute',
-    top: 12,
-    left: 24,
-    right: 24,
-    bottom: 32,
+    inset: 24,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -271,26 +278,28 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none',
   },
   scanFrame: {
-    width: 250,
-    height: 250,
+    width: 280,
+    height: 180,
     border: '2px solid var(--accent-yellow)',
-    borderRadius: 24,
-    boxShadow: '0 0 0 1000px rgba(0,0,0,0.3)',
+    borderRadius: 20,
+    boxShadow: '0 0 0 2000px rgba(0,0,0,0.5)', // Darker shroud
     position: 'relative',
+    transition: 'all 0.3s ease',
   },
   hint: {
     position: 'absolute',
     bottom: 20,
-    padding: '10px 16px',
-    background: 'rgba(0, 0, 0, 0.7)',
+    padding: '12px 20px',
+    background: 'rgba(0, 0, 0, 0.8)',
     backdropFilter: 'blur(10px)',
     borderRadius: 50,
     color: '#fff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 700,
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    border: '1px solid rgba(255,255,255,0.1)',
+    gap: 12,
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 5px 20px rgba(0,0,0,0.3)',
   }
 };
