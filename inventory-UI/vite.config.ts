@@ -20,6 +20,8 @@ export default defineConfig({
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',
+        scope: '/inventory/',
+        start_url: '/inventory/',
         icons: [
           {
             src: 'pwa-192x192.png',

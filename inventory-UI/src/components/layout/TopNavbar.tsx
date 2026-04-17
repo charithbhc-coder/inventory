@@ -20,7 +20,7 @@ import toast from 'react-hot-toast';
 export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'high' | 'unread'>('all');
@@ -76,9 +76,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
 
   useEffect(() => {
     // Default to light mode as requested
-    const saved = localStorage.getItem('theme') || 'light';
-    setTheme(saved);
-    document.documentElement.setAttribute('data-theme', saved);
+    document.documentElement.setAttribute('data-theme', theme);
 
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

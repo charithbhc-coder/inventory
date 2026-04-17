@@ -51,9 +51,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
           await html5QrCode.start(
             { 
-              facingMode: "environment",
-              // Optional but often helps on Android
-              ...({ focusMode: "continuous" } as any), 
+              facingMode: "environment"
             },
             config,
             handleScan,
