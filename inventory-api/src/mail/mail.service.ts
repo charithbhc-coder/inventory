@@ -31,14 +31,23 @@ export class MailService implements OnModuleInit {
       pass: this.configService.get<string>('MAIL_PASS'),
     };
 
+    const port = this.configService.get<number>('MAIL_PORT');
+    let secure = this.configService.get<string>('MAIL_SECURE') === 'true';
+
+    // 🔒 Auto-correct security based on standard ports to prevent configuration errors:
+    // Port 465 = Implicit SSL (secure: true)
+    // Port 587 = STARTTLS (secure: false)
+    if (port === 465) secure = true;
+    if (port === 587) secure = false;
+
     this.transporter = nodemailer.createTransport({
       service,
       host,
-      port: this.configService.get<number>('MAIL_PORT'),
-      secure: this.configService.get<string>('MAIL_SECURE') === 'true',
+      port,
+      secure,
       auth,
       tls: {
-        // Necessary for Office 365 / Outlook / Modern Gmail
+        // Modern security defaults
         rejectUnauthorized: false,
         minVersion: 'TLSv1.2'
       }
