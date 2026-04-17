@@ -38,9 +38,9 @@ export class MailService implements OnModuleInit {
       secure: this.configService.get<string>('MAIL_SECURE') === 'true',
       auth,
       tls: {
-        // Necessary for some variants of Office 365 / Outlook
+        // Necessary for Office 365 / Outlook / Modern Gmail
         rejectUnauthorized: false,
-        ciphers: 'SSLv3'
+        minVersion: 'TLSv1.2'
       }
     });
   }
