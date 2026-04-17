@@ -81,15 +81,6 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      {/* Absolute Close Button for easiest access on mobile */}
-      <button 
-        onClick={onClose} 
-        style={styles.floatingClose}
-        title="Close Camera"
-      >
-        <X size={32} />
-      </button>
-
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <div style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -101,6 +92,9 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
               <p style={styles.subtitle}>Center the barcode in the highlight area</p>
             </div>
           </div>
+          <button onClick={onClose} style={styles.closeBtn}>
+            <X size={24} />
+          </button>
         </div>
 
         <div style={styles.body}>
@@ -176,23 +170,18 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     padding: '24px',
   },
-  floatingClose: {
-    position: 'absolute',
-    top: 40,
-    right: 40,
-    width: 60,
-    height: 60,
-    borderRadius: '50%',
-    background: 'rgba(239, 68, 68, 0.95)',
-    border: '2px solid rgba(255, 255, 255, 0.4)',
-    color: '#fff',
+  closeBtn: {
+    background: 'rgba(255,255,255,0.05)',
+    border: 'none',
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    color: 'rgba(255,255,255,0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    zIndex: 10001,
-    boxShadow: '0 10px 40px rgba(239, 68, 68, 0.6)',
-    transition: 'transform 0.2s',
+    transition: 'all 0.2s',
   },
   modal: {
     width: '100%',
