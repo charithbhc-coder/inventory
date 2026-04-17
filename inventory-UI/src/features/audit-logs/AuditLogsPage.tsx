@@ -196,12 +196,13 @@ export default function AuditLogsPage() {
     columnHelper.accessor('action', {
       header: 'ACTION',
       cell: info => {
-        const rawAction = info.getValue();
+        const rawAction = info.getValue() || '';
+        const normalizedRawAction = String(rawAction).toUpperCase().replace(/-/g, '_');
         // Mask legacy UUIDs in old database records
-        const sanitizedAction = rawAction.replace(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g, 'ITEM');
+        const sanitizedAction = normalizedRawAction.replace(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/g, 'ITEM');
 
-        const friendlyAction = ACTION_MAP[rawAction] || ACTION_MAP[sanitizedAction] || sanitizedAction.replace(/_/g, ' ');
-        const isFailed = rawAction.includes('FAILED') || info.row.original.newValues?.status === 'FAILED';
+        const friendlyAction = ACTION_MAP[normalizedRawAction] || ACTION_MAP[sanitizedAction] || sanitizedAction.replace(/_/g, ' ');
+        const isFailed = normalizedRawAction.includes('FAILED') || info.row.original.newValues?.status === 'FAILED';
 
         const newVals = info.row.original.newValues || {};
         const oldVals = info.row.original.oldValues || {};
@@ -210,9 +211,9 @@ export default function AuditLogsPage() {
         const oldName = oldVals.assignedToName || oldVals.toPersonName || newVals.previousAssignedToName;
 
         let displayAction = friendlyAction;
-        if (newName && (rawAction.includes('ASSIGN') || rawAction.includes('TRANS') || rawAction.includes('ADD'))) {
+        if (newName && (normalizedRawAction.includes('ASSIGN') || normalizedRawAction.includes('TRANS') || normalizedRawAction.includes('ADD'))) {
           displayAction = `Assigned to ${newName}`;
-        } else if (rawAction.includes('UNASSIGN') && oldName) {
+        } else if (normalizedRawAction.includes('UNASSIGN') && oldName) {
           displayAction = `Released from ${oldName}`;
         }
 
@@ -220,17 +221,17 @@ export default function AuditLogsPage() {
         let color = 'var(--color-text-secondary)';
         let border = 'var(--color-border)';
 
-        if (isFailed || rawAction.includes('FAILURE')) {
+        if (isFailed || normalizedRawAction.includes('FAILURE')) {
           bg = 'rgba(239, 68, 68, 0.1)'; color = '#ef4444'; border = 'rgba(239, 68, 68, 0.2)';
-        } else if (rawAction.includes('ADD') || rawAction.includes('CREATE') || rawAction.includes('REGISTER')) {
+        } else if (normalizedRawAction.includes('ADD') || normalizedRawAction.includes('CREATE') || normalizedRawAction.includes('REGISTER')) {
           bg = 'rgba(16, 185, 129, 0.1)'; color = '#10b981'; border = 'rgba(16, 185, 129, 0.2)';
-        } else if (rawAction.includes('ASSIGN') || rawAction.includes('TRANS') || rawAction.includes('LOGIN') || rawAction.includes('LOGOUT')) {
+        } else if (normalizedRawAction.includes('ASSIGN') || normalizedRawAction.includes('TRANS') || normalizedRawAction.includes('LOGIN') || normalizedRawAction.includes('LOGOUT')) {
           bg = 'rgba(59, 130, 246, 0.1)'; color = '#3b82f6'; border = 'rgba(59, 130, 246, 0.2)';
-        } else if (rawAction.includes('PASSWORD')) {
+        } else if (normalizedRawAction.includes('PASSWORD')) {
           bg = 'rgba(99, 102, 241, 0.1)'; color = '#6366f1'; border = 'rgba(99, 102, 241, 0.2)';
-        } else if (rawAction.includes('REPAIR') || rawAction.includes('UPDATE') || rawAction.includes('EDIT')) {
+        } else if (normalizedRawAction.includes('REPAIR') || normalizedRawAction.includes('UPDATE') || normalizedRawAction.includes('EDIT')) {
           bg = 'rgba(246, 179, 11, 0.1)'; color = '#f6b30b'; border = 'rgba(246, 179, 11, 0.2)';
-        } else if (rawAction.includes('DISPOSE') || rawAction.includes('LOST') || rawAction.includes('DELETE') || rawAction.includes('REMOVE')) {
+        } else if (normalizedRawAction.includes('DISPOSE') || normalizedRawAction.includes('LOST') || normalizedRawAction.includes('DELETE') || normalizedRawAction.includes('REMOVE')) {
           bg = 'rgba(244, 63, 94, 0.1)'; color = '#f43f5e'; border = 'rgba(244, 63, 94, 0.2)';
         }
 

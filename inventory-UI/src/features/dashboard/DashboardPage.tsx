@@ -298,10 +298,11 @@ export default function DashboardPage() {
               CREATE_SEND_EMAIL: 'Report Email Dispatched'
             };
 
-            let title = ACTION_MAP[item.eventType] || item.eventType.replace(/_/g, ' ');
+            const normalizedEventType = String(item.eventType || '').toUpperCase().replace(/-/g, '_');
+            let title = ACTION_MAP[normalizedEventType] || normalizedEventType.replace(/_/g, ' ');
             if (item.toPersonName) {
               title = `Assigned to ${item.toPersonName}`;
-            } else if (item.eventType === 'UNASSIGNED' && item.fromPersonName) {
+            } else if (normalizedEventType === 'UNASSIGNED' && item.fromPersonName) {
               title = `Released from ${item.fromPersonName}`;
             }
 
@@ -312,11 +313,11 @@ export default function DashboardPage() {
             return (
               <TimelineItem 
                 key={idx}
-                icon={item.eventType === 'STATUS_CHANGE' ? <RefreshCw size={12} /> : <Package size={12} />} 
+                icon={normalizedEventType === 'STATUS_CHANGE' ? <RefreshCw size={12} /> : <Package size={12} />} 
                 title={title} 
                 desc={`${item.itemName} - ${item.notes || 'No description'}`} 
                 time={timeString} 
-                eventType={item.eventType}
+                eventType={normalizedEventType}
               />
             );
           })}
