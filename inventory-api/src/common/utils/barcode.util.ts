@@ -27,10 +27,13 @@ export async function generateBarcodeImage(barcodeStr: string): Promise<Buffer> 
       {
         bcid: 'code128',
         text: barcodeStr,
-        scale: 3,
-        height: 10,
+        scale: 4,              // Slightly larger for better detail
+        height: 20,            // Doubled height for easier mobile lens focus
         includetext: true,
         textxalign: 'center',
+        paddingwidth: 10,      // Add a clean white space around the bars
+        paddingheight: 5,
+        backgroundcolor: 'ffffff',
       },
       (err: Error, png: Buffer) => {
         if (err) {
