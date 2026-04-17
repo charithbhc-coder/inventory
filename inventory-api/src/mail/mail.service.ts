@@ -31,7 +31,8 @@ export class MailService implements OnModuleInit {
       pass: this.configService.get<string>('MAIL_PASS'),
     };
 
-    const port = this.configService.get<number>('MAIL_PORT');
+    const portStr = this.configService.get('MAIL_PORT');
+    const port = portStr ? Number(portStr) : 587;
     let secure = this.configService.get<string>('MAIL_SECURE') === 'true';
 
     // 🔒 Auto-correct security based on standard ports to prevent configuration errors:
