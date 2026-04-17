@@ -30,10 +30,11 @@ export interface ScheduledReport {
   subject: string;
   bodyMessage?: string | null;
   recipientEmails: string[];
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  frequency: 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   timeOfDay: string;
   dayOfWeek?: number | null;
   dayOfMonth?: number | null;
+  specificDate?: string | null;
   fileFormat: 'PDF' | 'EXCEL' | 'BOTH';
   filters?: ReportFilters;
   isActive: boolean;
@@ -47,10 +48,11 @@ export interface CreateSchedulePayload {
   subject: string;
   bodyMessage?: string;
   recipientEmails: string[];
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  frequency: 'ONCE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   timeOfDay: string;
   dayOfWeek?: number | null;
   dayOfMonth?: number | null;
+  specificDate?: string | null;
   fileFormat: 'PDF' | 'EXCEL' | 'BOTH';
   filters?: ReportFilters;
 }
