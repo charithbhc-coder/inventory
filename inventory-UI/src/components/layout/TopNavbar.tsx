@@ -11,8 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { searchService, GlobalSearchResult } from '@/services/search.service';
 
-import { authService } from '@/services/auth.service';
 import BarcodeScannerModal from '@/components/scanner/BarcodeScannerModal';
+import logo from '@/assets/logo-sidebar.png';
+import { itemService } from '@/services/item.service';
+import toast from 'react-hot-toast';
 
 export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
   const { user, logout } = useAuthStore();
@@ -204,6 +206,11 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
         <button className="nav-btn mobile-toggle" onClick={onOpenMobile}>
           <Menu size={20} />
         </button>
+
+        {/* Mobile Logo */}
+        <div className="hidden-desktop" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <img src={logo} alt="Logo" style={{ height: 32, width: 32, objectFit: 'contain' }} />
+        </div>
 
         <div className="search-wrap" ref={searchRef} style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
           <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', zIndex: 10 }} />
@@ -476,10 +483,27 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
       <BarcodeScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
-        onScan={(barcode) => {
+        onScan={async (barcode) => {
           setIsScannerOpen(false);
           const cleanBarcode = barcode.trim();
-          navigate(`/items?search=${encodeURIComponent(cleanBarcode)}`);
+          
+          try {
+            // Find item by barcode first to get its ID
+            const response = await itemService.getItems({ barcode: cleanBarcode, limit: 1 });
+            const items = response.data || response;
+            
+            if (items && items.length > 0) {
+              const item = items[0];
+              // Open specifically that item
+              navigate(`/items?search=${encodeURIComponent(cleanBarcode)}&open=${item.id}`);
+            } else {
+              // Fallback to just searching
+              navigate(`/items?search=${encodeURIComponent(cleanBarcode)}`);
+              toast.error(`Barcode "${cleanBarcode}" not found in inventory.`);
+            }
+          } catch (err) {
+            navigate(`/items?search=${encodeURIComponent(cleanBarcode)}`);
+          }
         }}
       />
     </header>
