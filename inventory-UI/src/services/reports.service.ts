@@ -101,7 +101,7 @@ export const reportsService = {
     return data;
   },
 
-  deleteSchedule: async (id: string): Promise<void> => {
-    await api.delete(`/reports/schedules/${id}`);
+  deleteSchedule: async (id: string, reason?: string): Promise<void> => {
+    await api.delete(`/reports/schedules/${id}`, { data: { reason } });
   },
 };

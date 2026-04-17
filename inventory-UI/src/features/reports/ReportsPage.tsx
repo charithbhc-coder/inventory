@@ -14,6 +14,7 @@ import { reportsService, downloadReport, ScheduledReport } from '@/services/repo
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 import toast from 'react-hot-toast';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 
 // ─── Report Type Config ────────────────────────────────────────────────────
 
@@ -485,6 +486,7 @@ function ScheduledJobsTab() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const defaultForm = {
     reportType: 'summary',
@@ -522,9 +524,13 @@ function ScheduledJobsTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['schedules'] }),
   });
 
-  const deleteMut = useMutation({
-    mutationFn: reportsService.deleteSchedule,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Schedule removed'); },
+   const deleteMut = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => reportsService.deleteSchedule(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      toast.success('Schedule removed');
+      setDeletingId(null);
+    },
   });
 
   const handleSave = () => {
@@ -698,7 +704,7 @@ function ScheduledJobsTab() {
                   {s.isActive ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
                 </button>
                 <button
-                  onClick={() => deleteMut.mutate(s.id)}
+                  onClick={() => setDeletingId(s.id)}
                   title="Delete schedule"
                   style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '6px', cursor: 'pointer', color: '#ef4444', display: 'flex' }}
                 >
@@ -709,6 +715,15 @@ function ScheduledJobsTab() {
           ))}
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={!!deletingId}
+        loading={deleteMut.isPending}
+        title="Delete Automated Report?"
+        message="This will permanently remove the automated schedule. No further reports will be sent for this configuration."
+        onClose={() => setDeletingId(null)}
+        onConfirm={(reason) => deleteMut.mutate({ id: deletingId!, reason })}
+      />
     </div>
   );
 }

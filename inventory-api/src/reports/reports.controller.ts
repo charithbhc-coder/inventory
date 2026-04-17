@@ -205,7 +205,7 @@ export class ReportsController {
   @Delete('schedules/:id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_REPORTS)
-  deleteSchedule(@Param('id') id: string) {
+  deleteSchedule(@Param('id') id: string, @Body() body: any) {
     return this.reportsService.deleteSchedule(id);
   }
 }
