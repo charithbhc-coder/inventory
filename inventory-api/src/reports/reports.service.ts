@@ -399,7 +399,7 @@ export class ReportsService {
   }
 
   async createSchedule(dto: CreateScheduledReportDto, userId: string): Promise<ScheduledReport> {
-    const nextRunAt = this.computeNextRun(dto.frequency, dto.timeOfDay, dto.dayOfWeek, dto.dayOfMonth);
+    const nextRunAt = this.computeNextRun(dto.frequency, dto.timeOfDay, dto.dayOfWeek, dto.dayOfMonth, dto.specificDate);
     const schedule = this.scheduledReportRepo.create({
       ...dto,
       createdByUserId: userId,
@@ -413,9 +413,9 @@ export class ReportsService {
     const schedule = await this.scheduledReportRepo.findOne({ where: { id } });
     if (!schedule) throw new NotFoundException('Scheduled report not found');
     Object.assign(schedule, dto);
-    if (dto.frequency || dto.timeOfDay || dto.dayOfWeek !== undefined || dto.dayOfMonth !== undefined) {
+    if (dto.frequency || dto.timeOfDay || dto.dayOfWeek !== undefined || dto.dayOfMonth !== undefined || dto.specificDate !== undefined) {
       schedule.nextRunAt = this.computeNextRun(
-        schedule.frequency, schedule.timeOfDay, schedule.dayOfWeek, schedule.dayOfMonth,
+        schedule.frequency, schedule.timeOfDay, schedule.dayOfWeek, schedule.dayOfMonth, schedule.specificDate,
       );
     }
     return this.scheduledReportRepo.save(schedule);
@@ -433,7 +433,14 @@ export class ReportsService {
     timeOfDay: string,
     dayOfWeek?: number | null,
     dayOfMonth?: number | null,
-  ): Date {
+    specificDate?: string | null,
+  ): Date | null {
+    if (frequency === ReportFrequency.ONCE && specificDate) {
+      const [year, month, day] = specificDate.split('-').map(Number);
+      const [hour, minute] = timeOfDay.split(':').map(Number);
+      return new Date(year, month - 1, day, hour, minute, 0, 0);
+    }
+
     const [hour, minute] = timeOfDay.split(':').map(Number);
     const now = new Date();
     const next = new Date();

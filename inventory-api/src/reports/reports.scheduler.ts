@@ -74,12 +74,18 @@ export class ReportsScheduler {
 
       // Update tracking
       schedule.lastSentAt = new Date();
-      schedule.nextRunAt = this.reportsService.computeNextRun(
-        schedule.frequency,
-        schedule.timeOfDay,
-        schedule.dayOfWeek,
-        schedule.dayOfMonth,
-      );
+      if (schedule.frequency === ReportFrequency.ONCE) {
+        schedule.isActive = false;
+        schedule.nextRunAt = null;
+      } else {
+        schedule.nextRunAt = this.reportsService.computeNextRun(
+          schedule.frequency,
+          schedule.timeOfDay,
+          schedule.dayOfWeek,
+          schedule.dayOfMonth,
+          schedule.specificDate,
+        );
+      }
       await this.scheduledReportRepo.save(schedule);
 
       this.logger.log(`✅ Schedule [${schedule.id}] executed. Next run: ${schedule.nextRunAt?.toISOString()}`);

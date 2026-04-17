@@ -26,6 +26,10 @@ export class CreateScheduledReportDto {
   @IsOptional()
   dayOfMonth?: number | null; // 1-31 for monthly
 
+  @IsOptional()
+  @IsString()
+  specificDate?: string | null; // YYYY-MM-DD for ONCE
+
   @IsEnum(FileFormat)
   fileFormat: FileFormat;
 
@@ -66,6 +70,10 @@ export class UpdateScheduledReportDto {
 
   @IsOptional()
   dayOfMonth?: number | null;
+
+  @IsOptional()
+  @IsString()
+  specificDate?: string | null;
 
   @IsOptional()
   @IsEnum(FileFormat)

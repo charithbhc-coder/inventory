@@ -69,6 +69,7 @@ const REPORT_TYPES = [
 ] as const;
 
 const FREQ_OPTIONS = [
+  { value: 'ONCE', label: 'Once (Specific Date)' },
   { value: 'DAILY', label: 'Daily' },
   { value: 'WEEKLY', label: 'Weekly' },
   { value: 'MONTHLY', label: 'Monthly' },
@@ -490,8 +491,9 @@ function ScheduledJobsTab() {
     subject: '',
     bodyMessage: '',
     recipientEmails: '',
-    frequency: 'MONTHLY',
+    frequency: 'ONCE',
     timeOfDay: '08:00',
+    specificDate: new Date().toISOString().split('T')[0],
     dayOfMonth: 1,
     dayOfWeek: 1,
     fileFormat: 'BOTH',
@@ -534,6 +536,7 @@ function ScheduledJobsTab() {
       recipientEmails: emails,
       dayOfMonth: form.frequency === 'MONTHLY' ? Number(form.dayOfMonth) : null,
       dayOfWeek: form.frequency === 'WEEKLY' ? Number(form.dayOfWeek) : null,
+      specificDate: form.frequency === 'ONCE' ? form.specificDate : null,
     };
 
     if (editingId) {
@@ -552,6 +555,7 @@ function ScheduledJobsTab() {
       recipientEmails: s.recipientEmails?.join(', ') || '',
       frequency: s.frequency,
       timeOfDay: s.timeOfDay || '08:00',
+      specificDate: s.specificDate || new Date().toISOString().split('T')[0],
       dayOfMonth: s.dayOfMonth || 1,
       dayOfWeek: s.dayOfWeek || 1,
       fileFormat: s.fileFormat,
@@ -597,6 +601,11 @@ function ScheduledJobsTab() {
                 {FREQ_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
             </FormField>
+            {form.frequency === 'ONCE' && (
+              <FormField label="Specific Date">
+                <input type="date" value={form.specificDate} onChange={e => setForm({ ...form, specificDate: e.target.value })} style={fStyle} />
+              </FormField>
+            )}
             {form.frequency === 'WEEKLY' && (
               <FormField label="Day of Week">
                 <select value={form.dayOfWeek} onChange={e => setForm({ ...form, dayOfWeek: e.target.value })} style={fStyle}>
@@ -666,7 +675,7 @@ function ScheduledJobsTab() {
                 </div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>📊 {rtLabel(s.reportType)}</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>🔁 {s.frequency} at {s.timeOfDay}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>🔁 {s.frequency === 'ONCE' ? `ONCE on ${s.specificDate}` : s.frequency} at {s.timeOfDay}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>📁 {s.fileFormat}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>👥 {s.recipientEmails.length} recipient(s)</span>
                   {s.nextRunAt && <span style={{ fontSize: 12, color: 'var(--accent-yellow)' }}>⏰ Next: {new Date(s.nextRunAt).toLocaleString()}</span>}

@@ -3,6 +3,7 @@ import { Company } from '../../companies/entities/company.entity';
 import { User } from '../../users/entities/user.entity';
 
 export enum ReportFrequency {
+  ONCE = 'ONCE',
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
   MONTHLY = 'MONTHLY',
@@ -47,6 +48,9 @@ export class ScheduledReport {
 
   @Column({ type: 'int', nullable: true })
   dayOfMonth?: number | null; // 1-31
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  specificDate?: string | null; // "YYYY-MM-DD"
 
   @Column({ type: 'jsonb', nullable: true })
   filters?: Record<string, any>;
