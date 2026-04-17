@@ -128,7 +128,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
                   boxShadow: '0 0 15px rgba(255, 240, 31, 0.4)',
                   border: '1px solid rgba(255, 240, 31, 0.3)'
                 }}>
-                  V1.2.6
+                  V1.2.9
                 </div>
               </div>
             </>

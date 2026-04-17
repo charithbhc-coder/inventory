@@ -53,7 +53,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             { 
               facingMode: "environment",
               // Optional but often helps on Android
-              focusMode: "continuous" as any, 
+              ...({ focusMode: "continuous" } as any), 
             },
             config,
             handleScan,
