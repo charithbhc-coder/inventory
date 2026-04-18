@@ -30,6 +30,7 @@ export default defineConfig({
         // Skip waiting so the new SW takes over immediately after update
         skipWaiting: true,
         clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 4000000,
       },
       manifest: {
         name: 'KTMG Vault',
