@@ -1052,3 +1052,26 @@ tbody tr:hover td { background: var(--color-surface-2); }
   .hidden-desktop { display: none !important; }
   .hidden-mobile { display: flex !important; }
 }
+
+/* ═══════════════════════════════════════════════
+   4K / ULTRA-WIDE SCREEN SCALING (≥ 2560px)
+   Scales the UI to 80% to match the "comfortable"
+   zoom level users need on 3840×2160 boardroom screens.
+   All rem-based values scale proportionally.
+═══════════════════════════════════════════════ */
+@media (min-width: 2560px) {
+  html {
+    font-size: 12.8px; /* 80% of default 16px */
+  }
+
+  /* Keep sidebar from being too narrow relative to the large screen */
+  :root {
+    --sidebar-width: 240px;
+    --topbar-height: 60px;
+  }
+
+  /* Scale up page content padding to breathe at 4K */
+  .page-content {
+    padding: 28px 32px;
+  }
+}

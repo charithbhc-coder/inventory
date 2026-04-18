@@ -1,4 +1,11 @@
-import { Package, Network, Building2, AlertOctagon, RefreshCw, Eye, UserPlus, AlertTriangle, Wrench, PlusCircle, Search } from 'lucide-react';
+import { Package, Network, Building2, AlertOctagon, RefreshCw, Eye, UserPlus, AlertTriangle, Wrench, PlusCircle, Search, Layers } from 'lucide-react';
+
+// Color palette cycled for category cards
+const CATEGORY_COLORS = [
+  '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+  '#ef4444', '#06b6d4', '#f97316', '#84cc16',
+  '#e879f9', '#38bdf8',
+];
 import { useQuery } from '@tanstack/react-query';
 import { analyticsService } from '@/services/analytics.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,6 +32,11 @@ export default function DashboardPage() {
   const { data: companies = [], isLoading: loadingCompanies } = useQuery({
     queryKey: ['analytics', 'companies'],
     queryFn: () => analyticsService.getAssetsByCompany(),
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['analytics', 'by-category'],
+    queryFn: () => analyticsService.getItemsByCategory(),
   });
 
   const { data: activity = [], isLoading: loadingActivity } = useQuery({
@@ -65,6 +77,8 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const activeCategories = (categories as any[]).filter((c: any) => parseInt(c.total) > 0);
 
   return (
     <div className="dashboard-grid">
@@ -198,7 +212,66 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ── Category Inventory Section ── */}
+      {activeCategories.length > 0 && (
+        <div className="col-span-12 dark-card">
+          <div style={styles.cardHeader}>
+            <div>
+              <h3 style={styles.cardTitle}>Inventory by Category</h3>
+              <p style={styles.cardSub}>Item counts across all asset categories</p>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--bg-dark)', padding: '4px 12px', borderRadius: 50, border: '1px solid var(--border-dark)' }}>
+              {activeCategories.length} categories
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+            {activeCategories.map((cat: any, idx: number) => {
+              const total = parseInt(cat.total) || 0;
+              const inUseCat = parseInt(cat.inUse) || 0;
+              const warehouseCat = parseInt(cat.warehouse) || 0;
+              const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+              const inUsePct = total > 0 ? Math.round((inUseCat / total) * 100) : 0;
+              return (
+                <div
+                  key={cat.categoryId}
+                  onClick={() => navigate(`/items?category=${cat.categoryId}`)}
+                  style={{
+                    padding: '14px 16px', borderRadius: 12,
+                    background: `${color}0D`,
+                    border: `1.5px solid ${color}30`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 16px ${color}20`; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = `${color}30`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                >
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color, borderRadius: '12px 12px 0 0' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}20`, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Layers size={14} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{cat.categoryName}</span>
+                  </div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color, lineHeight: 1, letterSpacing: '-1px' }}>{total}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>Total Items</div>
+                  <div style={{ marginTop: 10, height: 4, borderRadius: 50, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: `${inUsePct}%`, height: '100%', background: color, borderRadius: 50, transition: 'width 0.8s ease' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>
+                    <span style={{ color }}>{inUseCat} in use</span>
+                    <span>{warehouseCat} stock</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="col-span-12 lg-col-span-8" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
         <div className="dark-card" style={{ padding: '24px 24px 16px', overflowX: 'auto', alignSelf: 'start', width: '100%' }}>
         <div style={{ ...styles.cardHeader, marginBottom: 16 }}>
           <h3 style={styles.cardTitle}>Global Item Overview</h3>
