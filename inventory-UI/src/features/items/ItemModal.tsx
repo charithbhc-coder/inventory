@@ -615,7 +615,7 @@ const styles = {
     color: 'var(--text-muted)', letterSpacing: '0.05em'
   },
   inputWrap: { position: 'relative' as const, display: 'flex', alignItems: 'center' },
-  inputIcon: { position: 'absolute' as const, left: 14, color: 'var(--accent-yellow)' },
+  inputIcon: { position: 'absolute' as const, left: 14, color: 'var(--text-muted)' },
   input: {
     width: '100%', padding: '12px 14px 12px 42px',
     background: 'var(--bg-dark)', border: '1px solid var(--border-dark)',
@@ -633,7 +633,7 @@ const styles = {
     padding: '12px 16px', borderRadius: 12,
     border: '1px dashed var(--border-dark)',
     background: 'var(--bg-dark)',
-    color: 'var(--accent-yellow)',
+    color: 'var(--text-muted)',
     fontSize: 13, fontWeight: 600,
     cursor: 'pointer', transition: 'all 0.2s',
     whiteSpace: 'nowrap' as const
