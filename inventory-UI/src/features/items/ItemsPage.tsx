@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   Activity,
   Tags,
-  Key
+  Key,
+  Users
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
@@ -26,6 +27,7 @@ import { departmentService } from '@/services/department.service';
 import ItemModal from './ItemModal';
 import AssetDetailsDrawer from './AssetDetailsDrawer';
 import ItemTrackingModal from './ItemTrackingModal';
+import EmployeeAssetsModal from './EmployeeAssetsModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 
@@ -66,6 +68,7 @@ export default function ItemsPage() {
   const [drawerItem, setDrawerItem] = useState<Item | null>(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const hasPermission = useAuthStore((s: any) => s.hasPermission);
   const LIMIT = 15;
@@ -284,6 +287,19 @@ export default function ItemsPage() {
           </p>
         </div>
         <div className="items-header-actions" style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={() => setIsEmployeeModalOpen(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+              borderRadius: 12, border: '1px solid var(--border-dark)', 
+              background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6',
+              fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer'
+            }}
+            className="hover-card"
+          >
+            <Users size={18} strokeWidth={2.5} />
+            Employee View
+          </button>
           {hasPermission(AdminPermission.VIEW_LICENSES) && (
             <NavLink
               to="/licenses"
@@ -609,6 +625,12 @@ export default function ItemsPage() {
         item={trackingItem}
         isOpen={isTrackingModalOpen}
         onClose={() => setIsTrackingModalOpen(false)}
+      />
+
+      {/* Employee Assets Modal */}
+      <EmployeeAssetsModal
+        isOpen={isEmployeeModalOpen}
+        onClose={() => setIsEmployeeModalOpen(false)}
       />
 
       <style>{`

@@ -191,12 +191,13 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
                     borderBottom: '1px solid var(--border-dark)' 
                   }}>
                     <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Assigned To</th>
+                    <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Employee ID</th>
                     <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>From Date</th>
                     <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Released Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
+                    {(() => {
                     const tenures: any[] = [];
                     // Process timeline events chronologically
                     const sortedEvents = [...events].reverse();
@@ -212,6 +213,7 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
                           }
                           currentTenure = {
                             holder: holder,
+                            employeeId: ev.toPersonEmployeeId || null,
                             fromDate: new Date(ev.createdAt).toLocaleDateString(),
                             releasedDate: 'Present'
                           };
@@ -227,7 +229,7 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
 
                     if (tenures.length === 0) return (
                       <tr>
-                        <td colSpan={3} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>
                           No formal assignments recorded.
                         </td>
                       </tr>
@@ -241,8 +243,17 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
                         <td style={{ padding: '16px 14px' }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', display: 'block' }}>{t.holder}</span>
                         </td>
+                        <td style={{ padding: '16px 14px' }}>
+                          {t.employeeId ? (
+                            <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'monospace', padding: '3px 8px', background: 'rgba(255,224,83,0.1)', color: 'var(--accent-yellow)', borderRadius: 6, border: '1px solid rgba(255,224,83,0.2)' }}>
+                              {t.employeeId}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>
+                          )}
+                        </td>
                         <td style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>{t.fromDate}</td>
-                        <td style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>{t.releasedDate}</td>
+                        <td style={{ padding: '16px 14px', fontSize: 13, color: t.releasedDate === 'Present' ? 'var(--accent-yellow)' : 'var(--text-muted)', fontWeight: t.releasedDate === 'Present' ? 700 : 400 }}>{t.releasedDate}</td>
                       </tr>
                     ));
                   })()}

@@ -256,6 +256,7 @@ export class ItemsService {
         fromDepartmentId: prevDeptId,
         toDepartmentId: dto.departmentId || item.departmentId,
         toPersonName: dto.assignedToName,
+        toPersonEmployeeId: dto.assignedToEmployeeId || null,
         performedByUserId: userId,
         notes: dto.notes,
       });
@@ -306,6 +307,7 @@ export class ItemsService {
           fromDepartmentId: prevDeptId,
           toDepartmentId: assignDto.departmentId || item.departmentId,
           toPersonName: assignDto.assignedToName,
+          toPersonEmployeeId: assignDto.assignedToEmployeeId || null,
           performedByUserId: userId,
           notes: assignDto.notes || 'Bulk Assignment',
         });

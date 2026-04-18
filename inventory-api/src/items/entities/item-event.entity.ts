@@ -76,6 +76,9 @@ export class ItemEvent {
   @Column({ type: 'varchar', length: 255, nullable: true })
   toPersonName: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  toPersonEmployeeId: string | null;
+
   @Column()
   performedByUserId: string;
 
