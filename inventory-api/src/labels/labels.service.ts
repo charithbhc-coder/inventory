@@ -11,9 +11,8 @@ export class LabelsService {
     return new Promise(async (resolve, reject) => {
       try {
         const doc = new PDFDocument({
-          size: [2.5 * 72, 1 * 72], // 180pt x 72pt (2.5" x 1")
+          size: [2.5 * 72, 1 * 72], // 180pt x 72pt (2.5" x 1" landscape label)
           margin: 0,
-          layout: 'landscape',
         });
 
         const buffers: Buffer[] = [];

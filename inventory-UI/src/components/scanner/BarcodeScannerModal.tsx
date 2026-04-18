@@ -45,10 +45,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
           await html5QrCode.start(
             { 
-              facingMode: "environment",
-              // FIX BUG 4: Request HD resolution so camera can actually focus on thin bars
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              facingMode: "environment", // Use rear camera; let the browser pick best resolution
             },
             config,
             handleScan,
