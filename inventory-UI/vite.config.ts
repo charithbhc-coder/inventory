@@ -8,7 +8,7 @@ export default defineConfig({
   base: '/inventory/',
   plugins: [
     react(),
-    basicSsl(),
+    ...(process.env.NODE_ENV !== 'production' ? [basicSsl()] : []),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
