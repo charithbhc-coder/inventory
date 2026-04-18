@@ -93,7 +93,7 @@ export default function DashboardPage() {
         <StatCard title="TOTAL ASSETS" value={totalAssets.toLocaleString()} trend="+0.0%" icon={<Package size={24} />} />
       </div>
       <div className="col-span-12 md-col-span-6 lg-col-span-3">
-        <StatCard title="IN REPAIR" value={inRepair} tag={`${needsRepair} Pending`} icon={<Network size={24} />} />
+        <StatCard title="IN REPAIR" value={inRepair} tag={`${needsRepair - inRepair} Pending`} icon={<Network size={24} />} />
       </div>
       <div className="col-span-12 md-col-span-6 lg-col-span-3">
         <StatCard title="COMPANIES" value={companies.length} tag="Active Entities" icon={<Building2 size={24} />} />
@@ -464,7 +464,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-dark)' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>In Repair (Pending/Active)</span>
-                <span style={{ color: 'var(--accent-red)', fontSize: 13, fontWeight: 700 }}>{parseInt(selectedCompany.needsRepair || 0) + parseInt(selectedCompany.inRepair || 0)}</span>
+                <span style={{ color: 'var(--accent-red)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.needsRepair}</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>

@@ -92,6 +92,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       });
     });
 
+    // Global real-time state synchronizer
+    socket.on('audit_log_updated', () => {
+      // Instantly refresh data across all views when any user performs an action
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['item-timeline'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+    });
+
     set({ socket });
   },
 
