@@ -36,6 +36,14 @@ const REPORT_TYPES = [
     filters: ['company', 'category'],
   },
   {
+    id: 'category',
+    label: 'Category Inventory',
+    description: 'Detailed count of each item category (e.g. Laptops, Printers) and how many are in use vs storage.',
+    icon: Layers,
+    color: '#06b6d4',
+    filters: ['company'],
+  },
+  {
     id: 'department',
     label: 'Department Report',
     description: 'All assets allocated to a specific department — current status and assignments.',

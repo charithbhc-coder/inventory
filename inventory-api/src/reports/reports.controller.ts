@@ -79,6 +79,29 @@ export class ReportsController {
     res.send(buffer);
   }
 
+  // ─── CATEGORY INVENTORY ───────────────────────────────────────────
+  @Get('category/excel')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
+  async exportCategoryExcel(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
+    const context = await this.getUserContext(jwt.sub);
+    const buffer = await this.reportsService.exportCategoryExcel(filters, context);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Category_Inventory.xlsx');
+    res.send(buffer);
+  }
+
+  @Get('category/pdf')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.EXPORT_DATA, AdminPermission.VIEW_REPORTS)
+  async exportCategoryPdf(@Query() filters: ReportFilterDto, @Res() res: Response, @CurrentUser() jwt: JwtPayload) {
+    const context = await this.getUserContext(jwt.sub);
+    const buffer = await this.reportsService.exportCategoryPdf(filters, context);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=Category_Inventory.pdf');
+    res.send(buffer);
+  }
+
   // ─── DEPARTMENT REPORT ────────────────────────────────────────────
   @Get('department/excel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)

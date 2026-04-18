@@ -91,6 +91,31 @@ export class ReportsService {
     return this.dataSource.query(query, params);
   }
 
+  async getCategoryReportData(filters: ReportFilterDto) {
+    let query = `
+      SELECT
+        cat.name as "categoryName",
+        cat.code as "categoryCode",
+        COUNT(i.id) as "totalAssets",
+        COUNT(i.id) FILTER (WHERE i.status = 'IN_USE') as "inUse",
+        COUNT(i.id) FILTER (WHERE i.status = 'WAREHOUSE') as "warehouse",
+        COUNT(i.id) FILTER (WHERE i.status IN ('IN_REPAIR', 'SENT_TO_REPAIR')) as "inRepair",
+        COUNT(i.id) FILTER (WHERE i.status = 'LOST') as "lost",
+        SUM(i."purchasePrice") as "totalValue"
+      FROM item_categories cat
+      LEFT JOIN items i ON i."categoryId" = cat.id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let idx = 1;
+    if (filters.companyId) {
+      query += ` AND (i."companyId" = $${idx++} OR i."companyId" IS NULL)`;
+      params.push(filters.companyId);
+    }
+    query += ` GROUP BY cat.id, cat.name, cat.code HAVING COUNT(i.id) > 0 ORDER BY "totalValue" DESC NULLS LAST`;
+    return this.dataSource.query(query, params);
+  }
+
   async getDepartmentReportData(filters: ReportFilterDto) {
     if (!filters.departmentId && !filters.companyId) {
       throw new BadRequestException('departmentId or companyId is required for department reports');
@@ -232,6 +257,20 @@ export class ReportsService {
     ], 'Inventory Summary', userContext);
   }
 
+  async exportCategoryExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
+    const data = await this.getCategoryReportData(filters);
+    return this.excelGenerator.generateBuffer(data, [
+      { header: 'Category', key: 'categoryName', width: 25 },
+      { header: 'Category Code', key: 'categoryCode', width: 20 },
+      { header: 'Total Items', key: 'totalAssets', width: 15 },
+      { header: 'In Use', key: 'inUse', width: 15 },
+      { header: 'In Warehouse', key: 'warehouse', width: 15 },
+      { header: 'In Repair', key: 'inRepair', width: 15 },
+      { header: 'Lost', key: 'lost', width: 15 },
+      { header: 'Total Value (LKR)', key: 'totalValue', width: 20 },
+    ], 'Category Inventory', userContext);
+  }
+
   async exportDepartmentExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
     const data = await this.getDepartmentReportData(filters);
     return this.excelGenerator.generateBuffer(data, [
@@ -309,6 +348,24 @@ export class ReportsService {
       data.map((r: any) => [r.companyName, r.categoryName, r.totalAssets, r.inUse, r.inRepair, r.lost, r.warehouse, r.totalValue ? `Rs. ${r.totalValue.toLocaleString()}` : '—']),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Executive Inventory Summary', tableHtml, userContext));
+  }
+
+  async exportCategoryPdf(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
+    const data = await this.getCategoryReportData(filters);
+    const tableHtml = this.buildTableHtml(
+      ['Category', 'Code', 'Total Items', 'In Use', 'Warehouse', 'In Repair', 'Lost', 'Total Value'],
+      data.map((r: any) => [
+        r.categoryName, 
+        r.categoryCode, 
+        r.totalAssets, 
+        r.inUse, 
+        r.warehouse, 
+        r.inRepair, 
+        r.lost, 
+        r.totalValue ? `Rs. ${Number(r.totalValue).toLocaleString()}` : '—'
+      ]),
+    );
+    return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Category Inventory Report', tableHtml, userContext));
   }
 
   async exportDepartmentPdf(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
