@@ -3,26 +3,53 @@
 
 server {
     listen 80;
-    server_name apps.myblockchainbpo.com; # Update with your custom domain if different
+    server_name localhost;
 
-    # Redirect HTTP to HTTPS (Highly recommended)
-    # return 301 https://$host$request_uri;
+    # Register the correct MIME type for PWA web manifests.
+    # Without this nginx defaults to application/octet-stream, which
+    # causes workbox to reject the response during SW precaching.
+    types {
+        application/manifest+json   webmanifest;
+    }
 
     # Frontend serving from /inventory
     location /inventory/ {
-        alias /var/www/html/inventory/;
+        root /usr/share/nginx/html;
         index index.html;
         try_files $uri $uri/ /inventory/index.html;
 
-        # Basic security headers
+        # Standard security headers
         add_header X-Frame-Options "SAMEORIGIN";
         add_header X-XSS-Protection "1; mode=block";
         add_header X-Content-Type-Options "nosniff";
+
+        # Serve the PWA manifest with the correct Content-Type.
+        # This exact-match location takes priority over the regex below.
+        location = /inventory/manifest.webmanifest {
+            root /usr/share/nginx/html;
+            add_header Content-Type "application/manifest+json";
+            try_files $uri =404;
+        }
+
+        # Service worker must be served with no-cache headers so the
+        # browser always checks for an updated SW on each page load.
+        location = /inventory/sw.js {
+            root /usr/share/nginx/html;
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            try_files $uri =404;
+        }
+
+        # All other static assets: return 404 rather than falling back
+        # to index.html (prevents workbox from caching the wrong content).
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|json|webmanifest)$ {
+            root /usr/share/nginx/html;
+            try_files $uri =404;
+        }
     }
 
-    # API Proxy
-    location /api/v1/ {
-        proxy_pass http://localhost:3000/api/v1/;
+    # Proxy API requests to the 'api' container
+    location /inventory-api/v1/ {
+        proxy_pass http://api:3000/inventory-api/v1/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -30,22 +57,26 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
     }
 
-    # Uploads serving (avatars, invoices, etc.)
-    location /uploads/ {
-        proxy_pass http://localhost:3000/uploads/;
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # Internal Socket.io (Real-time notifications)
+    # Proxy Socket.io
     location /socket.io/ {
-        proxy_pass http://localhost:3000/socket.io/;
+        proxy_pass http://api:3000/socket.io/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
         proxy_set_header Host $host;
+    }
+
+    # Proxy Uploads
+    location /uploads/ {
+        proxy_pass http://api:3000/uploads/;
+        proxy_set_header Host $host;
+    }
+
+    # Error pages
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
     }
 }
