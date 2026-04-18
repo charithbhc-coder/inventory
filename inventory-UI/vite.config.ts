@@ -12,6 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      manifestFilename: 'manifest.json',
       manifest: {
         name: 'KTMG Vault',
         short_name: 'KTMG Vault',
