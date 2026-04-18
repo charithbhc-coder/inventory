@@ -113,7 +113,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
           gap: 4
         }}>
           {isCollapsed ? (
-            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-yellow)', textShadow: '0 0 10px rgba(255, 240, 31, 0.5)' }}>V1.2</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--accent-yellow)', textShadow: '0 0 10px rgba(255, 240, 31, 0.5)' }}>V1.3</div>
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -128,7 +128,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
                   boxShadow: '0 0 15px rgba(255, 240, 31, 0.4)',
                   border: '1px solid rgba(255, 240, 31, 0.3)'
                 }}>
-                  V1.3.8
+                  V1.3.9
                 </div>
               </div>
             </>
