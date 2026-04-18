@@ -758,4 +758,5 @@ const fStyle: React.CSSProperties = {
   color: 'var(--text-main)', fontSize: 13, outline: 'none',
   fontFamily: 'inherit', cursor: 'pointer',
   boxSizing: 'border-box',
+  colorScheme: 'dark',
 };

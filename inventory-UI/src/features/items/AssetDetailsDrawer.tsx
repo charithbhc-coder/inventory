@@ -155,12 +155,12 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             <div className="barcode-wrapper">
               <Barcode 
                 value={item.barcode} 
-                width={1.5} 
-                height={50} 
-                fontSize={12}
+                width={2.5}  
+                height={80}  
+                fontSize={13}
                 background="transparent"
                 lineColor="#000000"
-                margin={0}
+                margin={4}
               />
             </div>
           </div>

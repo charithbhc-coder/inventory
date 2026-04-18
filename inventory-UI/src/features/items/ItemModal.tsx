@@ -615,12 +615,12 @@ const styles = {
     color: 'var(--text-muted)', letterSpacing: '0.05em'
   },
   inputWrap: { position: 'relative' as const, display: 'flex', alignItems: 'center' },
-  inputIcon: { position: 'absolute' as const, left: 14, color: 'var(--text-muted)' },
+  inputIcon: { position: 'absolute' as const, left: 14, color: 'rgba(255, 255, 255, 0.45)' },
   input: {
     width: '100%', padding: '12px 14px 12px 42px',
     background: 'var(--bg-dark)', border: '1px solid var(--border-dark)',
     borderRadius: 12, fontSize: 14, fontWeight: 600, color: 'var(--text-main)',
-    outline: 'none', transition: 'all 0.2s'
+    outline: 'none', transition: 'all 0.2s', colorScheme: 'dark',
   },
   inputSimple: {
     width: '100%', padding: '12px 14px',

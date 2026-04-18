@@ -35,23 +35,20 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           qrCodeRef.current = html5QrCode;
 
           const config = {
-            fps: 24, // Higher FPS for faster movement tracking
+            fps: 24,
             qrbox: { width: 280, height: 180 }, // Rectangle optimized for barcodes
-            aspectRatio: 1.0,
+            aspectRatio: 1.777, // FIX BUG 1: Match 16:9 so video isn't squished (was 1.0 which distorted barcodes)
             formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.CODE_39,
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E,
+              Html5QrcodeSupportedFormats.CODE_128, // FIX BUG 3: Only scan what we generate (was 7 formats, wasted CPU every frame)
             ]
           };
 
           await html5QrCode.start(
             { 
-              facingMode: "environment"
+              facingMode: "environment",
+              // FIX BUG 4: Request HD resolution so camera can actually focus on thin bars
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
             },
             config,
             handleScan,
