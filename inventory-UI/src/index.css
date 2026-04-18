@@ -1061,17 +1061,26 @@ tbody tr:hover td { background: var(--color-surface-2); }
 ═══════════════════════════════════════════════ */
 @media (min-width: 2560px) {
   html {
-    font-size: 12.8px; /* 80% of default 16px */
+    /* At 4K logical pixels, scale EVERYTHING up by 150% so it's readable from a boardroom distance */
+    font-size: 24px; 
   }
 
-  /* Keep sidebar from being too narrow relative to the large screen */
+  /* Keep sidebar proportional to the large screen */
   :root {
-    --sidebar-width: 240px;
-    --topbar-height: 60px;
+    --sidebar-width: 320px;
+    --topbar-height: 80px;
   }
 
   /* Scale up page content padding to breathe at 4K */
   .page-content {
-    padding: 28px 32px;
+    padding: 40px 48px;
+    /* Ensure the dashboard extends to fill the tall 4K screen height */
+    min-height: calc(100vh - var(--topbar-height));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-content > * {
+    flex: 1;
   }
 }
