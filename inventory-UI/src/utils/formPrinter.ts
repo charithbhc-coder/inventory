@@ -4,6 +4,8 @@
  * Generates professional Asset Issuance & Handover forms for KTMG.
  */
 
+const API_ROOT_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/inventory-api/v1';
+
 export interface EmployeeInfo {
   name: string;
   employeeId?: string;
@@ -12,6 +14,7 @@ export interface EmployeeInfo {
   address?: string;
   contact?: string;
   company?: string;
+  companyLogoUrl?: string; // e.g. "/uploads/logos/abc.png"
 }
 
 export interface PrintableItem {
@@ -24,8 +27,6 @@ export interface PrintableItem {
   purchasePrice?: string | number;
 }
 
-const COMPANY_NAME = 'KTMG GROUP';
-
 const sharedStyles = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 30px 40px; }
@@ -33,7 +34,9 @@ const sharedStyles = `
   .header-center { text-align: center; flex: 1; }
   .header-center h1 { font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
   .header-center h2 { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border: 2px solid #000; display: inline-block; padding: 4px 16px; margin-top: 4px; }
-  .logo-box { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+  .logo-box { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; }
+  .logo-box img { width: 100%; height: 100%; object-fit: contain; }
+  .logo-fallback { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
   table { width: 100%; border-collapse: collapse; margin: 12px 0; }
   table th, table td { border: 1px solid #000; padding: 8px 10px; font-size: 11px; }
   table th { font-weight: bold; background: #f0f0f0; text-align: left; }
@@ -55,24 +58,51 @@ const sharedStyles = `
   }
 `;
 
-function openPrintFrame(html: string): void {
+/**
+ * Convert an image URL to a base64 data URI so it embeds into the print iframe.
+ */
+async function urlToBase64(url: string): Promise<string> {
+  try {
+    const response = await fetch(url, { cache: 'force-cache' });
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return ''; // If fetch fails, show nothing
+  }
+}
+
+/** 
+ * Sanitize employee name for use in a filename 
+ */
+function safeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_');
+}
+
+function openPrintFrame(html: string, filename: string): void {
   const iframe = document.createElement('iframe');
   iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:none;';
   iframe.srcdoc = html;
   document.body.appendChild(iframe);
   iframe.onload = () => {
     setTimeout(() => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-      setTimeout(() => document.body.removeChild(iframe), 3000);
+      if (iframe.contentWindow) {
+        // Set document title to control the suggested PDF filename
+        iframe.contentDocument!.title = filename;
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+      setTimeout(() => document.body.removeChild(iframe), 4000);
     }, 500);
   };
 }
 
-function renderItemsTable(items: PrintableItem[], showPrice = false): string {
+function renderItemsTable(items: PrintableItem[]): string {
   const headers = ['#', 'Item Name', 'Barcode', 'Serial No.', 'Condition', 'Remarks'];
-  if (showPrice) headers.push('Value (LKR)');
-
   return `
     <table>
       <thead>
@@ -89,39 +119,58 @@ function renderItemsTable(items: PrintableItem[], showPrice = false): string {
             <td>${item.serialNumber || '—'}</td>
             <td>${item.condition || 'Good'}</td>
             <td>${item.location || item.category || ''}</td>
-            ${showPrice ? `<td style="text-align:right">${item.purchasePrice ? Number(item.purchasePrice).toLocaleString('en-LK', { minimumFractionDigits: 2 }) : '—'}</td>` : ''}
           </tr>
         `).join('')}
         ${Array.from({ length: Math.max(0, 4 - items.length) }).map(() => `
-          <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>${showPrice ? '<td>&nbsp;</td>' : ''}</tr>
+          <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
         `).join('')}
       </tbody>
     </table>
   `;
 }
 
+function buildLogoHtml(base64: string, companyName: string): string {
+  if (base64) {
+    return `<div class="logo-box"><img src="${base64}" alt="${companyName} logo" /></div>`;
+  }
+  const initials = companyName.split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
+  return `<div class="logo-fallback">${initials}<br/>GROUP</div>`;
+}
+
 /**
  * Asset Issuance Form — printed when giving assets to an employee for the first time.
  */
-export function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableItem[]): void {
+export async function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const companyDisplay = employee.company || COMPANY_NAME;
+  const companyDisplay = employee.company || 'KTMG GROUP';
+
+  // Fetch logo as base64 so it works inside the print iframe
+  let logoBase64 = '';
+  if (employee.companyLogoUrl) {
+    const fullUrl = employee.companyLogoUrl.startsWith('http')
+      ? employee.companyLogoUrl
+      : `${API_ROOT_URL}${employee.companyLogoUrl}`;
+    logoBase64 = await urlToBase64(fullUrl);
+  }
+
+  const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
+  const filename = `${safeFilename(employee.name)}_Asset_Issuance_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Asset Issuance Form</title>
+  <title>${filename}</title>
   <style>${sharedStyles}</style>
 </head>
 <body>
   <div class="header">
-    <div class="logo-box">${companyDisplay.split(' ').map(w => w[0]).join('')}<br/>GROUP</div>
+    ${logoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
       <h2>Asset Issuance Form</h2>
     </div>
-    <div class="logo-box" style="font-size:9px;color:#555">KTMG<br/>VAULT<br/>SYSTEM</div>
+    ${logoHtml}
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
@@ -149,7 +198,7 @@ export function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableI
   </div>
 
   <div class="section-title">Assets Issued</div>
-  ${renderItemsTable(items, true)}
+  ${renderItemsTable(items)}
 
   <div style="margin:10px 0;">
     <div class="meta">Total Assets Issued: <span class="highlight">${items.length}</span></div>
@@ -188,32 +237,43 @@ export function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableI
 </body>
 </html>`;
 
-  openPrintFrame(html);
+  openPrintFrame(html, filename);
 }
 
 /**
  * Asset Handover Form — printed when an employee leaves or returns assets.
  * Matches the physical BLOCKCHAIN GROUP ASSET HANDOVER FORM format.
  */
-export function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableItem[]): void {
+export async function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const companyDisplay = employee.company || COMPANY_NAME;
+  const companyDisplay = employee.company || 'KTMG GROUP';
+
+  let logoBase64 = '';
+  if (employee.companyLogoUrl) {
+    const fullUrl = employee.companyLogoUrl.startsWith('http')
+      ? employee.companyLogoUrl
+      : `${API_ROOT_URL}${employee.companyLogoUrl}`;
+    logoBase64 = await urlToBase64(fullUrl);
+  }
+
+  const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
+  const filename = `${safeFilename(employee.name)}_Asset_Handover_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Asset Handover Form</title>
+  <title>${filename}</title>
   <style>${sharedStyles}</style>
 </head>
 <body>
   <div class="header">
-    <div class="logo-box">${companyDisplay.split(' ').map(w => w[0]).join('')}<br/>GROUP</div>
+    ${logoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
       <h2>Asset Handover Form</h2>
     </div>
-    <div class="logo-box" style="font-size:9px;color:#555">Kids &amp;<br/>Teens<br/>Medical</div>
+    ${logoHtml}
   </div>
 
   <div style="display:flex;justify-content:space-between;margin:8px 0;">
@@ -317,5 +377,5 @@ export function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableI
 </body>
 </html>`;
 
-  openPrintFrame(html);
+  openPrintFrame(html, filename);
 }

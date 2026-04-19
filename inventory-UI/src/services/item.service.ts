@@ -24,7 +24,7 @@ export interface Item {
   assignedToName?: string;
   assignedToEmployeeId?: string;
   category: { name: string; code: string };
-  company: { name: string; code: string };
+  company: { name: string; code: string; logoUrl?: string };
   department?: { name: string };
   createdAt: string;
   warrantyCardUrls?: string[];

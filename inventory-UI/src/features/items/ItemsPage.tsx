@@ -298,7 +298,7 @@ export default function ItemsPage() {
             className="hover-card"
           >
             <Users size={18} strokeWidth={2.5} />
-            Employee View
+            Employee Asset View
           </button>
           {hasPermission(AdminPermission.VIEW_LICENSES) && (
             <NavLink
