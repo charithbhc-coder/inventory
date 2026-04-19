@@ -68,8 +68,9 @@ const ACTION_MAP: Record<string, string> = {
 };
 
 export default function AuditLogsPage() {
-  const [actionFilter, setActionFilter] = useState('');
-  const [entityTypeFilter, setEntityTypeFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
   const queryClient = useQueryClient();
@@ -123,12 +124,14 @@ export default function AuditLogsPage() {
   // Removed unused user extraction
 
   const { data: logsData, isLoading } = useQuery({
-    queryKey: ['audit-logs', page, limit, actionFilter, entityTypeFilter],
+    queryKey: ['audit-logs', page, limit, searchFilter, userFilter, dateFilter],
     queryFn: () => auditLogService.getLogs({
       page,
       limit,
-      action: actionFilter || undefined,
-      entityType: entityTypeFilter || undefined,
+      search: searchFilter || undefined,
+      userId: userFilter || undefined,
+      startDate: dateFilter || undefined,
+      endDate: dateFilter || undefined,
     }),
   });
 
@@ -296,34 +299,44 @@ export default function AuditLogsPage() {
         {/* Search & Filter Bar */}
         <div style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
 
-          <div style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
+          <div style={{ position: 'relative', flex: '1 1 250px', maxWidth: 300 }}>
             <Search size={16} className="text-muted filter-icon-anim" style={{ position: 'absolute', left: 16, top: 12 }} />
             <input
               type="text"
-              placeholder="Search entity..."
-              value={entityTypeFilter}
-              onChange={e => setEntityTypeFilter(e.target.value)}
+              placeholder="Search persons or actions..."
+              value={searchFilter}
+              onChange={e => setSearchFilter(e.target.value)}
               className="input yellow-placeholder-anim"
               style={{ paddingLeft: 42 }}
             />
           </div>
 
-          <div style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
+          <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: 250 }}>
             <Filter size={16} className="text-muted filter-icon-anim" style={{ position: 'absolute', left: 16, top: 12, pointerEvents: 'none' }} />
             <select
-              value={actionFilter}
-              onChange={e => setActionFilter(e.target.value)}
+              value={userFilter}
+              onChange={e => setUserFilter(e.target.value)}
               className="input yellow-placeholder-anim"
               style={{ paddingLeft: 42, appearance: 'none', cursor: 'pointer' }}
             >
-              <option value="">All Actions</option>
-              {Object.keys(ACTION_MAP).map(key => (
-                <option key={key} value={key}>{ACTION_MAP[key]}</option>
+              <option value="">All Users</option>
+              {Object.values(userMap).map((u: User) => (
+                <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
               ))}
             </select>
             <div style={{ position: 'absolute', right: 16, top: 12, pointerEvents: 'none' }}>
               <ListFilter size={16} className="text-muted filter-icon-anim" />
             </div>
+          </div>
+
+          <div style={{ position: 'relative', flex: '1 1 180px', maxWidth: 200 }}>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className="input yellow-placeholder-anim"
+              style={{ paddingLeft: 16 }}
+            />
           </div>
         </div>
 

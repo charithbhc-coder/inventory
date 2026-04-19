@@ -26,6 +26,11 @@ export class UpdateDepartmentDto {
   
   @IsString()
   @IsOptional()
+  code?: string;
+
+  
+  @IsString()
+  @IsOptional()
   location?: string;
 
   

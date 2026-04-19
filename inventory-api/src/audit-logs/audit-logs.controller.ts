@@ -21,12 +21,15 @@ export class AuditLogsController {
     @CurrentUser() user: JwtPayload,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
     @Query('action') action?: string,
     @Query('userId') userId?: string,
     @Query('entityType') entityType?: string,
     @Query('entityId') entityId?: string,
     @Query('companyId') companyId?: string,
   ) {
-    return this.auditLogsService.findAll(user, { page, limit, action, userId, entityType, entityId, companyId });
+    return this.auditLogsService.findAll(user, { page, limit, search, startDate, endDate, action, userId, entityType, entityId, companyId });
   }
 }

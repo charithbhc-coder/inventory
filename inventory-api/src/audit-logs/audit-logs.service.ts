@@ -17,6 +17,9 @@ export class AuditLogsService {
     query: {
       page?: number;
       limit?: number;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
       action?: string;
       userId?: string;
       entityType?: string;
@@ -50,6 +53,20 @@ export class AuditLogsService {
     }
 
     const isValid = (val: any) => val && val !== '' && !val.includes('<') && val !== 'undefined';
+
+    if (isValid(query.search)) {
+      qb.andWhere('(audit.userEmail ILIKE :search OR audit.action ILIKE :search OR audit.entityType ILIKE :search)', { search: `%${query.search}%` });
+    }
+
+    if (isValid(query.startDate)) {
+      qb.andWhere('audit.createdAt >= :startDate', { startDate: new Date(query.startDate) });
+    }
+    
+    if (isValid(query.endDate)) {
+      const end = new Date(query.endDate);
+      end.setHours(23, 59, 59, 999);
+      qb.andWhere('audit.createdAt <= :endDate', { endDate: end });
+    }
 
     if (isValid(query.action)) qb.andWhere('audit.action = :action', { action: query.action });
     // Only allow userId filter override for super admins with audit access

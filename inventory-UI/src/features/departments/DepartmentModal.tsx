@@ -103,11 +103,7 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.3px', lineHeight: 1 }}>
                 {isEdit ? 'Edit Department' : 'New Department'}
               </h2>
-              {isEdit && (
-                <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
-                  Code <strong style={{ color: 'var(--text-main)' }}>{dept?.code}</strong> is locked after creation
-                </p>
-              )}
+              </h2>
             </div>
           </div>
           <button
@@ -163,12 +159,9 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
                 id="dept-code"
                 {...register('code')}
                 placeholder="HR"
-                disabled={isEdit}
                 style={{
                   ...inputStyle(!!errors.code),
-                  textTransform: 'uppercase',
-                  cursor: isEdit ? 'not-allowed' : 'text',
-                  opacity: isEdit ? 0.5 : 1,
+                  textTransform: 'uppercase'
                 }}
               />
               {errors.code && <span style={{ color: 'var(--accent-red)', fontSize: 11, marginTop: 4, display: 'block' }}>{errors.code.message}</span>}

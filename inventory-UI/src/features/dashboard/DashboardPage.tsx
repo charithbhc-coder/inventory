@@ -179,6 +179,7 @@ export default function DashboardPage() {
                   { name: 'In Repair', value: inRepair },
                   { name: 'Warehouse', value: warehouse },
                   { name: 'Disposed', value: disposed },
+                  { name: 'Missing/Lost', value: lost },
                 ]}
                 cx="50%"
                 cy="50%"
@@ -192,6 +193,7 @@ export default function DashboardPage() {
                 <Cell fill="#f59e0b" />
                 <Cell fill="#3b82f6" />
                 <Cell fill="#ef4444" />
+                <Cell fill="#991b1b" />
               </Pie>
               <Tooltip 
                 contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-dark)', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }} 
@@ -209,6 +211,7 @@ export default function DashboardPage() {
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#3b82f6'}}/> Warehouse</span> <strong style={{ color: '#3b82f6'}}>{warehouse.toLocaleString()}</strong></div>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#f59e0b'}}/> In Repair</span> <strong style={{ color: '#f59e0b'}}>{inRepair.toLocaleString()}</strong></div>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#ef4444'}}/> Disposed</span> <strong style={{ color: '#ef4444'}}>{disposed.toLocaleString()}</strong></div>
+          <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#991b1b'}}/> Missing/Lost</span> <strong style={{ color: '#991b1b'}}>{lost.toLocaleString()}</strong></div>
         </div>
       </div>
 
