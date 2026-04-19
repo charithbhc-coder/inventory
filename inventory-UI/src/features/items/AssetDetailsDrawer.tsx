@@ -97,13 +97,52 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         {/* Content */}
         <div className="drawer-body custom-scrollbar">
           
+
           {/* Quick Actions Bar */}
           <div className="action-hub mb-8">
+
+            {/* Repair Lock Banner */}
+            {(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) && (
+              <div style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1.5px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#f59e0b',
+              }}>
+                <Wrench size={14} style={{ flexShrink: 0 }} />
+                {item.status === ItemStatus.SENT_TO_REPAIR
+                  ? 'Asset is physically SENT TO REPAIR — only Return or Dispose are available.'
+                  : 'Asset is IN REPAIR — only Return or Dispose are available.'}
+              </div>
+            )}
+
             {hasPermission(AdminPermission.ASSIGN_ITEMS) && (
-              <button className="hub-btn" onClick={() => setActiveModal('assign')}>
-                <UserPlus size={16} />
-                <span>Assign</span>
-              </button>
+              <div style={{ position: 'relative', flex: 1 }} title={
+                (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
+                  ? 'Cannot assign — item is currently in repair'
+                  : undefined
+              }>
+                <button
+                  className="hub-btn"
+                  onClick={() => setActiveModal('assign')}
+                  disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
+                  style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
+                    ? { opacity: 0.4, cursor: 'not-allowed', flex: 1, width: '100%' }
+                    : { flex: 1, width: '100%' }
+                  }
+                >
+                  <UserPlus size={16} />
+                  <span>Assign</span>
+                </button>
+              </div>
             )}
             {hasPermission(AdminPermission.MANAGE_REPAIRS) && (
               (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) ? (
@@ -125,10 +164,24 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </button>
             ) : (
               hasPermission(AdminPermission.UPDATE_ITEMS) && (
-                <button className="hub-btn danger" onClick={() => setActiveModal('lost')}>
-                  <AlertOctagon size={16} />
-                  <span>Lost</span>
-                </button>
+                <div style={{ position: 'relative', flex: 1 }} title={
+                  (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
+                    ? 'Cannot mark as lost — item is currently in repair. Return it first.'
+                    : undefined
+                }>
+                  <button
+                    className="hub-btn danger"
+                    onClick={() => setActiveModal('lost')}
+                    disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
+                    style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
+                      ? { opacity: 0.4, cursor: 'not-allowed', flex: 1, width: '100%' }
+                      : { flex: 1, width: '100%' }
+                    }
+                  >
+                    <AlertOctagon size={16} />
+                    <span>Lost</span>
+                  </button>
+                </div>
               )
             )}
             {hasPermission(AdminPermission.MANAGE_DISPOSALS) && (
@@ -138,6 +191,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </button>
             )}
           </div>
+
 
           {/* Visual Barcode */}
           <div className="barcode-container mb-8">

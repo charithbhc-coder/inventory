@@ -463,8 +463,12 @@ export default function DashboardPage() {
                 <span style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.warehouse}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-dark)' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>In Repair (Pending/Active)</span>
-                <span style={{ color: 'var(--accent-red)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.needsRepair}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>Currently In Repair</span>
+                <span style={{ color: '#f59e0b', fontSize: 13, fontWeight: 700 }}>{selectedCompany.inRepair || 0}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-dark)' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>Flagged for Repair</span>
+                <span style={{ color: 'var(--accent-red)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.needsRepair || 0}</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
