@@ -135,11 +135,11 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   onClick={() => setActiveModal('assign')}
                   disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
                   style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
-                    ? { opacity: 0.4, cursor: 'not-allowed', width: '100%' }
-                    : { width: '100%' }
+                    ? { opacity: 0.4, cursor: 'not-allowed', flex: 1 }
+                    : { flex: 1 }
                   }
                 >
-                  <UserPlus size={16} />
+                  <UserPlus size={16} style={{ flexShrink: 0 }} />
                   <span>Assign</span>
                 </button>
               </div>
@@ -174,11 +174,11 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                     onClick={() => setActiveModal('lost')}
                     disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
                     style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
-                      ? { opacity: 0.4, cursor: 'not-allowed', width: '100%' }
-                      : { width: '100%' }
+                      ? { opacity: 0.4, cursor: 'not-allowed', flex: 1 }
+                      : { flex: 1 }
                     }
                   >
-                    <AlertOctagon size={16} />
+                    <AlertOctagon size={16} style={{ flexShrink: 0 }} />
                     <span>Lost</span>
                   </button>
                 </div>
