@@ -15,7 +15,7 @@ export default function RecoverItemModal({ item, isOpen, onClose }: RecoverItemM
   const [notes, setNotes] = useState('');
 
   const mutation = useMutation({
-    mutationFn: () => itemService.moveToWarehouse(item.id),
+    mutationFn: () => itemService.moveToWarehouse(item.id, notes || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });

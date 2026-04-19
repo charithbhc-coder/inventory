@@ -376,7 +376,9 @@ export default function ItemsPage() {
                 <option value="">All Statuses</option>
                 <option value="WAREHOUSE">Warehouse</option>
                 <option value="IN_USE">In Use</option>
-                <option value="IN_REPAIR">Repairing</option>
+                <option value="IN_REPAIR">In Repair</option>
+                <option value="SENT_TO_REPAIR">Sent To Repair</option>
+                <option value="LOST">Lost</option>
                 <option value="DISPOSED">Disposed</option>
               </select>
             </div>

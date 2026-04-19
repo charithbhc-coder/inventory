@@ -593,11 +593,25 @@ function GlobalActionFlow({ type, onClose }: any) {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: itemsRes } = useQuery({ 
-    queryKey: ['items-search', searchTerm], 
-    queryFn: () => itemService.getItems({ search: searchTerm, limit: 10 }), 
-    enabled: !!type && type !== 'register' && !selectedItem 
+  // Determine which statuses to EXCLUDE per action type
+  const EXCLUDED_FOR_ASSIGN   = ['DISPOSED', 'LOST', 'IN_REPAIR', 'SENT_TO_REPAIR'];
+  const EXCLUDED_FOR_REPAIR   = ['DISPOSED', 'LOST', 'IN_REPAIR', 'SENT_TO_REPAIR'];
+  const EXCLUDED_FOR_LOST     = ['DISPOSED', 'LOST'];
+
+  const { data: itemsRes } = useQuery({
+    queryKey: ['items-search', searchTerm],
+    queryFn: () => itemService.getItems({ search: searchTerm, limit: 20 }),
+    enabled: !!type && type !== 'register' && !selectedItem
   });
+
+  const allItems: any[] = itemsRes?.data || [];
+  const items = type === 'assign'
+    ? allItems.filter(i => !EXCLUDED_FOR_ASSIGN.includes(i.status))
+    : type === 'repair'
+    ? allItems.filter(i => !EXCLUDED_FOR_REPAIR.includes(i.status))
+    : type === 'lost'
+    ? allItems.filter(i => !EXCLUDED_FOR_LOST.includes(i.status))
+    : allItems;
 
   if (!type) return null;
 
@@ -606,7 +620,6 @@ function GlobalActionFlow({ type, onClose }: any) {
   }
 
   if (type && !selectedItem) {
-     const items = itemsRes?.data || [];
      return (
        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }} onClick={onClose}>
          <div className="modal" style={{ width: '100%', maxWidth: 450, background: 'var(--bg-card)', borderRadius: 16, overflow: 'hidden', padding: 24, boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
@@ -631,7 +644,7 @@ function GlobalActionFlow({ type, onClose }: any) {
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{it.barcode} • <span style={{ color: it.status === 'Needs Attention' ? 'var(--accent-red)' : 'var(--text-muted)' }}>{it.status}</span></div>
                   </div>
                ))}
-               {items.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '24px 12px', textAlign: 'center' }}>No assets found mapping to '{searchTerm}'</div>}
+               {items.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '24px 12px', textAlign: 'center' }}>No eligible assets found{searchTerm ? ` for '${searchTerm}'` : ''}</div>}
             </div>
             <button onClick={onClose} style={{ marginTop: 24, width: '100%', padding: 12, background: 'var(--bg-dark)', color: 'var(--text-main)', border: '1px solid var(--border-dark)', borderRadius: 10, cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-dark)'}>Cancel</button>
          </div>

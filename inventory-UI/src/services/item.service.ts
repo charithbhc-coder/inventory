@@ -97,8 +97,8 @@ export const itemService = {
     return data;
   },
 
-  moveToWarehouse: async (id: string) => {
-    const { data } = await apiClient.post(`/items/${id}/move-to-warehouse`);
+  moveToWarehouse: async (id: string, notes?: string) => {
+    const { data } = await apiClient.post(`/items/${id}/move-to-warehouse`, { notes });
     return data;
   },
 
