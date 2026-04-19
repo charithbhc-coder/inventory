@@ -156,6 +156,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     }
     const payload = {
       ...formData,
+      serialNumber: formData.serialNumber || undefined,
       departmentId: formData.departmentId || undefined,
       parentItemId: formData.parentItemId || undefined,
       purchasePrice: formData.purchasePrice !== '' ? formData.purchasePrice : undefined

@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Camera,
   Printer,
-  AlertOctagon
+  AlertOctagon,
+  Hash
 } from 'lucide-react';
 import Barcode from 'react-barcode';
 import { itemService, Item } from '@/services/item.service';
@@ -226,6 +227,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               <InfoItem icon={<User size={14} />} label="Assigned To" value={item.assignedToName || 'Unassigned'} />
               <InfoItem icon={<Building size={14} />} label="Subsidiary" value={item.company.name} />
               <InfoItem icon={<MapPin size={14} />} label="Location" value={item.location || 'Warehouse'} />
+              <InfoItem icon={<Hash size={14} />} label="Serial Number" value={item.serialNumber || 'N/A'} />
               <InfoItem icon={<ShieldCheck size={14} />} label="Warranty" value={item.warrantyExpiresAt ? format(new Date(item.warrantyExpiresAt), 'MMM dd, yyyy') : 'No Warranty'} color={item.warrantyExpiresAt ? 'var(--accent-yellow)' : 'inherit'} />
               <InfoItem icon={<BadgeDollarSign size={14} />} label="Value (LKR)" value={item.purchasePrice ? Number(item.purchasePrice).toLocaleString('en-LK', { minimumFractionDigits: 2 }) : '0.00'} />
             </div>

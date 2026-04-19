@@ -132,7 +132,7 @@ export default function CompaniesPage() {
 
   const handleSave = (formData: Partial<Company>) => {
     if (selectedCompany) {
-      const { code, id, createdAt, updatedAt, logoUrl, isActive, ...safePayload } = formData as any;
+      const { id, createdAt, updatedAt, logoUrl, isActive, ...safePayload } = formData as any;
       updateMutation.mutate({ id: selectedCompany.id, payload: safePayload });
     } else {
       createMutation.mutate(formData);
