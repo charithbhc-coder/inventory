@@ -156,7 +156,7 @@ export default function DepartmentsPage() {
 
   const handleSave = (formData: any) => {
     if (selectedDept) {
-      const { code, companyId, id, createdAt, updatedAt, ...safePayload } = formData;
+      const { companyId, id, createdAt, updatedAt, ...safePayload } = formData;
       updateMutation.mutate({ id: selectedDept.id, payload: safePayload });
     } else {
       const { companyId, ...safePayload } = formData;

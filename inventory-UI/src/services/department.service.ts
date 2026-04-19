@@ -41,7 +41,7 @@ export const departmentService = {
     return data;
   },
 
-  updateDepartment: async (id: string, payload: Partial<Pick<Department, 'name' | 'location' | 'isActive'>>) => {
+  updateDepartment: async (id: string, payload: Partial<Pick<Department, 'name' | 'code' | 'location' | 'isActive'>>) => {
     const { data } = await apiClient.patch<Department>(`/departments/${id}`, payload);
     return data;
   },
