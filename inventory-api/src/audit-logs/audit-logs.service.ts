@@ -59,11 +59,11 @@ export class AuditLogsService {
     }
 
     if (isValid(query.startDate)) {
-      qb.andWhere('audit.createdAt >= :startDate', { startDate: new Date(query.startDate) });
+      qb.andWhere('audit.createdAt >= :startDate', { startDate: new Date(query.startDate as string) });
     }
     
     if (isValid(query.endDate)) {
-      const end = new Date(query.endDate);
+      const end = new Date(query.endDate as string);
       end.setHours(23, 59, 59, 999);
       qb.andWhere('audit.createdAt <= :endDate', { endDate: end });
     }

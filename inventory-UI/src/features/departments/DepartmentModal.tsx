@@ -103,7 +103,6 @@ export default function DepartmentModal({ isOpen, onClose, dept, fixedCompanyId,
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.3px', lineHeight: 1 }}>
                 {isEdit ? 'Edit Department' : 'New Department'}
               </h2>
-              </h2>
             </div>
           </div>
           <button

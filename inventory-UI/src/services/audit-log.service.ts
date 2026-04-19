@@ -29,6 +29,9 @@ export const auditLogService = {
   getLogs: async (params?: { 
     page?: number; 
     limit?: number; 
+    search?: string;
+    startDate?: string;
+    endDate?: string;
     action?: string; 
     userId?: string; 
     entityType?: string; 
