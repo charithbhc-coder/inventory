@@ -99,7 +99,18 @@ export default function UserModal({ isOpen, onClose, user, onSave }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSave)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit((data) => {
+          // If companyId is empty or role is SUPER_ADMIN, completely remove it from payload
+          // to prevent the empty string from failing backend UUID validation
+          const payload = { ...data };
+          if (!payload.companyId) {
+            delete payload.companyId;
+          }
+          if (payload.role === 'SUPER_ADMIN') {
+            delete payload.companyId;
+          }
+          onSave(payload);
+        })} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <label htmlFor="firstName" style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>FIRST NAME</label>
