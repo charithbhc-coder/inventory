@@ -73,6 +73,19 @@ export class MailService implements OnModuleInit {
     return !!this.transporter;
   }
 
+  // 🕒 Timezone-aware timestamp generator
+  private getFormattedTimestamp(): string {
+    const tz = this.configService.get<string>('SYSTEM_TIMEZONE');
+    if (tz) {
+      try {
+        return new Date().toLocaleString('en-US', { timeZone: tz });
+      } catch (e) {
+        // Fallback if invalid timezone string provided
+      }
+    }
+    return new Date().toLocaleString();
+  }
+
   // 🔧 Common sender
   private async sendMail(to: string, subject: string, html: string) {
     if (!this.isConfigured()) {
@@ -137,7 +150,7 @@ export class MailService implements OnModuleInit {
   async sendPasswordResetEmail(to: string, name: string, token: string) {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
-    const timestamp = new Date().toLocaleString();
+    const timestamp = this.getFormattedTimestamp();
 
     const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
     const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
@@ -149,7 +162,7 @@ export class MailService implements OnModuleInit {
 
   // 🟢 PASSWORD CHANGED
   async sendPasswordChangedEmail(to: string, name: string) {
-    const timestamp = new Date().toLocaleString();
+    const timestamp = this.getFormattedTimestamp();
 
     const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
     const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
@@ -162,7 +175,7 @@ export class MailService implements OnModuleInit {
   // 🔵 FIRST LOGIN (Security Alert)
   async sendFirstLoginEmail(to: string, name: string) {
     const dashboardLink = `${this.configService.get('FRONTEND_URL')}/dashboard`;
-    const timestamp = new Date().toLocaleString();
+    const timestamp = this.getFormattedTimestamp();
 
     const systemName = this.configService.get<string>('SYSTEM_NAME') || 'Inventory';
     const systemOrg = this.configService.get<string>('SYSTEM_ORG') || 'Company';
