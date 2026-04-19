@@ -556,6 +556,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
           }
           .action-hub {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
             padding: 4px;
             background: var(--bg-dark);
