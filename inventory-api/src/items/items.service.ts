@@ -219,6 +219,13 @@ export class ItemsService {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
+      // STATE GUARD: Cannot assign an item that is currently in repair
+      if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
+        throw new BadRequestException(
+          `Cannot assign "${item.name}" — it is currently in repair. Return it from repair first.`
+        );
+      }
+
       const prevStatus = item.status;
       const prevDeptId = item.departmentId;
 
@@ -275,6 +282,11 @@ export class ItemsService {
       for (const id of itemIds) {
         const item = await manager.findOne(Item, { where: { id } });
         if (!item) continue;
+
+        // STATE GUARD: Skip items currently in repair during bulk assignment
+        if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
+          continue; // silently skip — caller should filter these out
+        }
 
         const prevStatus = item.status;
         const prevDeptId = item.departmentId;
@@ -360,6 +372,13 @@ export class ItemsService {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      // STATE GUARD: Cannot send to repair if already in repair
+      if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
+        throw new BadRequestException(
+          `"${item.name}" is already in repair. Return it from repair before initiating a new repair cycle.`
+        );
+      }
 
       const prevStatus = item.status;
 
@@ -447,6 +466,9 @@ export class ItemsService {
       if (!item) throw new NotFoundException('Item not found');
 
       const prevStatus = item.status;
+      // NOTE: Dispose IS allowed from IN_REPAIR/SENT_TO_REPAIR — item may be beyond repair.
+      // The audit note will record that it was scrapped from repair state.
+      const wasInRepair = item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR;
 
       item.status = ItemStatus.DISPOSED;
       item.disposalReason = dto.disposalReason;
@@ -465,13 +487,17 @@ export class ItemsService {
 
       const saved = await manager.save(Item, item);
 
+      const repairNote = wasInRepair
+        ? ` [Scrapped from repair — repair could not be completed]`
+        : '';
+
       const event = manager.create(ItemEvent, {
         itemId: saved.id,
         eventType: ItemEventType.DISPOSED,
         fromStatus: prevStatus,
         toStatus: ItemStatus.DISPOSED,
         performedByUserId: userId,
-        notes: `Disposed: ${dto.disposalReason} (Method: ${dto.disposalMethod})`,
+        notes: `Disposed: ${dto.disposalReason} (Method: ${dto.disposalMethod})${repairNote}`,
       });
       await manager.save(ItemEvent, event);
 
@@ -486,6 +512,13 @@ export class ItemsService {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      // STATE GUARD: Cannot mark as lost while item is in repair — return from repair first
+      if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
+        throw new BadRequestException(
+          `Cannot mark "${item.name}" as lost — it is currently in repair. Return it from repair first, then report as lost if needed.`
+        );
+      }
 
       const prevStatus = item.status;
 
