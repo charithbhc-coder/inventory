@@ -219,11 +219,17 @@ export class ItemsService {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
-      // STATE GUARD: Cannot assign an item that is currently in repair
+      // STATE GUARD: Cannot assign items in repair or terminal states
       if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
         throw new BadRequestException(
           `Cannot assign "${item.name}" — it is currently in repair. Return it from repair first.`
         );
+      }
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(`Cannot assign "${item.name}" — it has been disposed.`);
+      }
+      if (item.status === ItemStatus.LOST) {
+        throw new BadRequestException(`Cannot assign "${item.name}" — it is reported as lost. Recover it first.`);
       }
 
       const prevStatus = item.status;
@@ -333,6 +339,14 @@ export class ItemsService {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
+      // STATE GUARD: Cannot unassign terminal-state items
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(`Cannot unassign "${item.name}" — it has been disposed.`);
+      }
+      if (item.status === ItemStatus.LOST) {
+        throw new BadRequestException(`Cannot unassign "${item.name}" — it is reported as lost. Use Recover instead.`);
+      }
+
       const prevStatus = item.status;
 
       // Store previous
@@ -373,11 +387,17 @@ export class ItemsService {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
-      // STATE GUARD: Cannot send to repair if already in repair
+      // STATE GUARD: Cannot send to repair if already in repair or in a terminal state
       if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
         throw new BadRequestException(
           `"${item.name}" is already in repair. Return it from repair before initiating a new repair cycle.`
         );
+      }
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(`Cannot send "${item.name}" to repair — it has been disposed.`);
+      }
+      if (item.status === ItemStatus.LOST) {
+        throw new BadRequestException(`Cannot send "${item.name}" to repair — it is reported as lost. Recover it first.`);
       }
 
       const prevStatus = item.status;
@@ -419,6 +439,13 @@ export class ItemsService {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      // STATE GUARD: Can only return from repair if actually in repair
+      if (item.status !== ItemStatus.IN_REPAIR && item.status !== ItemStatus.SENT_TO_REPAIR) {
+        throw new BadRequestException(
+          `"${item.name}" is not currently in repair (status: ${item.status}). Nothing to return.`
+        );
+      }
 
       const prevStatus = item.status;
 
@@ -464,6 +491,11 @@ export class ItemsService {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      // STATE GUARD: Cannot re-dispose an already disposed item
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(`"${item.name}" is already disposed.`);
+      }
 
       const prevStatus = item.status;
       // NOTE: Dispose IS allowed from IN_REPAIR/SENT_TO_REPAIR — item may be beyond repair.
@@ -513,11 +545,17 @@ export class ItemsService {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
-      // STATE GUARD: Cannot mark as lost while item is in repair — return from repair first
+      // STATE GUARD: Cannot mark as lost if in repair or already in terminal state
       if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
         throw new BadRequestException(
-          `Cannot mark "${item.name}" as lost — it is currently in repair. Return it from repair first, then report as lost if needed.`
+          `Cannot mark "${item.name}" as lost — it is currently in repair. Return it from repair first.`
         );
+      }
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(`Cannot mark "${item.name}" as lost — it has already been disposed.`);
+      }
+      if (item.status === ItemStatus.LOST) {
+        throw new BadRequestException(`"${item.name}" is already reported as lost.`);
       }
 
       const prevStatus = item.status;
@@ -589,13 +627,26 @@ export class ItemsService {
   // MOVE TO WAREHOUSE — return item to warehouse
   // ========================================
 
-  async moveToWarehouse(itemId: string, userId: string): Promise<Item> {
+  async moveToWarehouse(itemId: string, userId: string, notes?: string): Promise<Item> {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
 
+      // STATE GUARD: Cannot move a disposed item back to warehouse
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(
+          `Cannot move "${item.name}" to warehouse — it has been disposed and is a terminal state.`
+        );
+      }
+
       const prevStatus = item.status;
       const prevDeptId = item.departmentId;
+
+      // Clear assignment and flags if item was lost (recovery flow)
+      if (item.status === ItemStatus.LOST) {
+        item.needsRepair = false;
+        item.isWorking = true;
+      }
 
       // Store previous assignment
       if (item.assignedToName) {
@@ -611,6 +662,10 @@ export class ItemsService {
 
       const saved = await manager.save(Item, item);
 
+      const defaultNote = prevStatus === ItemStatus.LOST
+        ? 'Asset recovered and returned to warehouse'
+        : 'Item returned to warehouse';
+
       const event = manager.create(ItemEvent, {
         itemId: saved.id,
         eventType: ItemEventType.MOVED_TO_WAREHOUSE,
@@ -618,7 +673,7 @@ export class ItemsService {
         toStatus: ItemStatus.WAREHOUSE,
         fromDepartmentId: prevDeptId,
         performedByUserId: userId,
-        notes: 'Item returned to warehouse',
+        notes: notes ? `${defaultNote} — ${notes}` : defaultNote,
       });
       await manager.save(ItemEvent, event);
 
