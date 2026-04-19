@@ -3,9 +3,16 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import path from 'path'
+import { readFileSync } from 'fs'
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
   base: '/inventory/',
+  define: {
+    // Inject version from package.json so Sidebar reads it dynamically
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     react(),
     ...(process.env.NODE_ENV !== 'production' ? [basicSsl()] : []),
@@ -45,17 +52,17 @@ export default defineConfig({
         start_url: '/inventory/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'pwa-192x192.png?v=2',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-512x512.png?v=2',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-512x512.png?v=2',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
