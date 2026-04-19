@@ -53,10 +53,7 @@ export class UsersService {
       throw new ForbiddenException('You do not have permission to create users');
     }
 
-    // Cannot create SUPER_ADMIN via API
-    if (dto.role === UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Super Admins can only be created via seed scripts');
-    }
+    // Super Admin creation is now allowed via API by user request
 
     const existing = await this.usersRepository.findOne({
       where: { email: dto.email.toLowerCase() },
@@ -162,9 +159,7 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
-    if (dto.role === UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Cannot assign Super Admin role via API');
-    }
+    // Super Admin assignment via API is enabled per user request
 
     if (dto.email && dto.email.toLowerCase() !== user.email.toLowerCase()) {
       const existing = await this.usersRepository.findOne({
