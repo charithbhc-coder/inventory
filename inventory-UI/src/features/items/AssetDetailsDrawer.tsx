@@ -125,7 +125,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             )}
 
             {hasPermission(AdminPermission.ASSIGN_ITEMS) && (
-              <div style={{ position: 'relative', flex: 1 }} title={
+              <div style={{ position: 'relative', flex: 1, display: 'flex' }} title={
                 (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
                   ? 'Cannot assign — item is currently in repair'
                   : undefined
@@ -135,8 +135,8 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   onClick={() => setActiveModal('assign')}
                   disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
                   style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
-                    ? { opacity: 0.4, cursor: 'not-allowed', flex: 1, width: '100%' }
-                    : { flex: 1, width: '100%' }
+                    ? { opacity: 0.4, cursor: 'not-allowed', width: '100%' }
+                    : { width: '100%' }
                   }
                 >
                   <UserPlus size={16} />
@@ -164,7 +164,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </button>
             ) : (
               hasPermission(AdminPermission.UPDATE_ITEMS) && (
-                <div style={{ position: 'relative', flex: 1 }} title={
+                <div style={{ position: 'relative', flex: 1, display: 'flex' }} title={
                   (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
                     ? 'Cannot mark as lost — item is currently in repair. Return it first.'
                     : undefined
@@ -174,8 +174,8 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                     onClick={() => setActiveModal('lost')}
                     disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
                     style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
-                      ? { opacity: 0.4, cursor: 'not-allowed', flex: 1, width: '100%' }
-                      : { flex: 1, width: '100%' }
+                      ? { opacity: 0.4, cursor: 'not-allowed', width: '100%' }
+                      : { width: '100%' }
                     }
                   >
                     <AlertOctagon size={16} />
