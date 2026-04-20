@@ -424,7 +424,9 @@ export default function DashboardPage() {
                 key={idx}
                 icon={normalizedEventType === 'STATUS_CHANGE' ? <RefreshCw size={12} /> : <Package size={12} />} 
                 title={title} 
-                desc={`${item.itemName} - ${item.notes || 'No description'}`} 
+                desc={item.source === 'audit' 
+                  ? `${item.notes || 'No description'} • By ${item.performedBy}` 
+                  : `${item.itemName} - ${item.notes || 'No description'} • By ${item.performedBy}`} 
                 time={timeString} 
                 eventType={normalizedEventType}
               />

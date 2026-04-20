@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, PackageSearch, Package, ShieldCheck, Info, Cpu, Globe, Calendar, BadgeDollarSign, MapPin, Edit, Building, UploadCloud, Plus, CheckCircle2, Printer } from 'lucide-react';
+import { X, PackageSearch, Package, ShieldCheck, Info, Cpu, Globe, Calendar, BadgeDollarSign, Edit, Building, UploadCloud, Plus, CheckCircle2, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { itemService, Item } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
@@ -30,8 +30,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     purchaseDate: item?.purchaseDate?.split('T')[0] || '',
     purchasedFrom: item?.purchasedFrom || '',
     warrantyExpiresAt: item?.warrantyExpiresAt?.split('T')[0] || '',
-    location: item?.location || '',
-    notes: item?.notes || '',
+    remarks: item?.remarks || '',
     parentItemId: item?.parentItemId || '',
   });
 
@@ -48,8 +47,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
         purchaseDate: item?.purchaseDate?.split('T')[0] || '',
         purchasedFrom: item?.purchasedFrom || '',
         warrantyExpiresAt: item?.warrantyExpiresAt?.split('T')[0] || '',
-        location: item?.location || '',
-        notes: item?.notes || '',
+        remarks: item?.remarks || '',
         parentItemId: item?.parentItemId || '',
       });
       // Reset files on open/switch
@@ -398,18 +396,15 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="item-location" style={styles.label}>LOCATION / ROOM</label>
-                  <div style={styles.inputWrap}>
-                    <MapPin style={styles.inputIcon} size={16} />
-                    <input
-                      id="item-location"
-                      style={styles.input}
-                      placeholder="e.g. Server Room, Floor 2"
-                      value={formData.location}
-                      onChange={e => setFormData({ ...formData, location: e.target.value })}
-                    />
-                  </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <label htmlFor="item-remarks" style={styles.label}>REMARKS</label>
+                  <textarea
+                    id="item-remarks"
+                    style={{ ...styles.inputSimple, flex: 1, minHeight: 80, resize: 'none', padding: '12px' }}
+                    placeholder="Remarks..."
+                    value={formData.remarks}
+                    onChange={e => setFormData({ ...formData, remarks: e.target.value })}
+                  />
                 </div>
               </div>
 
@@ -535,17 +530,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     </label>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>* Files will be uploaded automatically on save.</div>
                   </div>
-                </div>
-
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <label htmlFor="item-notes" style={styles.label}>TECHNICAL NOTES</label>
-                  <textarea
-                    id="item-notes"
-                    style={{ ...styles.inputSimple, flex: 1, minHeight: 80, resize: 'none', padding: '12px' }}
-                    placeholder="Internal notes about this unit..."
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                  />
                 </div>
               </div>
             </div>

@@ -7,7 +7,6 @@ import {
   User, 
   Building, 
   ShieldCheck, 
-  MapPin, 
   CheckCircle2, 
   Clock, 
   Download, 
@@ -226,7 +225,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             <div className="info-grid">
               <InfoItem icon={<User size={14} />} label="Assigned To" value={item.assignedToName || 'Unassigned'} />
               <InfoItem icon={<Building size={14} />} label="Subsidiary" value={item.company.name} />
-              <InfoItem icon={<MapPin size={14} />} label="Location" value={item.location || 'Warehouse'} />
+              <InfoItem icon={<FileText size={14} />} label="Remarks" value={item.remarks || 'None'} />
               <InfoItem icon={<Hash size={14} />} label="Serial Number" value={item.serialNumber || 'N/A'} />
               <InfoItem icon={<ShieldCheck size={14} />} label="Warranty" value={item.warrantyExpiresAt ? format(new Date(item.warrantyExpiresAt), 'MMM dd, yyyy') : 'No Warranty'} color={item.warrantyExpiresAt ? 'var(--accent-yellow)' : 'inherit'} />
               <InfoItem icon={<BadgeDollarSign size={14} />} label="Value (LKR)" value={item.purchasePrice ? Number(item.purchasePrice).toLocaleString('en-LK', { minimumFractionDigits: 2 }) : '0.00'} />
@@ -234,11 +233,11 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
           </section>
 
           {/* Asset Notes */}
-          {item.notes && (
+          {item.remarks && (
             <section className="mb-8 section-mt">
               <h4 className="section-title flex items-center gap-2">
                 <FileText size={16} />
-                Asset Notes
+                Asset Remarks
               </h4>
               <div style={{ 
                 padding: '20px', 
@@ -251,7 +250,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 fontWeight: 600,
                 boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                {item.notes}
+                {item.remarks}
               </div>
             </section>
           )}
@@ -357,7 +356,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                     </div>
                     <p className="event-note">{event.notes}</p>
                     <div className="event-meta">
-                      By {event.performedByUser?.name || 'System'}
+                      By {event.performedByUser?.firstName ? `${event.performedByUser.firstName} ${event.performedByUser.lastName}` : (event.performedByUser?.name || 'System')}
                     </div>
                   </div>
                 </div>

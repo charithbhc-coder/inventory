@@ -14,8 +14,7 @@ export interface Item {
   purchasedFrom?: string;
   warrantyExpiresAt?: string;
   imageUrl?: string;
-  location?: string;
-  notes?: string;
+  remarks?: string;
   isWorking: boolean;
   needsRepair: boolean;
   categoryId: string;
