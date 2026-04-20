@@ -60,12 +60,7 @@ export class CreateItemDto {
   
   @IsString()
   @IsOptional()
-  location?: string;
-
-  
-  @IsString()
-  @IsOptional()
-  notes?: string;
+  remarks?: string;
 
   
   @IsUUID()
@@ -121,12 +116,7 @@ export class UpdateItemDto {
   
   @IsString()
   @IsOptional()
-  location?: string;
-
-  
-  @IsString()
-  @IsOptional()
-  notes?: string;
+  remarks?: string;
 
   
   @IsBoolean()

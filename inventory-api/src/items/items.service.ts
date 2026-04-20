@@ -89,9 +89,8 @@ export class ItemsService {
             itemId: savedItem.id,
             eventType: ItemEventType.ITEM_ADDED,
             toStatus: ItemStatus.WAREHOUSE,
-            toLocation: dto.location || 'Company Warehouse',
             performedByUserId: userId,
-            notes: `Item "${savedItem.name}" added to inventory`,
+            notes: `Item "${savedItem.name}" added to inventory - Remarks: ${dto.remarks || 'None'}`,
           });
           await manager.save(ItemEvent, event);
 
@@ -245,7 +244,6 @@ export class ItemsService {
       if (dto.departmentId) item.departmentId = dto.departmentId;
       if (dto.assignedToName !== undefined) item.assignedToName = dto.assignedToName;
       if (dto.assignedToEmployeeId !== undefined) item.assignedToEmployeeId = dto.assignedToEmployeeId;
-      if (dto.location) item.location = dto.location;
 
       // Determine status
       if (dto.assignedToName) {
@@ -305,7 +303,6 @@ export class ItemsService {
         if (assignDto.departmentId) item.departmentId = assignDto.departmentId;
         if (assignDto.assignedToName !== undefined) item.assignedToName = assignDto.assignedToName;
         if (assignDto.assignedToEmployeeId !== undefined) item.assignedToEmployeeId = assignDto.assignedToEmployeeId;
-        if (assignDto.location) item.location = assignDto.location;
 
         if (assignDto.assignedToName || assignDto.departmentId) {
           item.status = ItemStatus.IN_USE;
@@ -658,7 +655,6 @@ export class ItemsService {
       item.departmentId = null;
       item.assignedToName = null;
       item.assignedToEmployeeId = null;
-      item.location = 'Company Warehouse';
 
       const saved = await manager.save(Item, item);
 

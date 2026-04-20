@@ -72,9 +72,6 @@ export class Item {
   @Column({ type: 'varchar', length: 100, nullable: true })
   previousAssignedToEmployeeId: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  location: string | null; // Physical location: 'Warehouse Shelf A3', 'IT Dept - Floor 2'
-
   // --- Status & Condition ---
   @Column({
     type: 'enum',
@@ -162,7 +159,7 @@ export class Item {
 
   // --- Metadata ---
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  remarks: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   addedByUserId: string | null;
