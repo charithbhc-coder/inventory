@@ -92,7 +92,7 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
       serialNumber: item.serialNumber,
       condition: item.condition,
       category: item.category?.name,
-      location: item.location || undefined,
+      remarks: item.remarks || undefined,
     }));
 
   const toEmployeeInfo = (group: EmployeeGroup): EmployeeInfo => ({
@@ -245,7 +245,7 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: 'rgba(0,0,0,0.1)', borderBottom: '1px solid var(--border-dark)' }}>
-                      {['Asset Name', 'Barcode', 'Category', 'Status', 'Location'].map(h => (
+                      {['Asset Name', 'Barcode', 'Category', 'Status', 'Remarks'].map(h => (
                         <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 10, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           {h}
                         </th>
@@ -262,7 +262,7 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
                         <td style={{ padding: '14px 16px', fontSize: 12, fontFamily: 'monospace', color: 'var(--text-muted)', fontWeight: 700 }}>{item.barcode}</td>
                         <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)' }}>{item.category?.name || '—'}</td>
                         <td style={{ padding: '14px 16px' }}><StatusBadge status={item.status} /></td>
-                        <td style={{ padding: '14px 16px', fontSize: 12, color: 'var(--text-muted)' }}>{item.location || '—'}</td>
+                        <td style={{ padding: '14px 16px', fontSize: 12, color: 'var(--text-muted)' }}>{item.remarks || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

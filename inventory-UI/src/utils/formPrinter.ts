@@ -23,7 +23,7 @@ export interface PrintableItem {
   serialNumber?: string;
   condition?: string;
   category?: string;
-  location?: string;
+  remarks?: string;
   purchasePrice?: string | number;
 }
 
@@ -118,7 +118,7 @@ function renderItemsTable(items: PrintableItem[]): string {
             <td style="font-family:monospace;font-size:10px">${item.barcode}</td>
             <td>${item.serialNumber || '—'}</td>
             <td>${item.condition || 'Good'}</td>
-            <td>${item.location || item.category || ''}</td>
+            <td>${item.remarks || item.category || ''}</td>
           </tr>
         `).join('')}
         ${Array.from({ length: Math.max(0, 4 - items.length) }).map(() => `
