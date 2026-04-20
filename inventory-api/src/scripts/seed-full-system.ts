@@ -173,8 +173,7 @@ async function seed() {
       assignedToEmployeeId: assignedUser ? `EMP-${1000 + i}` : null,
       purchasePrice: (Math.random() * 2000 + 400).toFixed(2),
       purchaseDate: new Date(Date.now() - Math.floor(Math.random() * 700 * 24 * 60 * 60 * 1000)),
-      location: status === ItemStatus.WAREHOUSE ? 'Warehouse Shelf A-1' : 'Main Office Floor 2',
-      notes: 'Automated seed data'
+      remarks: 'Automated seed data'
     });
     items.push(await itemRepo.save(item));
   }
