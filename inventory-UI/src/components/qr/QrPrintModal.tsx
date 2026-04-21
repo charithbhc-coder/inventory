@@ -38,7 +38,6 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     display:flex;flex-direction:column;align-items:center;gap:8px;
     box-shadow:0 4px 20px rgba(0,0,0,.12)}
   img{width:220px;height:220px;display:block;image-rendering:pixelated}
-  .hint{font-size:8px;font-weight:900;color:#1b2d3e;letter-spacing:.15em;text-transform:uppercase}
   .code{font-size:13px;font-weight:900;color:#1b2d3e;letter-spacing:.1em}
   .name{font-size:11px;color:#555;margin-top:10px;text-align:center;max-width:260px;font-weight:600}
   @media print{body{padding:10px;justify-content:flex-start;padding-top:20px}}
@@ -46,7 +45,6 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
 <body>
   <div class="card">
     <img src="${qrDataUrl}" />
-    <div class="hint">SCAN TO OPEN</div>
     <div class="code">${assetCode}</div>
   </div>
   <div class="name">${itemName}</div>
@@ -59,37 +57,31 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const canvas = getCanvas();
     if (!canvas) return;
 
-    // We'll create a larger canvas to fit the QR + the labels below it
+    // We'll create a larger canvas to fit the QR + the label below it
     const PADDING = 20;
-    const HINT_H = 15;
-    const CODE_H = 25;
-    const TOTAL_TEXT_H = HINT_H + CODE_H + PADDING;
+    const CODE_H = 30; // Height for the asset code text area
+    const TOTAL_TEXT_H = CODE_H;
 
     const out = document.createElement('canvas');
     out.width = canvas.width + (PADDING * 2);
     out.height = canvas.height + TOTAL_TEXT_H + PADDING;
-    
+
     const ctx = out.getContext('2d')!;
-    
+
     // 1. Background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, out.width, out.height);
-    
+
     // 2. Draw QR Code (centered)
     ctx.drawImage(canvas, PADDING, PADDING);
-    
-    // 3. Draw "SCAN TO OPEN" hint
+
+    // 3. Draw Asset Code
     ctx.fillStyle = '#1b2d3e';
-    ctx.font = `900 10px 'Courier New', monospace`;
-    ctx.textAlign = 'center';
-    ctx.letterSpacing = '2px'; // Modern browser support
-    ctx.fillText('SCAN TO OPEN', out.width / 2, canvas.height + PADDING + 15);
-    
-    // 4. Draw Asset Code
     const fontSize = Math.max(14, Math.floor(canvas.width / 14));
     ctx.font = `900 ${fontSize}px 'Courier New', monospace`;
+    ctx.textAlign = 'center';
     ctx.letterSpacing = '1px';
-    ctx.fillText(assetCode, out.width / 2, canvas.height + PADDING + 15 + CODE_H);
+    ctx.fillText(assetCode, out.width / 2, canvas.height + PADDING + (CODE_H * 0.75));
 
     const link = document.createElement('a');
     link.download = `qr-${assetCode}.png`;
@@ -155,9 +147,6 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
               fgColor="#1b2d3e"
               bgColor="#ffffff"
             />
-            <span style={{ fontSize: 8, fontWeight: 900, color: '#1b2d3e', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              SCAN TO OPEN
-            </span>
             <span style={{ fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: '#1b2d3e', letterSpacing: '0.1em' }}>
               {assetCode}
             </span>
