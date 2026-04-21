@@ -33,6 +33,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     warrantyExpiresAt: item?.warrantyExpiresAt?.split('T')[0] || '',
     remarks: item?.remarks || '',
     parentItemId: item?.parentItemId || '',
+    assignedToName: item?.assignedToName || '',
+    assignedToEmployeeId: item?.assignedToEmployeeId || '',
   });
 
   useEffect(() => {
@@ -50,6 +52,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
         warrantyExpiresAt: item?.warrantyExpiresAt?.split('T')[0] || '',
         remarks: item?.remarks || '',
         parentItemId: item?.parentItemId || '',
+        assignedToName: item?.assignedToName || '',
+        assignedToEmployeeId: item?.assignedToEmployeeId || '',
       });
       // Reset files on open/switch
       setWarrantyFile(null);
@@ -161,6 +165,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       purchasePrice: formData.purchasePrice !== '' ? formData.purchasePrice : undefined,
       purchaseDate: formData.purchaseDate || undefined,
       warrantyExpiresAt: formData.warrantyExpiresAt || undefined,
+      assignedToName: formData.assignedToName || undefined,
+      assignedToEmployeeId: formData.assignedToEmployeeId || undefined,
     };
 
     // If editing, remove immutable/special fields that are handled by other endpoints
@@ -376,6 +382,31 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     </select>
                   </div>
                 </div>
+
+                {isEdit && formData.assignedToName && (
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', padding: '16px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: 12, border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                    <div style={{ flex: '1 1 150px' }}>
+                      <label htmlFor="item-assignee" style={styles.label}>HOLDER NAME (FIX TYPO)</label>
+                      <input
+                        id="item-assignee"
+                        style={styles.inputSimple}
+                        placeholder="Holder Name"
+                        value={formData.assignedToName}
+                        onChange={e => setFormData({ ...formData, assignedToName: e.target.value })}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 120px' }}>
+                      <label htmlFor="item-assignee-id" style={styles.label}>EMPLOYEE ID (FIX TYPO)</label>
+                      <input
+                        id="item-assignee-id"
+                        style={styles.inputSimple}
+                        placeholder="EMP-XXXX"
+                        value={formData.assignedToEmployeeId}
+                        onChange={e => setFormData({ ...formData, assignedToEmployeeId: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 150px' }}>

@@ -63,7 +63,8 @@ const sharedStyles = `
  */
 async function urlToBase64(url: string): Promise<string> {
   try {
-    const response = await fetch(url, { cache: 'force-cache' });
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error('Network response was not ok');
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -71,8 +72,9 @@ async function urlToBase64(url: string): Promise<string> {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-  } catch {
-    return ''; // If fetch fails, show nothing
+  } catch (err) {
+    console.warn('urlToBase64 failed, falling back to original URL:', url, err);
+    return url; // Fall back to the original URL
   }
 }
 
@@ -129,9 +131,9 @@ function renderItemsTable(items: PrintableItem[]): string {
   `;
 }
 
-function buildLogoHtml(base64: string, companyName: string): string {
-  if (base64) {
-    return `<div class="logo-box"><img src="${base64}" alt="${companyName} logo" /></div>`;
+function buildLogoHtml(logoSource: string, companyName: string): string {
+  if (logoSource) {
+    return `<div class="logo-box"><img src="${logoSource}" alt="${companyName} logo" /></div>`;
   }
   const initials = companyName.split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
   return `<div class="logo-fallback">${initials}<br/>GROUP</div>`;

@@ -42,7 +42,7 @@ import { JwtPayload } from '../common/interfaces';
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('items')
 export class ItemsController {
-  constructor(private readonly itemsService: ItemsService) {}
+  constructor(private readonly itemsService: ItemsService) { }
 
   // --- CRUD ---
 

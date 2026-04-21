@@ -29,7 +29,7 @@ export class ItemsService {
     @InjectRepository(Company) private readonly companyRepository: Repository<Company>,
     private dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   // ========================================
   // CRUD
@@ -99,7 +99,7 @@ export class ItemsService {
         });
 
         // Notify actor of new registration (outside transaction — fire and forget)
-        this.notificationsService.handleItemAdded({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+        this.notificationsService.handleItemAdded({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
         return saved;
       } catch (err: any) {
@@ -275,7 +275,7 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Notify actor of assignment
-      this.notificationsService.handleItemAssigned({ itemId: saved.id, barcode: saved.barcode, assignedTo: dto.assignedToName || 'department', userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+      this.notificationsService.handleItemAssigned({ itemId: saved.id, barcode: saved.barcode, assignedTo: dto.assignedToName || 'department', userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
       return saved;
     });
@@ -366,8 +366,8 @@ export class ItemsService {
         toStatus: saved.status,
         fromPersonName: item.previousAssignedToName,
         performedByUserId: userId,
-        notes: item.departmentId 
-          ? `Returned to ${item.department?.name || 'department'} custody` 
+        notes: item.departmentId
+          ? `Returned to ${item.department?.name || 'department'} custody`
           : 'Item unassigned from person and returned to general inventory',
       });
       await manager.save(ItemEvent, event);
@@ -427,7 +427,7 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Notify actor of repair
-      this.notificationsService.handleItemSentToRepair({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+      this.notificationsService.handleItemSentToRepair({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
       return saved;
     });
@@ -477,7 +477,7 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Notify actor of return from repair
-      this.notificationsService.handleItemReturnedFromRepair({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+      this.notificationsService.handleItemReturnedFromRepair({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
       return saved;
     });
@@ -532,7 +532,7 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Notify actor + broadcast to SUPER_ADMINs
-      this.notificationsService.handleItemDisposed({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+      this.notificationsService.handleItemDisposed({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
       return saved;
     });
@@ -583,7 +583,7 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Notify actor + broadcast to SUPER_ADMINs (CRITICAL)
-      this.notificationsService.handleItemLost({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => {});
+      this.notificationsService.handleItemLost({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
       return saved;
     });

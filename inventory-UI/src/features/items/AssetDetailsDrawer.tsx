@@ -120,29 +120,72 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               }}>
                 <Wrench size={14} style={{ flexShrink: 0 }} />
                 {item.status === ItemStatus.SENT_TO_REPAIR
-                  ? 'Asset is physically SENT TO REPAIR — only Return or Dispose are available.'
-                  : 'Asset is IN REPAIR — only Return or Dispose are available.'}
+                   ? 'Asset is physically SENT TO REPAIR — only Return or Dispose are available.'
+                   : 'Asset is IN REPAIR — only Return or Dispose are available.'}
+              </div>
+            )}
+
+            {/* Lost Lock Banner */}
+            {item.status === ItemStatus.LOST && (
+              <div style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: 'rgba(225, 29, 72, 0.1)',
+                border: '1.5px solid rgba(225, 29, 72, 0.35)',
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#e11d48',
+              }}>
+                <AlertOctagon size={14} style={{ flexShrink: 0 }} />
+                Asset is reported LOST — you must Recover it before assigning or repairing.
               </div>
             )}
 
             {hasPermission(AdminPermission.ASSIGN_ITEMS) && (
-              <div style={{ position: 'relative', flex: 1, display: 'flex' }} title={
+              <div style={{ position: 'relative', flex: 1, display: 'flex', gap: 8 }} title={
                 (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
                   ? 'Cannot assign — item is currently in repair'
+                  : item.status === ItemStatus.LOST
+                  ? 'Cannot assign — item is reported lost'
                   : undefined
               }>
                 <button
                   className="hub-btn"
                   onClick={() => setActiveModal('assign')}
-                  disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR}
-                  style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
+                  disabled={item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR || item.status === ItemStatus.LOST}
+                  style={(item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR || item.status === ItemStatus.LOST)
                     ? { opacity: 0.4, cursor: 'not-allowed', flex: 1 }
                     : { flex: 1 }
                   }
                 >
                   <UserPlus size={16} style={{ flexShrink: 0 }} />
-                  <span>Assign</span>
+                  <span>{item.assignedToName ? 'Reassign' : 'Assign'}</span>
                 </button>
+
+                {item.status === ItemStatus.IN_USE && (
+                  <button
+                    className="hub-btn"
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to return "${item.name}" to the warehouse? This will remove the current assignment.`)) {
+                        try {
+                          await itemService.unassignItem(item.id);
+                          window.location.reload(); // Refresh to show updated state
+                        } catch (err) {
+                          alert('Failed to return to warehouse');
+                        }
+                      }
+                    }}
+                    style={{ flex: 1, background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6' }}
+                  >
+                    <Building size={16} />
+                    <span>Return</span>
+                  </button>
+                )}
               </div>
             )}
             {hasPermission(AdminPermission.MANAGE_REPAIRS) && (
@@ -152,16 +195,25 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   <span>Return</span>
                 </button>
               ) : (
-                <button className="hub-btn" onClick={() => setActiveModal('repair')}>
-                  <Wrench size={16} />
-                  <span>Repair</span>
-                </button>
+                <div style={{ position: 'relative', flex: 1, display: 'flex' }} title={
+                  item.status === ItemStatus.LOST ? 'Cannot repair — item is reported lost' : undefined
+                }>
+                  <button 
+                    className="hub-btn" 
+                    onClick={() => setActiveModal('repair')}
+                    disabled={item.status === ItemStatus.LOST}
+                    style={item.status === ItemStatus.LOST ? { opacity: 0.4, cursor: 'not-allowed', flex: 1 } : { flex: 1 }}
+                  >
+                    <Wrench size={16} />
+                    <span>Repair</span>
+                  </button>
+                </div>
               )
             )}
             {item.status === ItemStatus.LOST ? (
-              <button className="hub-btn success" onClick={() => setActiveModal('recover')}>
+              <button className="hub-btn success" onClick={() => setActiveModal('recover')} style={{ flex: 1.5 }}>
                 <CheckCircle2 size={16} />
-                <span>Recover</span>
+                <span>Found Asset</span>
               </button>
             ) : (
               hasPermission(AdminPermission.UPDATE_ITEMS) && (

@@ -127,6 +127,14 @@ export class UpdateItemDto {
   @IsUUID()
   @IsOptional()
   parentItemId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  assignedToName?: string;
+
+  @IsString()
+  @IsOptional()
+  assignedToEmployeeId?: string;
 }
 
 export class AssignItemDto {
