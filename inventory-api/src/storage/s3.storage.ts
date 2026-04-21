@@ -4,20 +4,27 @@ import { extname } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const multerS3 = require('multer-s3');
 
-export const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+let _s3Client: S3Client | null = null;
+
+export function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    });
+  }
+  return _s3Client;
+}
 
 // Creates a multer-s3 storage engine targeting the given sub-folder.
 // Files land at: ktmg-vault-images/{folder}/{timestamp}-{random}.{ext}
 // After upload, multer sets file.location to the full S3 HTTPS URL.
 export function s3Storage(folder: string) {
   return multerS3({
-    s3: s3Client,
+    s3: getS3Client(),
     bucket: process.env.AWS_S3_BUCKET!,
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: (_req: any, file: any, cb: any) => {
@@ -34,7 +41,7 @@ export async function deleteFromS3(url: string): Promise<void> {
     if (!url || !url.startsWith('http')) return;
     const urlObj = new URL(url);
     const key = urlObj.pathname.replace(/^\//, '');
-    await s3Client.send(
+    await getS3Client().send(
       new DeleteObjectCommand({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }),
     );
   } catch {
