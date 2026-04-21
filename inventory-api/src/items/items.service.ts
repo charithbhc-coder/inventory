@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as qrcode from 'qrcode';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { Item } from './entities/item.entity';
@@ -681,30 +682,37 @@ export class ItemsService {
   // FILE UPLOADS — warranty cards & invoices
   // ========================================
 
-  async addWarrantyCard(itemId: string, filename: string): Promise<Item> {
+  async addWarrantyCard(itemId: string, fileUrl: string): Promise<Item> {
     const item = await this.itemsRepository.findOne({ where: { id: itemId } });
     if (!item) throw new NotFoundException('Item not found');
 
-    const url = `/uploads/warranties/${filename}`;
-    item.warrantyCardUrls = [...(item.warrantyCardUrls || []), url];
+    item.warrantyCardUrls = [...(item.warrantyCardUrls || []), fileUrl];
     return this.itemsRepository.save(item);
   }
 
-  async addInvoice(itemId: string, filename: string): Promise<Item> {
+  async addInvoice(itemId: string, fileUrl: string): Promise<Item> {
     const item = await this.itemsRepository.findOne({ where: { id: itemId } });
     if (!item) throw new NotFoundException('Item not found');
 
-    const url = `/uploads/invoices/${filename}`;
-    item.invoiceUrls = [...(item.invoiceUrls || []), url];
+    item.invoiceUrls = [...(item.invoiceUrls || []), fileUrl];
     return this.itemsRepository.save(item);
   }
 
-  async updateImage(itemId: string, filename: string): Promise<Item> {
+  async updateImage(itemId: string, fileUrl: string): Promise<Item> {
     const item = await this.itemsRepository.findOne({ where: { id: itemId } });
     if (!item) throw new NotFoundException('Item not found');
 
-    item.imageUrl = `/uploads/items/${filename}`;
+    item.imageUrl = fileUrl;
     return this.itemsRepository.save(item);
+  }
+
+  async generateQrCode(itemId: string): Promise<Buffer> {
+    const item = await this.itemsRepository.findOne({ where: { id: itemId } });
+    if (!item) throw new NotFoundException('Item not found');
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173/inventory';
+    const deepLink = `${frontendUrl}/items/${item.id}`;
+    return qrcode.toBuffer(deepLink, { type: 'png', width: 300, margin: 2 });
   }
 
   async previewBarcode(companyId: string, categoryId: string): Promise<string> {

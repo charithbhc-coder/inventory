@@ -16,8 +16,7 @@ import {
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { s3Storage } from '../storage/s3.storage';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -100,35 +99,17 @@ export class AuthController {
 
   @Post('me/avatar')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('avatars') }))
   async uploadAvatar(
     @CurrentUser() user: JwtPayload,
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addValidator(
-          new (require('@nestjs/common').FileTypeValidator)({
-            fileType: /(jpg|jpeg|png|webp)$/i,
-            fallbackToMimetype: true,
-          }),
-        )
         .addMaxSizeValidator({ maxSize: 1024 * 1024 * 5 })
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
     )
     file: Express.Multer.File,
-    
   ) {
-    return this.authService.updateAvatar(user.sub, file.filename);
+    return this.authService.updateAvatar(user.sub, (file as any).location);
   }
 
   @Delete('me/avatar')

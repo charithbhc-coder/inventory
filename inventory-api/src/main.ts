@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -34,11 +33,6 @@ async function bootstrap() {
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-  });
-
-  // Serve static uploads (avatars, logos, warranties, invoices)
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/inventory-api/v1/uploads/',
   });
 
   // Global prefixes and pipes

@@ -146,6 +146,20 @@ export const itemService = {
     }
   },
 
+  getQrCodeUrl: (id: string) => `${API_BASE_URL}/items/${id}/qr-code`,
+
+  downloadQrCode: async (id: string, barcode: string) => {
+    const { data } = await apiClient.get(`/items/${id}/qr-code`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([data], { type: 'image/png' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `qr-${barcode}.png`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   printLabel: async (id: string) => {
     try {
       // Fetch the PDF blob

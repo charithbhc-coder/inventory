@@ -15,6 +15,7 @@ const SettingsPage     = lazy(() => import('@/features/settings/SettingsPage'));
 const ReportsPage      = lazy(() => import('@/features/reports/ReportsPage'));
 import DepartmentsPage  from '@/features/departments/DepartmentsPage';
 import ItemsPage        from '@/features/items/ItemsPage';
+const ItemDeepLinkPage = lazy(() => import('@/features/items/ItemDeepLinkPage'));
 import CategoriesPage   from '@/features/categories/CategoriesPage';
 const ProfilePage      = lazy(() => import('@/features/profile/ProfilePage'));
 const AuditLogsPage    = lazy(() => import('@/features/audit-logs/AuditLogsPage'));
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
           { path: '/departments', element: <DepartmentsPage /> },
           { path: '/users',       element: <UsersPage /> },
           { path: '/items',       element: <ItemsPage /> },
+          { path: '/items/:id',  element: <ItemDeepLinkPage /> },
           { path: '/categories',  element: <CategoriesPage /> },
           { path: '/licenses',    element: <LicensesPage /> },
           { path: '/reports',     element: <ReportsPage /> },

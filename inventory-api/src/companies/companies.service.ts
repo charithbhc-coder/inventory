@@ -4,8 +4,7 @@ import { Repository } from 'typeorm';
 import { Company } from './entities/company.entity';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/create-company.dto';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
-import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { deleteFromS3 } from '../storage/s3.storage';
 
 @Injectable()
 export class CompaniesService {
@@ -56,18 +55,12 @@ export class CompaniesService {
     return this.companiesRepository.save(company);
   }
 
-  async updateLogo(id: string, filename: string): Promise<{ logoUrl: string }> {
+  async updateLogo(id: string, fileUrl: string): Promise<{ logoUrl: string }> {
     const company = await this.findOne(id);
 
-    if (company.logoUrl) {
-      const oldFilename = company.logoUrl.replace('/uploads/logos/', '');
-      const oldPath = join(process.cwd(), 'uploads', 'logos', oldFilename);
-      unlink(oldPath).catch(() => {});
-    }
+    if (company.logoUrl) deleteFromS3(company.logoUrl).catch(() => {});
 
-    const logoUrl = `/uploads/logos/${filename}`;
-    await this.companiesRepository.update(id, { logoUrl });
-
-    return { logoUrl };
+    await this.companiesRepository.update(id, { logoUrl: fileUrl });
+    return { logoUrl: fileUrl };
   }
 }

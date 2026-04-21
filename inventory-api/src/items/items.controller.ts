@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -14,9 +15,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { Response } from 'express';
 import { ItemsService } from './items.service';
+import { s3Storage } from '../storage/s3.storage';
 import {
   CreateItemDto,
   UpdateItemDto,
@@ -168,43 +169,23 @@ export class ItemsController {
   @Post(':id/warranty')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/warranties',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${extname(file.originalname).toLowerCase()}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('warranties') }))
   uploadWarranty(
     @Param('id') id: string,
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 }) // 10MB
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 })
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
     )
     file: Express.Multer.File,
   ) {
-    return this.itemsService.addWarrantyCard(id, file.filename);
+    return this.itemsService.addWarrantyCard(id, (file as any).location);
   }
 
   @Post(':id/invoice')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/invoices',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('invoices') }))
   uploadInvoice(
     @Param('id') id: string,
     @UploadedFile(
@@ -214,32 +195,34 @@ export class ItemsController {
     )
     file: Express.Multer.File,
   ) {
-    return this.itemsService.addInvoice(id, file.filename);
+    return this.itemsService.addInvoice(id, (file as any).location);
   }
 
   @Post(':id/image')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/items',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('items') }))
   uploadImage(
     @Param('id') id: string,
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 }) // 10MB
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 })
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
     )
     file: Express.Multer.File,
   ) {
-    return this.itemsService.updateImage(id, file.filename);
+    return this.itemsService.updateImage(id, (file as any).location);
+  }
+
+  @Get(':id/qr-code')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.VIEW_ITEMS)
+  async getQrCode(@Param('id') id: string, @Res() res: Response) {
+    const buffer = await this.itemsService.generateQrCode(id);
+    res.set({
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.send(buffer);
   }
 }

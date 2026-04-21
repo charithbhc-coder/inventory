@@ -21,8 +21,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { UserRole, AdminPermission } from '../common/enums';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { s3Storage } from '../storage/s3.storage';
 
 
 
@@ -62,18 +61,7 @@ export class CompaniesController {
   @Post(':id/logo')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_COMPANIES)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/logos',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('logos') }))
   async uploadLogo(
     @Param('id') id: string,
     @UploadedFile(
@@ -83,6 +71,6 @@ export class CompaniesController {
     )
     file: Express.Multer.File,
   ) {
-    return this.companiesService.updateLogo(id, file.filename);
+    return this.companiesService.updateLogo(id, (file as any).location);
   }
 }

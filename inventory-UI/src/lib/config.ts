@@ -11,8 +11,13 @@ export const API_ROOT_URL = VITE_API_BASE_URL;
 // The full base URL for API requests
 export const API_BASE_URL = VITE_API_BASE_URL;
 
-// Helper to get full URL for uploads
-export const getUploadUrl = (path: string) => path ? `${API_ROOT_URL}${path}` : '';
+// Helper to get full URL for uploads.
+// S3 files are stored as full https:// URLs; legacy local files are relative paths.
+export const getUploadUrl = (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_ROOT_URL}${path}`;
+};
 
 // Generic system branding if needed on frontend
 export const SYSTEM_NAME = 'Inventory';

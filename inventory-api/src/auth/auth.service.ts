@@ -10,8 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { deleteFromS3 } from '../storage/s3.storage';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User } from '../users/entities/user.entity';
 import { AuditLog } from '../audit-logs/entities/audit-log.entity';
@@ -324,22 +323,15 @@ export class AuthService {
     return this.sanitizeUser(savedUser);
   }
 
-  async updateAvatar(userId: string, filename: string): Promise<Partial<User>> {
+  async updateAvatar(userId: string, fileUrl: string): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Delete old avatar file from disk to prevent orphaned file build-up
-    if (user.avatarUrl) {
-      const oldFilename = user.avatarUrl.replace('/uploads/avatars/', '');
-      const oldPath = join(process.cwd(), 'uploads', 'avatars', oldFilename);
-      unlink(oldPath).catch(() => {
-        // Silently ignore — old file may have already been deleted
-      });
-    }
+    if (user.avatarUrl) deleteFromS3(user.avatarUrl).catch(() => {});
 
-    const avatarUrl = `/uploads/avatars/${filename}`;
+    const avatarUrl = fileUrl;
     await this.usersRepository.update(user.id, { avatarUrl });
 
     // Return the full updated user object
@@ -363,12 +355,7 @@ export class AuthService {
       throw new BadRequestException('No profile image to delete');
     }
 
-    // Delete file from disk
-    const oldFilename = user.avatarUrl.replace('/uploads/avatars/', '');
-    const oldPath = join(process.cwd(), 'uploads', 'avatars', oldFilename);
-    unlink(oldPath).catch(() => {
-      // Silently ignore — file may already be gone
-    });
+    deleteFromS3(user.avatarUrl).catch(() => {});
 
     // Clear avatarUrl from database
     await this.usersRepository.update(user.id, { avatarUrl: null });

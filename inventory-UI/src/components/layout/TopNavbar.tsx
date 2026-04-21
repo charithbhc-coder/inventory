@@ -482,26 +482,29 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
       <BarcodeScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
-        onScan={async (barcode) => {
+        onScan={async (scanned) => {
           setIsScannerOpen(false);
-          const cleanBarcode = barcode.trim();
-          
+          const value = scanned.trim();
+
+          // QR deep-link: extract item ID from URL and navigate directly
+          const deepLinkMatch = value.match(/\/items\/([0-9a-f-]{36})/i);
+          if (deepLinkMatch) {
+            navigate(`/items/${deepLinkMatch[1]}`);
+            return;
+          }
+
+          // Plain barcode: search by barcode value
           try {
-            // Find item by barcode first to get its ID
-            const response = await itemService.getItems({ barcode: cleanBarcode, limit: 1 });
+            const response = await itemService.getItems({ barcode: value, limit: 1 });
             const items = response.data || response;
-            
             if (items && items.length > 0) {
-              const item = items[0];
-              // Open specifically that item
-              navigate(`/items?search=${encodeURIComponent(cleanBarcode)}&open=${item.id}`);
+              navigate(`/items?search=${encodeURIComponent(value)}&open=${items[0].id}`);
             } else {
-              // Fallback to just searching
-              navigate(`/items?search=${encodeURIComponent(cleanBarcode)}`);
-              toast.error(`Barcode "${cleanBarcode}" not found in inventory.`);
+              navigate(`/items?search=${encodeURIComponent(value)}`);
+              toast.error(`Barcode "${value}" not found in inventory.`);
             }
-          } catch (err) {
-            navigate(`/items?search=${encodeURIComponent(cleanBarcode)}`);
+          } catch {
+            navigate(`/items?search=${encodeURIComponent(value)}`);
           }
         }}
       />

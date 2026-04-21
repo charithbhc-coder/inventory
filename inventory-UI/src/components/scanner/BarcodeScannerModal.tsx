@@ -36,11 +36,12 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
           const config = {
             fps: 24,
-            qrbox: { width: 280, height: 180 }, // Rectangle optimized for barcodes
-            aspectRatio: 1.777, // FIX BUG 1: Match 16:9 so video isn't squished (was 1.0 which distorted barcodes)
+            qrbox: { width: 280, height: 180 },
+            aspectRatio: 1.777,
             formatsToSupport: [
-              Html5QrcodeSupportedFormats.CODE_128, // FIX BUG 3: Only scan what we generate (was 7 formats, wasted CPU every frame)
-            ]
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.QR_CODE,
+            ],
           };
 
           await html5QrCode.start(

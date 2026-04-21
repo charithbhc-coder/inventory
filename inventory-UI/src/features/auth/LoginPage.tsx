@@ -43,7 +43,9 @@ export default function LoginPage() {
         navigate('/change-password', { replace: true });
       } else {
         toast.success(`Welcome back, ${res.user.firstName}!`);
-        navigate('/dashboard', { replace: true });
+        const redirect = sessionStorage.getItem('redirectAfterLogin');
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirect || '/dashboard', { replace: true });
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })
