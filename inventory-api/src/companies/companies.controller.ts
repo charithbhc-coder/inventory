@@ -11,7 +11,9 @@ import {
   UploadedFile,
   ParseFilePipeBuilder,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/create-company.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -72,5 +74,21 @@ export class CompaniesController {
     file: Express.Multer.File,
   ) {
     return this.companiesService.updateLogo(id, (file as any).location);
+  }
+
+  @Get('logo-proxy')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  async proxyLogo(@Query('url') url: string, @Res() res: Response) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch image');
+      const contentType = response.headers.get('content-type');
+      if (contentType) res.setHeader('Content-Type', contentType);
+      
+      const arrayBuffer = await response.arrayBuffer();
+      res.send(Buffer.from(arrayBuffer));
+    } catch (err) {
+      res.status(404).send('Image not found');
+    }
   }
 }

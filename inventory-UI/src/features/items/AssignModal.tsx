@@ -62,7 +62,7 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['item-timeline', item.id] });
-      toast.success('Asset assigned successfully');
+      toast.success(item.assignedToName ? 'Assignment updated successfully' : 'Asset assigned successfully');
       onClose();
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to assign asset')
@@ -119,7 +119,7 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={styles.iconBox}><UserPlus size={20} /></div>
             <div>
-              <h3 style={styles.title}>Assign Asset</h3>
+              <h3 style={styles.title}>{item.assignedToName ? 'Edit Assignment' : 'Assign Asset'}</h3>
               <p style={styles.subtitle}>{item.barcode} — {item.name}</p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
               disabled={mutation.isPending}
               style={{ minWidth: 160 }}
             >
-              {mutation.isPending ? 'Assigning...' : 'Confirm Assignment'}
+              {mutation.isPending ? (item.assignedToName ? 'Updating...' : 'Assigning...') : (item.assignedToName ? 'Update Assignment' : 'Confirm Assignment')}
             </button>
           </div>
         </form>

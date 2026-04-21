@@ -160,8 +160,8 @@ export class ItemsController {
   @Post(':id/move-to-warehouse')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.ASSIGN_ITEMS)
-  moveToWarehouse(@Param('id') id: string, @Body() body: { notes?: string }, @CurrentUser() user: JwtPayload) {
-    return this.itemsService.moveToWarehouse(id, user.sub, body?.notes);
+  moveToWarehouse(@Param('id') id: string, @Body() body: { notes?: string, companyId?: string }, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.moveToWarehouse(id, user.sub, body?.notes, body?.companyId);
   }
 
   // --- FILE UPLOADS ---

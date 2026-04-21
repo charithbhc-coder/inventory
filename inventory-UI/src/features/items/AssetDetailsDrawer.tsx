@@ -30,6 +30,7 @@ import DisposeModal from './DisposeModal';
 import ReportLostModal from './ReportLostModal';
 import ReturnFromRepairModal from './ReturnFromRepairModal';
 import RecoverItemModal from './RecoverItemModal';
+import ReturnToWarehouseModal from './ReturnToWarehouseModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission, ItemStatus } from '@/types';
 import { getUploadUrl } from '@/lib/config';
@@ -52,7 +53,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
   const item = timelineData?.item || initialItem;
   const events = timelineData?.events || [];
 
-  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'lost' | 'return' | 'recover' | null>(null);
+  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'lost' | 'return' | 'recover' | 'return-warehouse' | null>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const hasPermission = useAuthStore(s => s.hasPermission);
@@ -164,22 +165,13 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   }
                 >
                   <UserPlus size={16} style={{ flexShrink: 0 }} />
-                  <span>{item.assignedToName ? 'Reassign' : 'Assign'}</span>
+                  <span>{item.assignedToName ? 'Edit Assignment' : 'Assign'}</span>
                 </button>
 
                 {item.status === ItemStatus.IN_USE && (
                   <button
                     className="hub-btn"
-                    onClick={async () => {
-                      if (window.confirm(`Are you sure you want to return "${item.name}" to the warehouse? This will remove the current assignment.`)) {
-                        try {
-                          await itemService.unassignItem(item.id);
-                          window.location.reload(); // Refresh to show updated state
-                        } catch (err) {
-                          alert('Failed to return to warehouse');
-                        }
-                      }
-                    }}
+                    onClick={() => setActiveModal('return-warehouse')}
                     style={{ flex: 1, background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6' }}
                   >
                     <Building size={16} />
@@ -438,6 +430,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         <ReportLostModal item={item} isOpen={activeModal === 'lost'} onClose={() => setActiveModal(null)} />
         <ReturnFromRepairModal item={item} isOpen={activeModal === 'return'} onClose={() => setActiveModal(null)} />
         <RecoverItemModal item={item} isOpen={activeModal === 'recover'} onClose={() => setActiveModal(null)} />
+        <ReturnToWarehouseModal item={item} isOpen={activeModal === 'return-warehouse'} onClose={() => setActiveModal(null)} />
 
         {/* QR Print Modal */}
         <QrPrintModal

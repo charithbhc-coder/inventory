@@ -152,7 +152,10 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
     const fullUrl = employee.companyLogoUrl.startsWith('http')
       ? employee.companyLogoUrl
       : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-    logoBase64 = await urlToBase64(fullUrl);
+    
+    // Route through proxy to bypass S3 CORS issues
+    const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
+    logoBase64 = await urlToBase64(proxyUrl);
   }
 
   const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
@@ -255,7 +258,10 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
     const fullUrl = employee.companyLogoUrl.startsWith('http')
       ? employee.companyLogoUrl
       : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-    logoBase64 = await urlToBase64(fullUrl);
+    
+    // Route through proxy to bypass S3 CORS issues
+    const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
+    logoBase64 = await urlToBase64(proxyUrl);
   }
 
   const logoHtml = buildLogoHtml(logoBase64, companyDisplay);

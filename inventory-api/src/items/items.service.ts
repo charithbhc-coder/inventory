@@ -625,7 +625,7 @@ export class ItemsService {
   // MOVE TO WAREHOUSE — return item to warehouse
   // ========================================
 
-  async moveToWarehouse(itemId: string, userId: string, notes?: string): Promise<Item> {
+  async moveToWarehouse(itemId: string, userId: string, notes?: string, companyId?: string): Promise<Item> {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
@@ -639,6 +639,11 @@ export class ItemsService {
 
       const prevStatus = item.status;
       const prevDeptId = item.departmentId;
+
+      // Update company if provided
+      if (companyId) {
+        item.companyId = companyId;
+      }
 
       // Clear assignment and flags if item was lost (recovery flow)
       if (item.status === ItemStatus.LOST) {

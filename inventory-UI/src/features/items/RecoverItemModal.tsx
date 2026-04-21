@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Search, MapPin, MessageSquare, AlertCircle } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X, Search, MapPin, MessageSquare, AlertCircle, Building, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { itemService, Item } from '@/services/item.service';
+import { companyService } from '@/services/company.service';
 
 interface RecoverItemModalProps {
   item: Item;
@@ -13,9 +14,18 @@ interface RecoverItemModalProps {
 export default function RecoverItemModal({ item, isOpen, onClose }: RecoverItemModalProps) {
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState('');
+  const [companyId, setCompanyId] = useState(item.companyId || '');
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies', 'active'],
+    queryFn: () => companyService.getCompanies(),
+    enabled: isOpen
+  });
+
+  const companiesList = Array.isArray(companies) ? companies : (companies as any)?.data || [];
 
   const mutation = useMutation({
-    mutationFn: () => itemService.moveToWarehouse(item.id, notes || undefined),
+    mutationFn: () => itemService.moveToWarehouse(item.id, notes || undefined, companyId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
@@ -56,11 +66,30 @@ export default function RecoverItemModal({ item, isOpen, onClose }: RecoverItemM
             </div>
 
             <div>
+              <label style={styles.label}>RESTORE TO SUBSIDIARY <span style={{ color: 'var(--color-accent)' }}>*</span></label>
+              <div style={styles.inputWrap}>
+                <Building style={styles.inputIcon} size={16} />
+                <select
+                  style={styles.input}
+                  value={companyId}
+                  onChange={e => setCompanyId(e.target.value)}
+                  required
+                >
+                  <option value="">Select Subsidiary...</option>
+                  {companiesList.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <ChevronDown style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} size={14} color="var(--color-text-muted)" />
+              </div>
+            </div>
+
+            <div>
               <label style={styles.label}>NEW LOCATION (OPTIONAL)</label>
               <div style={styles.inputWrap}>
                 <MapPin style={styles.inputIcon} size={16} />
                 <input 
-                  style={styles.input}
+                  style={{ ...styles.input, appearance: 'none' }}
                   placeholder="e.g. IT Warehouse, Main Office..."
                   value="Company Warehouse"
                   readOnly
