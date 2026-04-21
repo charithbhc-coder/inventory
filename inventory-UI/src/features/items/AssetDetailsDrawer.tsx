@@ -22,7 +22,7 @@ import {
   AlertOctagon,
   Hash
 } from 'lucide-react';
-import Barcode from 'react-barcode';
+import { QRCodeCanvas } from 'qrcode.react';
 import { itemService, Item } from '@/services/item.service';
 import { format } from 'date-fns';
 import AssignModal from './AssignModal';
@@ -193,9 +193,9 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
           </div>
 
 
-          {/* Barcode + QR side-by-side */}
+          {/* QR Code */}
           <div className="barcode-container mb-8">
-            <div className="flex justify-between items-center w-full mb-2">
+            <div className="flex justify-between items-center w-full mb-3">
               <div className="barcode-label">SCANNABLE IDENTIFIER</div>
               <div className="flex gap-2">
                 <button
@@ -216,28 +216,17 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 </button>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-              <div className="barcode-wrapper" style={{ flex: 1 }}>
-                <Barcode
-                  value={item.barcode}
-                  width={2}
-                  height={70}
-                  fontSize={11}
-                  background="transparent"
-                  lineColor="#000000"
-                  margin={4}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
+              <div style={{ background: '#fff', borderRadius: 12, padding: 12, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <QRCodeCanvas
+                  value={`${window.location.origin}/inventory/items/${item.id}`}
+                  size={160}
+                  marginSize={2}
+                  level="M"
                 />
+                <span style={{ fontSize: 8, fontWeight: 800, color: '#666', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Scan to open</span>
               </div>
-              <div style={{ flexShrink: 0, background: '#fff', borderRadius: 8, padding: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <img
-                  src={itemService.getQrCodeUrl(item.id)}
-                  alt="QR Code"
-                  width={80}
-                  height={80}
-                  style={{ display: 'block', borderRadius: 4 }}
-                />
-                <span style={{ fontSize: 7, fontWeight: 800, color: '#666', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Scan to open</span>
-              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{item.barcode}</span>
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, PackageSearch, Package, ShieldCheck, Info, Cpu, Globe, Calendar, BadgeDollarSign, Edit, Building, UploadCloud, Plus, CheckCircle2, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -157,7 +158,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       serialNumber: formData.serialNumber || undefined,
       departmentId: formData.departmentId || undefined,
       parentItemId: formData.parentItemId || undefined,
-      purchasePrice: formData.purchasePrice !== '' ? formData.purchasePrice : undefined
+      purchasePrice: formData.purchasePrice !== '' ? formData.purchasePrice : undefined,
+      purchaseDate: formData.purchaseDate || undefined,
+      warrantyExpiresAt: formData.warrantyExpiresAt || undefined,
     };
 
     // If editing, remove immutable/special fields that are handled by other endpoints
@@ -233,13 +236,21 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 </p>
               </div>
 
-              <div style={{ 
-                background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', 
-                padding: '24px 40px', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 12,
+              <div style={{
+                background: 'var(--bg-dark)', border: '1px solid var(--border-dark)',
+                padding: '24px 40px', borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
                 width: '100%', maxWidth: 300
               }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ASSIGNED BARCODE</div>
-                <div style={{ fontSize: 24, fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-main)', letterSpacing: '2px' }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>ASSET QR CODE</div>
+                <div style={{ background: '#fff', borderRadius: 10, padding: 10 }}>
+                  <QRCodeCanvas
+                    value={`${window.location.origin}/inventory/items/${lastCreatedItem.id}`}
+                    size={140}
+                    marginSize={2}
+                    level="M"
+                  />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-main)', letterSpacing: '1px' }}>
                   {lastCreatedItem.barcode}
                 </div>
               </div>
@@ -419,7 +430,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     borderRadius: 16, padding: 24, textAlign: 'center',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12
                   }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>AUTO-GENERATED BARCODE</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>AUTO-GENERATED QR CODE</div>
                     <div style={{
                       height: 60, width: '100%', background: 'var(--bg-card)', borderRadius: 8,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -442,7 +453,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                   }}>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>ASSET BARCODE</div>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>ASSET ID</div>
                       <div style={{ fontFamily: 'monospace', fontSize: 18, fontWeight: 900, color: 'var(--text-main)' }}>{item?.barcode}</div>
                     </div>
                   </div>
