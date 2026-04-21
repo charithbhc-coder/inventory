@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DB_CONTAINER="inventory-db"
+DB_CONTAINER=$(docker ps --filter "name=inventory-db" --format "{{.Names}}" | head -1)
 DB_NAME="${DB_NAME:-inventory}"
 DB_USER="${DB_USERNAME:-postgres}"
 S3_BUCKET="aws-s3-acibhub"
