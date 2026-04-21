@@ -33,6 +33,7 @@ import RecoverItemModal from './RecoverItemModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission, ItemStatus } from '@/types';
 import { getUploadUrl } from '@/lib/config';
+import QrPrintModal from '@/components/qr/QrPrintModal';
 
 interface DrawerProps {
   item: Item;
@@ -52,6 +53,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
   const events = timelineData?.events || [];
 
   const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'lost' | 'return' | 'recover' | null>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const hasPermission = useAuthStore(s => s.hasPermission);
 
@@ -197,12 +199,12 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             <div className="flex justify-between items-center w-full mb-3">
               <div className="qr-label">ASSET QR CODE</div>
               <button
-                onClick={() => itemService.downloadQrCode(item.id, item.barcode)}
+                onClick={() => setIsQrModalOpen(true)}
                 className="print-trigger-btn"
-                title="Download QR Code"
+                title="Print / Save QR Code"
               >
                 <Download size={14} />
-                <span>Download</span>
+                <span>Print / Save</span>
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%' }}>
@@ -384,6 +386,15 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         <ReportLostModal item={item} isOpen={activeModal === 'lost'} onClose={() => setActiveModal(null)} />
         <ReturnFromRepairModal item={item} isOpen={activeModal === 'return'} onClose={() => setActiveModal(null)} />
         <RecoverItemModal item={item} isOpen={activeModal === 'recover'} onClose={() => setActiveModal(null)} />
+
+        {/* QR Print Modal */}
+        <QrPrintModal
+          isOpen={isQrModalOpen}
+          onClose={() => setIsQrModalOpen(false)}
+          itemId={item.id}
+          itemName={item.name}
+          assetCode={item.barcode}
+        />
 
         {/* Document Preview Popup */}
         {previewUrl && (

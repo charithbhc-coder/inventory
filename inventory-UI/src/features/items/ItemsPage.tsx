@@ -28,6 +28,7 @@ import ItemModal from './ItemModal';
 import AssetDetailsDrawer from './AssetDetailsDrawer';
 import ItemTrackingModal from './ItemTrackingModal';
 import EmployeeAssetsModal from './EmployeeAssetsModal';
+import QrPrintModal from '@/components/qr/QrPrintModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 
@@ -69,6 +70,7 @@ export default function ItemsPage() {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+  const [qrPrintItem, setQrPrintItem] = useState<Item | null>(null);
   const [page, setPage] = useState(1);
   const hasPermission = useAuthStore((s: any) => s.hasPermission);
   const LIMIT = 15;
@@ -211,10 +213,10 @@ export default function ItemsPage() {
       cell: info => (
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
           <button
-            title="Download QR Code"
+            title="Print / Save QR Code"
             onClick={(e) => {
               e.stopPropagation();
-              itemService.downloadQrCode(info.row.original.id, info.row.original.barcode);
+              setQrPrintItem(info.row.original);
             }}
             style={{ 
               background: 'rgba(255, 224, 83, 0.08)', border: '1px solid rgba(255, 224, 83, 0.15)', 
@@ -549,7 +551,7 @@ export default function ItemsPage() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                      <button
-                        onClick={(e) => { e.stopPropagation(); itemService.downloadQrCode(item.id, item.barcode); }}
+                        onClick={(e) => { e.stopPropagation(); setQrPrintItem(item); }}
                         style={{ flex: 1, padding: '8px', borderRadius: 8, background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: 'var(--text-main)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                      >
                        <QrCode size={14} /> QR
@@ -635,6 +637,17 @@ export default function ItemsPage() {
         isOpen={isEmployeeModalOpen}
         onClose={() => setIsEmployeeModalOpen(false)}
       />
+
+      {/* QR Print Modal */}
+      {qrPrintItem && (
+        <QrPrintModal
+          isOpen={!!qrPrintItem}
+          onClose={() => setQrPrintItem(null)}
+          itemId={qrPrintItem.id}
+          itemName={qrPrintItem.name}
+          assetCode={qrPrintItem.barcode}
+        />
+      )}
 
       <style>{`
         .loading-spinner {
