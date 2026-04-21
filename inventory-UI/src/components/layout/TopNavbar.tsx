@@ -13,6 +13,7 @@ import { searchService, GlobalSearchResult } from '@/services/search.service';
 
 import { authService } from '@/services/auth.service';
 import BarcodeScannerModal from '@/components/scanner/BarcodeScannerModal';
+import { getUploadUrl } from '@/lib/config';
 import logo from '@/assets/logo-sidebar.png';
 import { itemService } from '@/services/item.service';
 import toast from 'react-hot-toast';
@@ -441,7 +442,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-yellow)', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, overflow: 'hidden' }}>
             {user?.avatarUrl ? (
               <img
-                src={`${import.meta.env.VITE_API_BASE_URL}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`}
+                src={getUploadUrl(user.avatarUrl)}
                 alt="Profile"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -486,10 +487,10 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           setIsScannerOpen(false);
           const value = scanned.trim();
 
-          // QR deep-link: extract item ID from URL and navigate directly
-          const deepLinkMatch = value.match(/\/items\/([0-9a-f-]{36})/i);
+          // QR deep-link: extract item UUID from URL and open drawer on items page
+          const deepLinkMatch = value.match(/\/items\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
           if (deepLinkMatch) {
-            navigate(`/items/${deepLinkMatch[1]}`);
+            navigate(`/items?open=${deepLinkMatch[1]}`);
             return;
           }
 

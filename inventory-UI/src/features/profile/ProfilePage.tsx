@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '@/services/auth.service';
 import { queryClient } from '@/App';
+import { getUploadUrl } from '@/lib/config';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -140,10 +141,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  const avatarUrl = user.avatarUrl
-    ? `${baseUrl}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(user.updatedAt || 0).getTime()}`
-    : '';
+  const avatarUrl = user.avatarUrl ? getUploadUrl(user.avatarUrl) : '';
 
   return (
     <div className="profile-container" style={styles.container}>

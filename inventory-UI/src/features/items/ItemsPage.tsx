@@ -123,7 +123,6 @@ export default function ItemsPage() {
 
   // Handle Deep Link 'open' or sync search
   useEffect(() => {
-    if (items.length === 0) return;
     if (!urlOpen && !urlSearch) return;
 
     const newParams = new URLSearchParams(searchParams);
@@ -134,6 +133,11 @@ export default function ItemsPage() {
       if (match) {
         setDrawerItem(match);
         setIsDrawerOpen(true);
+      } else {
+        // Item not in current page — fetch directly by ID (QR deep-link case)
+        itemService.getItemTimeline(urlOpen).then(({ item }: { item: Item }) => {
+          if (item) { setDrawerItem(item); setIsDrawerOpen(true); }
+        }).catch(() => {});
       }
       newParams.delete('open');
       changed = true;

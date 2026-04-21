@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
 import { ArrowLeft, UploadCloud, MapPin, Mail, Phone, Edit } from 'lucide-react';
 import CompanyModal from './CompanyModal';
+import { getUploadUrl } from '@/lib/config';
 
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,7 +59,7 @@ export default function CompanyDetailPage() {
     );
   }
 
-  const logoUrlStr = company.logoUrl ? `${import.meta.env.VITE_API_BASE_URL}${company.logoUrl}` : null;
+  const logoUrlStr = company.logoUrl ? getUploadUrl(company.logoUrl) : null;
 
   return (
     <div style={{ padding: '0 0 40px' }} className="company-detail-responsive">

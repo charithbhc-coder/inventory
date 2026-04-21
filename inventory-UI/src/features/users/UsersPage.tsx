@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { getUploadUrl } from '@/lib/config';
 import { useEffect } from 'react';
 
 const columnHelper = createColumnHelper<User>();
@@ -164,7 +165,7 @@ export default function UsersPage() {
           }}>
              {info.row.original.avatarUrl ? (
                <img 
-                 src={`${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${info.row.original.avatarUrl.startsWith('/') ? '' : '/'}${info.row.original.avatarUrl}${info.row.original.avatarUrl.includes('?') ? '&' : '?'}t=${new Date(info.row.original.updatedAt || 0).getTime()}`} 
+                 src={getUploadUrl(info.row.original.avatarUrl)}
                  alt="" 
                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                />

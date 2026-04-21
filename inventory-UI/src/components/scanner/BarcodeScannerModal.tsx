@@ -36,7 +36,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
           const config = {
             fps: 24,
-            qrbox: { width: 280, height: 180 },
+            qrbox: { width: 250, height: 250 },
             aspectRatio: 1.777,
             formatsToSupport: [
               Html5QrcodeSupportedFormats.CODE_128,
