@@ -9,7 +9,7 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   Clock, 
-  Download, 
+  Download,
   Trash2,
   UserPlus,
   Wrench,
@@ -18,7 +18,6 @@ import {
   Link,
   ChevronRight,
   Camera,
-  Printer,
   AlertOctagon,
   Hash
 } from 'lucide-react';
@@ -194,39 +193,41 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
 
 
           {/* QR Code */}
-          <div className="barcode-container mb-8">
+          <div className="qr-container mb-8">
             <div className="flex justify-between items-center w-full mb-3">
-              <div className="barcode-label">SCANNABLE IDENTIFIER</div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => itemService.downloadQrCode(item.id, item.barcode)}
-                  className="print-trigger-btn"
-                  title="Download QR Code"
-                >
-                  <Download size={14} />
-                  <span>QR</span>
-                </button>
-                <button
-                  onClick={() => itemService.printLabel(item.id)}
-                  className="print-trigger-btn"
-                  title="Print Asset Label"
-                >
-                  <Printer size={14} />
-                  <span>Print</span>
-                </button>
-              </div>
+              <div className="qr-label">ASSET QR CODE</div>
+              <button
+                onClick={() => itemService.downloadQrCode(item.id, item.barcode)}
+                className="print-trigger-btn"
+                title="Download QR Code"
+              >
+                <Download size={14} />
+                <span>Download</span>
+              </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
-              <div style={{ background: '#fff', borderRadius: 12, padding: 12, display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%' }}>
+              <div style={{
+                background: '#fff',
+                borderRadius: 16,
+                padding: 16,
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                border: '3px solid #ffe053',
+              }}>
                 <QRCodeCanvas
                   value={`${window.location.origin}/inventory/items/${item.id}`}
-                  size={160}
-                  marginSize={2}
-                  level="M"
+                  size={180}
+                  marginSize={1}
+                  level="H"
+                  fgColor="#1b2d3e"
+                  bgColor="#ffffff"
                 />
-                <span style={{ fontSize: 8, fontWeight: 800, color: '#666', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Scan to open</span>
+                <span style={{ fontSize: 8, fontWeight: 900, color: '#1b2d3e', letterSpacing: '0.15em', textTransform: 'uppercase' }}>SCAN TO OPEN</span>
+                <span style={{ fontSize: 11, fontWeight: 900, fontFamily: 'monospace', color: '#1b2d3e', letterSpacing: '0.12em' }}>{item.barcode}</span>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{item.barcode}</span>
             </div>
           </div>
 
@@ -476,7 +477,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             object-fit: cover;
             border: 1px solid var(--border-dark);
           }
-          .barcode-container {
+          .qr-container {
             padding: 16px;
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border-dark);
@@ -486,7 +487,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             align-items: center;
             gap: 8px;
           }
-          .barcode-label {
+          .qr-label {
             font-size: 9px;
             font-weight: 900;
             color: var(--text-muted);
@@ -511,13 +512,6 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
             background: var(--accent-yellow);
             color: #000;
             transform: translateY(-1px);
-          }
-          .barcode-wrapper {
-            background: white;
-            padding: 8px 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
           }
           .section-mt {
             margin-top: 32px;

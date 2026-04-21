@@ -84,7 +84,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             </div>
             <div>
               <h3 style={styles.title}>Asset Scanner</h3>
-              <p style={styles.subtitle}>Center the barcode in the highlight area</p>
+              <p style={styles.subtitle}>Center the QR code or label in the scan area</p>
             </div>
           </div>
           <button onClick={onClose} style={styles.closeBtn}>

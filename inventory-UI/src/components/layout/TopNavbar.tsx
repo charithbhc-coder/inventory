@@ -290,7 +290,7 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
             borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--accent-yellow)', padding: '6px'
           }}
-          title="Scan physical asset barcode"
+          title="Scan QR code"
         >
           <Camera size={18} />
         </button>

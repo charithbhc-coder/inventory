@@ -12,7 +12,7 @@ import {
   Search, 
   Package, 
   Cpu,
-  Barcode,
+  QrCode,
   Edit,
   LayoutGrid,
   Activity,
@@ -175,9 +175,6 @@ export default function ItemsPage() {
             <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: 13, lineHeight: '1.2' }}>
               {info.getValue() || 'Unnamed Asset'}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, fontFamily: 'monospace' }}>
-              {info.row.original.barcode || '-'}
-            </span>
           </div>
         </div>
       ),
@@ -213,11 +210,11 @@ export default function ItemsPage() {
       header: 'ACTIONS',
       cell: info => (
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
-          <button 
-            title="Print Label"
-            onClick={(e) => { 
+          <button
+            title="Download QR Code"
+            onClick={(e) => {
               e.stopPropagation();
-              itemService.printLabel(info.row.original.id);
+              itemService.downloadQrCode(info.row.original.id, info.row.original.barcode);
             }}
             style={{ 
               background: 'rgba(255, 224, 83, 0.08)', border: '1px solid rgba(255, 224, 83, 0.15)', 
@@ -227,7 +224,7 @@ export default function ItemsPage() {
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 224, 83, 0.15)'; e.currentTarget.style.borderColor = 'rgba(255, 224, 83, 0.3)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 224, 83, 0.08)'; e.currentTarget.style.borderColor = 'rgba(255, 224, 83, 0.15)'; }}
           >
-            <Barcode size={16} />
+            <QrCode size={16} />
           </button>
           
           {hasPermission(AdminPermission.UPDATE_ITEMS) && (
@@ -357,7 +354,7 @@ export default function ItemsPage() {
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 16, top: 12 }} />
             <input
               type="text"
-              placeholder="Search by name, barcode or serial..."
+              placeholder="Search by name, asset code or serial..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
@@ -551,11 +548,11 @@ export default function ItemsPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 8 }}>
-                     <button 
-                        onClick={(e) => { e.stopPropagation(); itemService.printLabel(item.id); }}
+                     <button
+                        onClick={(e) => { e.stopPropagation(); itemService.downloadQrCode(item.id, item.barcode); }}
                         style={{ flex: 1, padding: '8px', borderRadius: 8, background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: 'var(--text-main)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                      >
-                       <Barcode size={14} /> Label
+                       <QrCode size={14} /> QR
                      </button>
                      <button 
                         onClick={(e) => { e.stopPropagation(); setTrackingItem(item); setIsTrackingModalOpen(true); }}
