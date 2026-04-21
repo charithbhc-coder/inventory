@@ -168,7 +168,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   <span>{item.assignedToName ? 'Edit Assignment' : 'Assign'}</span>
                 </button>
 
-                {item.status === ItemStatus.IN_USE && (
+                {item.assignedToName && (
                   <button
                     className="hub-btn"
                     onClick={() => setActiveModal('return-warehouse')}
