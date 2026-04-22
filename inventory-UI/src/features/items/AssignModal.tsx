@@ -20,11 +20,16 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
     notes: ''
   });
 
-  // Autocomplete state
+  // Autocomplete state — ID field
   const [idSuggestions, setIdSuggestions] = useState<{ name: string; employeeId: string }[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const idInputRef = useRef<HTMLInputElement>(null);
+
+  // Autocomplete state — Name field
+  const [nameSuggestions, setNameSuggestions] = useState<{ name: string; employeeId: string }[]>([]);
+  const [showNameDropdown, setShowNameDropdown] = useState(false);
+  const nameDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: departmentsRes } = useQuery({
     queryKey: ['departments', item.companyId],
@@ -99,11 +104,29 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
     setIdSuggestions([]);
   };
 
-  // Close dropdown when clicking outside
+  // Handle name field typing → filter by name
+  const handleNameChange = (val: string) => {
+    setFormData(prev => ({ ...prev, assignedToName: val }));
+    if (val.trim().length > 0) {
+      const matches = knownEmployees.filter(e =>
+        e.name.toLowerCase().includes(val.toLowerCase())
+      );
+      setNameSuggestions(matches);
+      setShowNameDropdown(matches.length > 0);
+    } else {
+      setNameSuggestions([]);
+      setShowNameDropdown(false);
+    }
+  };
+
+  // Close both dropdowns when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
+      }
+      if (nameDropdownRef.current && !nameDropdownRef.current.contains(e.target as Node)) {
+        setShowNameDropdown(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -212,23 +235,63 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
                 )}
               </div>
 
-              {/* Employee Name — auto-filled or free-type */}
+              {/* Employee Name — autocomplete by name, auto-fills ID */}
               <div style={{ flex: 1 }}>
                 <label style={styles.label}>ASSIGNED TO (NAME)</label>
-                <div style={styles.inputWrap}>
-                  <User style={styles.inputIcon} size={16} />
-                  <input
-                    style={{
-                      ...styles.input,
-                      background: formData.assignedToName && formData.assignedToEmployeeId &&
-                        knownEmployees.some(e => e.employeeId === formData.assignedToEmployeeId)
-                        ? 'rgba(59,130,246,0.05)'
-                        : 'var(--color-surface-2)',
-                    }}
-                    placeholder="Auto-filled or type name..."
-                    value={formData.assignedToName}
-                    onChange={e => setFormData({ ...formData, assignedToName: e.target.value })}
-                  />
+                <div style={{ position: 'relative' }} ref={nameDropdownRef}>
+                  <div style={styles.inputWrap}>
+                    <User style={styles.inputIcon} size={16} />
+                    <input
+                      style={{
+                        ...styles.input,
+                        background: formData.assignedToName && formData.assignedToEmployeeId &&
+                          knownEmployees.some(e => e.employeeId === formData.assignedToEmployeeId)
+                          ? 'rgba(59,130,246,0.05)'
+                          : 'var(--color-surface-2)',
+                      }}
+                      placeholder="Type name to search..."
+                      value={formData.assignedToName}
+                      onChange={e => handleNameChange(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </div>
+                  {showNameDropdown && (
+                    <div style={{
+                      position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+                      background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                      borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                      zIndex: 200, overflow: 'hidden', maxHeight: 200, overflowY: 'auto'
+                    }}>
+                      {nameSuggestions.map(emp => (
+                        <button
+                          key={emp.employeeId}
+                          type="button"
+                          onMouseDown={() => selectEmployee(emp)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            width: '100%', padding: '10px 14px', background: 'transparent',
+                            border: 'none', cursor: 'pointer', textAlign: 'left',
+                            borderBottom: '1px solid var(--color-border)',
+                            transition: 'background 0.15s'
+                          }}
+                          className="assign-suggestion-btn"
+                        >
+                          <div style={{
+                            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontWeight: 800, fontSize: 13
+                          }}>
+                            {emp.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>{emp.name}</div>
+                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--color-accent)', fontWeight: 700, marginTop: 1 }}>#{emp.employeeId}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
