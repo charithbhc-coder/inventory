@@ -10,7 +10,8 @@ export interface EmployeeInfo {
   address?: string;
   contact?: string;
   company?: string;
-  companyLogoUrl?: string; // e.g. "/uploads/logos/abc.png"
+  companyLogoUrl?: string;    // subsidiary company logo — shown top-left
+  mainCompanyLogoUrl?: string; // KTMG main company logo — shown top-right
 }
 
 export interface PrintableItem {
@@ -144,21 +145,22 @@ function buildLogoHtml(logoSource: string, companyName: string): string {
 export async function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const companyDisplay = employee.company || 'KTMG GROUP';
+  const token = (useAuthStore.getState() as any).accessToken;
 
-  // Fetch logo as base64 so it works inside the print iframe
-  let logoBase64 = '';
-  if (employee.companyLogoUrl) {
-    const fullUrl = employee.companyLogoUrl.startsWith('http')
-      ? employee.companyLogoUrl
-      : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-
-    // Route through proxy to bypass S3 CORS issues
+  const fetchLogoBase64 = async (logoUrl?: string): Promise<string> => {
+    if (!logoUrl) return '';
+    const fullUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ROOT_URL}${logoUrl}`;
     const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    const token = (useAuthStore.getState() as any).accessToken;
-    logoBase64 = await urlToBase64(proxyUrl, token);
-  }
+    return urlToBase64(proxyUrl, token);
+  };
 
-  const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
+  const [leftLogoBase64, rightLogoBase64] = await Promise.all([
+    fetchLogoBase64(employee.companyLogoUrl),
+    fetchLogoBase64(employee.mainCompanyLogoUrl),
+  ]);
+
+  const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
+  const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
   const filename = `${safeFilename(employee.name)}_Asset_Issuance_Form`;
 
   const html = `<!DOCTYPE html>
@@ -170,12 +172,12 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 </head>
 <body>
   <div class="header">
-    ${logoHtml}
+    ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
       <h2>Asset Issuance Form</h2>
     </div>
-    ${logoHtml}
+    ${rightLogoHtml}
   </div>
 
   <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
@@ -252,20 +254,22 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 export async function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const companyDisplay = employee.company || 'KTMG GROUP';
+  const token = (useAuthStore.getState() as any).accessToken;
 
-  let logoBase64 = '';
-  if (employee.companyLogoUrl) {
-    const fullUrl = employee.companyLogoUrl.startsWith('http')
-      ? employee.companyLogoUrl
-      : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-
-    // Route through proxy to bypass S3 CORS issues
+  const fetchLogoBase64 = async (logoUrl?: string): Promise<string> => {
+    if (!logoUrl) return '';
+    const fullUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ROOT_URL}${logoUrl}`;
     const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    const token = (useAuthStore.getState() as any).accessToken;
-    logoBase64 = await urlToBase64(proxyUrl, token);
-  }
+    return urlToBase64(proxyUrl, token);
+  };
 
-  const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
+  const [leftLogoBase64, rightLogoBase64] = await Promise.all([
+    fetchLogoBase64(employee.companyLogoUrl),
+    fetchLogoBase64(employee.mainCompanyLogoUrl),
+  ]);
+
+  const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
+  const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
   const filename = `${safeFilename(employee.name)}_Asset_Handover_Form`;
 
   const html = `<!DOCTYPE html>
@@ -277,12 +281,12 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
 </head>
 <body>
   <div class="header">
-    ${logoHtml}
+    ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
       <h2>Asset Handover Form</h2>
     </div>
-    ${logoHtml}
+    ${rightLogoHtml}
   </div>
 
   <div style="display:flex;justify-content:space-between;margin:8px 0;">

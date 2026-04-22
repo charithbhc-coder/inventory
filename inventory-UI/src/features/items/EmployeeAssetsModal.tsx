@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Search, User, Package, FileText, FileDown, Loader } from 'lucide-react';
 import { itemService, Item } from '@/services/item.service';
+import { companyService } from '@/services/company.service';
 import { printAssetIssuanceForm, printAssetHandoverForm, PrintableItem, EmployeeInfo } from '@/utils/formPrinter';
 
 interface EmployeeAssetsModalProps {
@@ -49,6 +50,23 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
     queryFn: () => itemService.getItems({ status: 'IN_USE', limit: 500 }),
     enabled: isOpen,
   });
+
+  // Fetch all companies to find the KTMG main company logo (for form right-side header)
+  const { data: companyData } = useQuery({
+    queryKey: ['companies', 'all-for-forms'],
+    queryFn: () => companyService.getCompanies({ limit: 100 }),
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const mainCompanyLogoUrl = useMemo(() => {
+    const all = Array.isArray(companyData) ? companyData : (companyData as any)?.data || [];
+    const ktmg = all.find((c: any) =>
+      c.code?.toUpperCase() === 'KTMG' ||
+      c.name?.toLowerCase().includes('kids and teens')
+    );
+    return ktmg?.logoUrl || undefined;
+  }, [companyData]);
 
   const allItems: Item[] = useMemo(() => {
     const raw = Array.isArray(itemData) ? itemData : (itemData as any)?.data || [];
@@ -101,6 +119,7 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
     department: group.department || group.items[0]?.department?.name,
     company: group.items[0]?.company?.name,
     companyLogoUrl: group.companyLogoUrl || group.items[0]?.company?.logoUrl,
+    mainCompanyLogoUrl,
   });
 
   const handlePrint = async (fn: () => Promise<void>) => {

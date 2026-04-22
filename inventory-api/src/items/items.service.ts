@@ -193,6 +193,10 @@ export class ItemsService {
 
       const prevStatus = item.status;
       Object.assign(item, dto);
+
+      // Explicit null handling so clearing departmentId works
+      if (dto.departmentId === null) item.departmentId = null;
+
       const saved = await manager.save(Item, item);
 
       // Log event
@@ -206,7 +210,11 @@ export class ItemsService {
       });
       await manager.save(ItemEvent, event);
 
-      return saved;
+      // Reload with relations so the caller gets a complete item object
+      return manager.findOne(Item, {
+        where: { id: saved.id },
+        relations: ['category', 'company', 'department', 'addedByUser', 'parentItem', 'parentItem.category', 'childItems', 'childItems.category'],
+      }) as Promise<Item>;
     });
   }
 

@@ -126,6 +126,10 @@ export class UpdateItemDto {
   
   @IsUUID()
   @IsOptional()
+  departmentId?: string | null;
+
+  @IsUUID()
+  @IsOptional()
   parentItemId?: string | null;
 
   @IsString()
