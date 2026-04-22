@@ -86,28 +86,30 @@ export class CompaniesController {
     if (!url) return res.status(400).send('URL is required');
     
     try {
-      const response = await fetch(url, {
+      const protocol = url.startsWith('https') ? require('https') : require('http');
+      
+      protocol.get(url, {
         headers: {
           'User-Agent': 'KTMG-Inventory-Proxy/1.0',
-        },
+        }
+      }, (proxyRes: any) => {
+        if (proxyRes.statusCode >= 400) {
+          console.error(`Proxy fetch failed for ${url}: ${proxyRes.statusCode}`);
+          return res.status(proxyRes.statusCode).send('Failed to fetch from source');
+        }
+
+        const contentType = proxyRes.headers['content-type'];
+        if (contentType) res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+
+        proxyRes.pipe(res);
+      }).on('error', (err: any) => {
+        console.error(`Proxy connection error for ${url}:`, err);
+        res.status(500).send('Internal Server Error while proxying image');
       });
-
-      if (!response.ok) {
-        console.error(`Proxy fetch failed for ${url}: ${response.status} ${response.statusText}`);
-        return res.status(response.status).send(`Failed to fetch from source: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType) res.setHeader('Content-Type', contentType);
-      
-      // Add caching headers for performance
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
-
-      const arrayBuffer = await response.arrayBuffer();
-      res.send(Buffer.from(arrayBuffer));
     } catch (err) {
-      console.error(`Proxy error for ${url}:`, err);
-      res.status(500).send('Internal Server Error while proxying image');
+      console.error(`Proxy setup error for ${url}:`, err);
+      res.status(500).send('Internal Server Error');
     }
   }
 }
