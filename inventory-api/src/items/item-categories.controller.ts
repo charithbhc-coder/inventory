@@ -15,7 +15,7 @@ export class ItemCategoriesController {
 
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_CATEGORIES)
+  @Permissions(AdminPermission.CREATE_CATEGORIES, AdminPermission.MANAGE_CATEGORIES)
   create(@Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);
   }
@@ -41,14 +41,14 @@ export class ItemCategoriesController {
 
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_CATEGORIES)
+  @Permissions(AdminPermission.UPDATE_CATEGORIES, AdminPermission.MANAGE_CATEGORIES)
   update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.categoriesService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_CATEGORIES)
+  @Permissions(AdminPermission.DELETE_CATEGORIES, AdminPermission.MANAGE_CATEGORIES)
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(id);
   }
