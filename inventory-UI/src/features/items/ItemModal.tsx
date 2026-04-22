@@ -156,17 +156,19 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     const payload = {
       ...formData,
       serialNumber: formData.serialNumber || undefined,
-      departmentId: formData.departmentId || undefined,
+      // In edit mode send null to allow clearing; in create mode omit if empty
+      departmentId: isEdit
+        ? (formData.departmentId || null)
+        : (formData.departmentId || undefined),
       parentItemId: formData.parentItemId || undefined,
       purchasePrice: formData.purchasePrice !== '' ? formData.purchasePrice : undefined,
       purchaseDate: formData.purchaseDate || undefined,
       warrantyExpiresAt: formData.warrantyExpiresAt || undefined,
     };
 
-    // If editing, remove immutable/special fields that are handled by other endpoints
+    // companyId is immutable after creation
     if (isEdit) {
       delete (payload as any).companyId;
-      delete (payload as any).departmentId;
     }
 
     mutation.mutate(payload);
