@@ -27,11 +27,11 @@ import { s3Storage } from '../storage/s3.storage';
 
 
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.CREATE_COMPANIES)
@@ -39,6 +39,7 @@ export class CompaniesController {
     return this.companiesService.create(dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES)
@@ -46,6 +47,7 @@ export class CompaniesController {
     return this.companiesService.findAll({ page, limit, search });
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES)
@@ -53,6 +55,7 @@ export class CompaniesController {
     return this.companiesService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_COMPANIES)
@@ -60,6 +63,7 @@ export class CompaniesController {
     return this.companiesService.update(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Post(':id/logo')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_COMPANIES)
@@ -76,19 +80,34 @@ export class CompaniesController {
     return this.companiesService.updateLogo(id, (file as any).location);
   }
 
+  // PUBLIC endpoint for proxying logos (no auth needed for logo display)
   @Get('logo-proxy')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   async proxyLogo(@Query('url') url: string, @Res() res: Response) {
+    if (!url) return res.status(400).send('URL is required');
+    
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch image');
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'KTMG-Inventory-Proxy/1.0',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Proxy fetch failed for ${url}: ${response.status} ${response.statusText}`);
+        return res.status(response.status).send(`Failed to fetch from source: ${response.statusText}`);
+      }
+
       const contentType = response.headers.get('content-type');
       if (contentType) res.setHeader('Content-Type', contentType);
       
+      // Add caching headers for performance
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
+
       const arrayBuffer = await response.arrayBuffer();
       res.send(Buffer.from(arrayBuffer));
     } catch (err) {
-      res.status(404).send('Image not found');
+      console.error(`Proxy error for ${url}:`, err);
+      res.status(500).send('Internal Server Error while proxying image');
     }
   }
 }
