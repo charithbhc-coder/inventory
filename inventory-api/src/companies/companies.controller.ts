@@ -46,6 +46,24 @@ export class CompaniesController {
     return this.companiesService.findAll({ page, limit, search });
   }
 
+  // Must be declared before @Get(':id') to avoid route collision
+  @Get('logo-proxy')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  async proxyLogo(@Query('url') url: string, @Res() res: Response) {
+    try {
+      if (!url) { res.status(400).send('Missing url parameter'); return; }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Upstream ${response.status}`);
+      const contentType = response.headers.get('content-type') || 'image/png';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      const arrayBuffer = await response.arrayBuffer();
+      res.send(Buffer.from(arrayBuffer));
+    } catch (err) {
+      res.status(404).send('Image not found');
+    }
+  }
+
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_COMPANIES)
@@ -74,21 +92,5 @@ export class CompaniesController {
     file: Express.Multer.File,
   ) {
     return this.companiesService.updateLogo(id, (file as any).location);
-  }
-
-  @Get('logo-proxy')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  async proxyLogo(@Query('url') url: string, @Res() res: Response) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch image');
-      const contentType = response.headers.get('content-type');
-      if (contentType) res.setHeader('Content-Type', contentType);
-
-      const arrayBuffer = await response.arrayBuffer();
-      res.send(Buffer.from(arrayBuffer));
-    } catch (err) {
-      res.status(404).send('Image not found');
-    }
   }
 }
