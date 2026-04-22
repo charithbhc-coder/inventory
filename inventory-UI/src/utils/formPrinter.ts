@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/store/auth.store';
+
 const API_ROOT_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/inventory-api/v1';
 
 export interface EmployeeInfo {
@@ -55,9 +57,12 @@ const sharedStyles = `
 /**
  * Convert an image URL to a base64 data URI so it embeds into the print iframe.
  */
-async function urlToBase64(url: string): Promise<string> {
+async function urlToBase64(url: string, token?: string): Promise<string> {
   try {
-    const response = await fetch(url, { mode: 'cors' });
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, { mode: 'cors', headers });
     if (!response.ok) throw new Error('Network response was not ok');
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
@@ -146,10 +151,11 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
     const fullUrl = employee.companyLogoUrl.startsWith('http')
       ? employee.companyLogoUrl
       : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-    
+
     // Route through proxy to bypass S3 CORS issues
     const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    logoBase64 = await urlToBase64(proxyUrl);
+    const token = (useAuthStore.getState() as any).accessToken;
+    logoBase64 = await urlToBase64(proxyUrl, token);
   }
 
   const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
@@ -252,10 +258,11 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
     const fullUrl = employee.companyLogoUrl.startsWith('http')
       ? employee.companyLogoUrl
       : `${API_ROOT_URL}${employee.companyLogoUrl}`;
-    
+
     // Route through proxy to bypass S3 CORS issues
     const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    logoBase64 = await urlToBase64(proxyUrl);
+    const token = (useAuthStore.getState() as any).accessToken;
+    logoBase64 = await urlToBase64(proxyUrl, token);
   }
 
   const logoHtml = buildLogoHtml(logoBase64, companyDisplay);
