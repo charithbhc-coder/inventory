@@ -93,7 +93,7 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
     }
   };
 
-  // When user selects a suggestion → auto-fill name
+  // When user selects a suggestion → auto-fill both fields and close all dropdowns
   const selectEmployee = (emp: { name: string; employeeId: string }) => {
     setFormData(prev => ({
       ...prev,
@@ -102,6 +102,8 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
     }));
     setShowDropdown(false);
     setIdSuggestions([]);
+    setShowNameDropdown(false);
+    setNameSuggestions([]);
   };
 
   // Handle name field typing → filter by name

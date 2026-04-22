@@ -358,7 +358,7 @@ export default function ItemsPage() {
               type="text"
               placeholder="Search by name, asset code or serial..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
               style={{
                 width: '100%', padding: '10px 16px 10px 42px',
                 borderRadius: 8, border: '1px solid var(--border-dark)',
