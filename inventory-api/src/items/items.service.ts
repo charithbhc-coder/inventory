@@ -55,14 +55,16 @@ export class ItemsService {
         .select('item.barcode', 'barcode')
         .where('item.companyId = :companyId', { companyId: dto.companyId })
         .andWhere('item.categoryId = :categoryId', { categoryId: dto.categoryId })
-        .orderBy('item.createdAt', 'DESC')
+        .orderBy('item.barcode', 'DESC')
         .limit(1)
         .getRawOne<{ barcode: string }>();
 
-      // Parse the sequence from the last barcode (format: CO-CAT-YYYYMMDD-NNNN)
+      // Parse the sequence from the last barcode (format: CO-CAT-YYYYMMDD-NNNN).
+      // Ordering by barcode DESC (not createdAt) ensures we always read the highest
+      // existing sequence even when createdAt timestamps are out of order.
       // Fall back to count() when no barcode exists yet or it doesn't match format.
       let nextSeq: number;
-      const match = existing?.barcode?.match(/-(\d{4})$/);
+      const match = existing?.barcode?.match(/-(\d+)$/);
       if (match) {
         nextSeq = parseInt(match[1], 10) + 1;
       } else {
