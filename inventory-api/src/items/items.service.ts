@@ -175,26 +175,6 @@ export class ItemsService implements OnModuleInit {
       if (!item) throw new NotFoundException('Item not found');
 
       const prevStatus = item.status;
-
-      // When category changes, regenerate the barcode under the new category code
-      // so the barcode always matches the item's actual category.
-      if (dto.categoryId && dto.categoryId !== item.categoryId) {
-        const newCategory = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
-        const company = await manager.findOne(Company, { where: { id: item.companyId } });
-        if (newCategory && company) {
-          const [{ last_seq }] = await manager.query(`
-            INSERT INTO item_barcode_counters (company_id, category_id, last_seq)
-            SELECT $1, $2,
-              COALESCE(MAX((regexp_match(barcode, '-(\d+)$'))[1]::integer), 0) + 1
-            FROM items WHERE "companyId" = $1 AND "categoryId" = $2
-            ON CONFLICT (company_id, category_id)
-            DO UPDATE SET last_seq = item_barcode_counters.last_seq + 1
-            RETURNING last_seq
-          `, [item.companyId, dto.categoryId]);
-          item.barcode = generateBarcodeString(company.code, newCategory.code, parseInt(last_seq, 10));
-        }
-      }
-
       Object.assign(item, dto);
 
       // Explicit null handling so clearing departmentId works

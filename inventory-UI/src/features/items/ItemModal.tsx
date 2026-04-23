@@ -300,21 +300,25 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   <div style={{ flex: '1 1 150px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                       <label htmlFor="item-category" style={{ ...styles.label, marginBottom: 0 }}>CATEGORY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
-                      <button 
-                        type="button" 
-                        onClick={() => setIsCategoryModalOpen(true)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--color-new-btn)', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                      >
-                        <Plus size={12} strokeWidth={3} /> NEW
-                      </button>
+                      {!isEdit && (
+                        <button
+                          type="button"
+                          onClick={() => setIsCategoryModalOpen(true)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--color-new-btn)', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Plus size={12} strokeWidth={3} /> NEW
+                        </button>
+                      )}
                     </div>
                     <div style={styles.inputWrap}>
                       <Cpu style={styles.inputIcon} size={16} />
                       <select
                         id="item-category"
-                        style={styles.input}
+                        style={{ ...styles.input, ...(isEdit ? { opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' } : {}) }}
                         value={formData.categoryId}
-                        onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
+                        onChange={e => !isEdit && setFormData({ ...formData, categoryId: e.target.value })}
+                        disabled={isEdit}
+                        title={isEdit ? 'Category cannot be changed after registration. Re-register the asset under the correct category if needed.' : undefined}
                       >
                         <option value="">Select Category</option>
                         {categoriesList.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}

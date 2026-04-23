@@ -69,17 +69,14 @@ export class CreateItemDto {
 }
 
 export class UpdateItemDto {
-  
+
   @IsString()
   @IsOptional()
   name?: string;
 
-  
-  @IsUUID()
-  @IsOptional()
-  categoryId?: string;
+  // categoryId is intentionally omitted — changing category changes the barcode prefix,
+  // which breaks physical stickers. Re-register the item under the correct category instead.
 
-  
   @IsString()
   @IsOptional()
   serialNumber?: string;
