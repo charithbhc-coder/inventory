@@ -8,7 +8,7 @@ import { ItemCategory } from './entities/item-category.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ItemStatus, ItemCondition, ItemEventType } from '../common/enums';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
-import { generateBarcodeString } from '../common/utils/barcode.util';
+import { generateBarcodeString, seqLockKey } from '../common/utils/barcode.util';
 import {
   CreateItemDto,
   UpdateItemDto,
@@ -36,22 +36,20 @@ export class ItemsService {
   // ========================================
 
   async create(dto: CreateItemDto, userId: string): Promise<Item> {
-    // Validate category and company outside the retry loop (they won't change)
     const category = await this.categoriesRepository.findOne({ where: { id: dto.categoryId } });
     if (!category) throw new NotFoundException('Category not found');
 
     const company = await this.companyRepository.findOne({ where: { id: dto.companyId } });
     if (!company) throw new NotFoundException('Company not found');
 
-    // Retry-on-conflict loop to safely handle concurrent barcode generation.
-    // count()+1 is non-atomic; if two requests race, the unique index rejects one.
-    // On conflict (PG code 23505) we re-derive the sequence from the highest
-    // existing barcode for this company+category and retry.
-    const MAX_RETRIES = 5;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      // Derive next sequence atomically within a serializable snapshot
-      const existing = await this.itemsRepository
-        .createQueryBuilder('item')
+    const saved = await this.dataSource.transaction(async (manager) => {
+      // Acquire a PostgreSQL advisory lock scoped to this company+category pair.
+      // Concurrent requests for the same pair queue here instead of racing,
+      // making duplicate-barcode conflicts impossible. Released when tx ends.
+      await manager.query('SELECT pg_advisory_xact_lock($1)', [seqLockKey(dto.companyId, dto.categoryId)]);
+
+      const existing = await manager
+        .createQueryBuilder(Item, 'item')
         .select('item.barcode', 'barcode')
         .where('item.companyId = :companyId', { companyId: dto.companyId })
         .andWhere('item.categoryId = :categoryId', { categoryId: dto.categoryId })
@@ -59,63 +57,35 @@ export class ItemsService {
         .limit(1)
         .getRawOne<{ barcode: string }>();
 
-      // Parse the sequence from the last barcode (format: CO-CAT-YYYYMMDD-NNNN).
-      // Ordering by barcode DESC (not createdAt) ensures we always read the highest
-      // existing sequence even when createdAt timestamps are out of order.
-      // Fall back to count() when no barcode exists yet or it doesn't match format.
-      let nextSeq: number;
       const match = existing?.barcode?.match(/-(\d+)$/);
-      if (match) {
-        nextSeq = parseInt(match[1], 10) + 1;
-      } else {
-        const count = await this.itemsRepository.count({ where: { companyId: dto.companyId, categoryId: dto.categoryId } });
-        nextSeq = count + 1;
-      }
-
+      const nextSeq = match ? parseInt(match[1], 10) + 1 : 1;
       const barcode = generateBarcodeString(company.code, category.code, nextSeq);
 
-      try {
-        const saved = await this.dataSource.transaction(async (manager) => {
-          const item = manager.create(Item, {
-            ...dto,
-            barcode,
-            status: dto.departmentId ? ItemStatus.IN_USE : ItemStatus.WAREHOUSE,
-            condition: dto.condition || ItemCondition.NEW,
-            isWorking: true,
-            addedByUserId: userId,
-          });
+      const item = manager.create(Item, {
+        ...dto,
+        barcode,
+        status: dto.departmentId ? ItemStatus.IN_USE : ItemStatus.WAREHOUSE,
+        condition: dto.condition || ItemCondition.NEW,
+        isWorking: true,
+        addedByUserId: userId,
+      });
+      const savedItem = await manager.save(Item, item);
 
-          const savedItem = await manager.save(Item, item);
+      const event = manager.create(ItemEvent, {
+        itemId: savedItem.id,
+        eventType: ItemEventType.ITEM_ADDED,
+        toStatus: ItemStatus.WAREHOUSE,
+        performedByUserId: userId,
+        notes: `Item "${savedItem.name}" added to inventory - Remarks: ${dto.remarks || 'None'}`,
+      });
+      await manager.save(ItemEvent, event);
 
-          // Log event
-          const event = manager.create(ItemEvent, {
-            itemId: savedItem.id,
-            eventType: ItemEventType.ITEM_ADDED,
-            toStatus: ItemStatus.WAREHOUSE,
-            performedByUserId: userId,
-            notes: `Item "${savedItem.name}" added to inventory - Remarks: ${dto.remarks || 'None'}`,
-          });
-          await manager.save(ItemEvent, event);
+      return savedItem;
+    });
 
-          return savedItem;
-        });
+    this.notificationsService.handleItemAdded({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
 
-        // Notify actor of new registration (outside transaction — fire and forget)
-        this.notificationsService.handleItemAdded({ itemId: saved.id, barcode: saved.barcode, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
-
-        return saved;
-      } catch (err: any) {
-        // PostgreSQL unique_violation on the barcode column — retry with new sequence
-        const isUniqueViolation = err?.code === '23505' && err?.detail?.includes('barcode');
-        if (isUniqueViolation && attempt < MAX_RETRIES) {
-          continue; // re-enter the loop with an updated sequence number
-        }
-        throw err; // non-conflict error or exhausted retries
-      }
-    }
-
-    // TypeScript requires an explicit unreachable throw after the loop
-    throw new BadRequestException('Failed to generate a unique barcode after multiple attempts. Please try again.');
+    return saved;
   }
 
   async findAll(query: {

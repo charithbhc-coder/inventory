@@ -1,6 +1,19 @@
 import { format } from 'date-fns';
 
 /**
+ * Produces a stable 32-bit integer lock key for a company+category pair.
+ * Used with pg_advisory_xact_lock to serialize barcode sequence generation.
+ */
+export function seqLockKey(companyId: string, categoryId: string): number {
+  const str = companyId + categoryId;
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  }
+  return Math.abs(h);
+}
+
+/**
  * Generates a human-readable, sortable barcode string.
  * Format: {CompanyCode}-{CategoryCode}-{YYYYMMDD}-{SEQ4}
  * Example: ACME-LAP-20250615-0042
