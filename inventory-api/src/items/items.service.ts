@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import * as qrcode from 'qrcode';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner } from 'typeorm';
@@ -8,7 +8,7 @@ import { ItemCategory } from './entities/item-category.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ItemStatus, ItemCondition, ItemEventType } from '../common/enums';
 import { paginate, getPaginationOptions } from '../common/utils/pagination.util';
-import { generateBarcodeString, seqLockKey } from '../common/utils/barcode.util';
+import { generateBarcodeString } from '../common/utils/barcode.util';
 import {
   CreateItemDto,
   UpdateItemDto,
@@ -21,7 +21,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
-export class ItemsService {
+export class ItemsService implements OnModuleInit {
   constructor(
     @InjectRepository(Item) private readonly itemsRepository: Repository<Item>,
     @InjectRepository(ItemEvent) private readonly eventsRepository: Repository<ItemEvent>,
@@ -30,6 +30,17 @@ export class ItemsService {
     private dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
   ) { }
+
+  async onModuleInit() {
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS item_barcode_counters (
+        company_id UUID NOT NULL,
+        category_id UUID NOT NULL,
+        last_seq INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (company_id, category_id)
+      )
+    `);
+  }
 
   // ========================================
   // CRUD
@@ -43,22 +54,22 @@ export class ItemsService {
     if (!company) throw new NotFoundException('Company not found');
 
     const saved = await this.dataSource.transaction(async (manager) => {
-      // Acquire a PostgreSQL advisory lock scoped to this company+category pair.
-      // Concurrent requests for the same pair queue here instead of racing,
-      // making duplicate-barcode conflicts impossible. Released when tx ends.
-      await manager.query('SELECT pg_advisory_xact_lock($1)', [seqLockKey(dto.companyId, dto.categoryId)]);
-
-      const existing = await manager
-        .createQueryBuilder(Item, 'item')
-        .select('item.barcode', 'barcode')
-        .where('item.companyId = :companyId', { companyId: dto.companyId })
-        .andWhere('item.categoryId = :categoryId', { categoryId: dto.categoryId })
-        .orderBy('item.barcode', 'DESC')
-        .limit(1)
-        .getRawOne<{ barcode: string }>();
-
-      const match = existing?.barcode?.match(/-(\d+)$/);
-      const nextSeq = match ? parseInt(match[1], 10) + 1 : 1;
+      // Atomic counter increment via INSERT ... ON CONFLICT DO UPDATE.
+      // PostgreSQL serializes concurrent upserts on the same primary key row,
+      // so two simultaneous creates for the same company+category always get
+      // distinct sequence numbers — no advisory locks or retries needed.
+      // On first insert for a pair, seeds from the existing max to avoid
+      // colliding with items registered before this counter table existed.
+      const [{ last_seq }] = await manager.query(`
+        INSERT INTO item_barcode_counters (company_id, category_id, last_seq)
+        SELECT $1, $2,
+          COALESCE(MAX((regexp_match(barcode, '-(\d+)$'))[1]::integer), 0) + 1
+        FROM items WHERE "companyId" = $1 AND "categoryId" = $2
+        ON CONFLICT (company_id, category_id)
+        DO UPDATE SET last_seq = item_barcode_counters.last_seq + 1
+        RETURNING last_seq
+      `, [dto.companyId, dto.categoryId]);
+      const nextSeq = parseInt(last_seq, 10);
       const barcode = generateBarcodeString(company.code, category.code, nextSeq);
 
       const item = manager.create(Item, {
