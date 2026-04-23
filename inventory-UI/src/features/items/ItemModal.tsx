@@ -56,12 +56,14 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setInvoiceFile(null);
       setItemFile(null);
       setLastCreatedItem(null);
+      setCategoryChanged(false);
     }
   }, [item, isOpen]);
 
 
 
   const [previewBarcode, setPreviewBarcode] = useState<string>('');
+  const [categoryChanged, setCategoryChanged] = useState(false);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
@@ -88,8 +90,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const companiesList = useMemo(() => Array.isArray(companies) ? companies : (companies as any)?.data || [], [companies]);
   const categoriesList = useMemo(() => {
     const raw = Array.isArray(categories) ? categories : (categories as any)?.data || [];
-    // Show active categories, plus the currently selected one (in case it's archived)
-    return raw.filter((c: any) => c.isActive !== false || c.id === formData.categoryId);
+    // Only show leaf (child) categories — parent/group categories like "Hardware" are not
+    // directly assignable to items. Always include the currently selected one even if archived.
+    return raw.filter((c: any) =>
+      (c.parentCategoryId !== null && (c.isActive !== false)) || c.id === formData.categoryId
+    );
   }, [categories, formData.categoryId]);
   const departmentsList = useMemo(() => Array.isArray(departments) ? departments : (departments as any)?.data || [], [departments]);
   const itemsList = useMemo(() => Array.isArray(companyItems) ? companyItems : (companyItems as any)?.data || (companyItems as any)?.items || [], [companyItems]);
@@ -314,16 +319,24 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       <Cpu style={styles.inputIcon} size={16} />
                       <select
                         id="item-category"
-                        style={{ ...styles.input, ...(isEdit ? { opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' } : {}) }}
+                        style={styles.input}
                         value={formData.categoryId}
-                        onChange={e => !isEdit && setFormData({ ...formData, categoryId: e.target.value })}
-                        disabled={isEdit}
-                        title={isEdit ? 'Category cannot be changed after registration. Re-register the asset under the correct category if needed.' : undefined}
+                        onChange={e => {
+                          const newCatId = e.target.value;
+                          if (isEdit && newCatId !== formData.categoryId) setCategoryChanged(true);
+                          else if (isEdit && newCatId === item?.categoryId) setCategoryChanged(false);
+                          setFormData({ ...formData, categoryId: newCatId });
+                        }}
                       >
                         <option value="">Select Category</option>
                         {categoriesList.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
+                    {categoryChanged && (
+                      <p style={{ margin: '4px 0 0', fontSize: 11, color: '#e67e22', fontWeight: 600 }}>
+                        ⚠ Changing category will generate a new Asset QR ID. Reprint the QR label after saving.
+                      </p>
+                    )}
                   </div>
                   {isEdit && (
                     <div style={{ flex: '1 1 150px' }}>
