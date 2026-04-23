@@ -41,7 +41,7 @@ export class CompaniesController {
 
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.VIEW_COMPANIES)
+  @Permissions(AdminPermission.VIEW_COMPANIES, AdminPermission.VIEW_ITEMS, AdminPermission.VIEW_DEPARTMENTS, AdminPermission.VIEW_CATEGORIES)
   findAll(@Query('page') page?: number, @Query('limit') limit?: number, @Query('search') search?: string) {
     return this.companiesService.findAll({ page, limit, search });
   }

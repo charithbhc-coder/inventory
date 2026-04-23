@@ -102,12 +102,18 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const { data: barcodeRes } = useQuery({
     queryKey: ['barcode-preview', formData.companyId, formData.categoryId],
     queryFn: () => itemService.previewBarcode(formData.companyId, formData.categoryId),
-    enabled: !!formData.companyId && !!formData.categoryId && !isEdit
+    enabled: !!formData.companyId && !!formData.categoryId && !isEdit,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   useEffect(() => {
-    if (barcodeRes) setPreviewBarcode(barcodeRes?.code || barcodeRes);
-  }, [barcodeRes]);
+    if (!formData.companyId || !formData.categoryId) {
+      setPreviewBarcode('');
+    } else if (barcodeRes) {
+      setPreviewBarcode(barcodeRes?.code || barcodeRes);
+    }
+  }, [barcodeRes, formData.companyId, formData.categoryId]);
 
   const uploadMutation = useMutation({
     mutationFn: async ({ id, type, file }: { id: string, type: 'warranty' | 'invoice' | 'image', file: File }) => {

@@ -52,6 +52,11 @@ const sharedStyles = `
   @media print {
     body { padding: 20px 30px; }
     @page { margin: 1cm; size: A4; }
+    table { page-break-inside: avoid; break-inside: avoid; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    .declaration { page-break-inside: avoid; break-inside: avoid; }
+    .sig-row { page-break-inside: avoid; break-inside: avoid; }
+    .header { page-break-inside: avoid; break-inside: avoid; }
   }
 `;
 
