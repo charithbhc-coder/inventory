@@ -92,6 +92,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       });
     });
 
+    // Direct item list sync — fires immediately after create/update before audit log chain
+    socket.on('items_updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    });
+
     // Global real-time state synchronizer
     socket.on('audit_log_updated', () => {
       // Instantly refresh data across all views when any user performs an action

@@ -220,6 +220,8 @@ export class NotificationsService {
 
   @OnEvent('item.added')
   async handleItemAdded(payload: { itemId: string; barcode: string; userId: string; companyId: string; itemName: string }) {
+    this.gateway.broadcastItemsUpdated({ action: 'added', itemId: payload.itemId });
+
     const enabled = await this.settingsService.getSetting('notify_on_item_added', true);
     if (!enabled) return;
 
@@ -234,6 +236,10 @@ export class NotificationsService {
       entityId: payload.itemId,
       actionUrl: `/items?barcode=${payload.barcode}`,
     });
+  }
+
+  async handleItemUpdated(payload: { itemId: string; userId: string; companyId: string; itemName: string }) {
+    this.gateway.broadcastItemsUpdated({ action: 'updated', itemId: payload.itemId });
   }
 
   @OnEvent('item.sent_to_repair')

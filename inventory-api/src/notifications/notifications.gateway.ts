@@ -57,4 +57,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   broadcastAuditLog(payload?: any) {
     this.server.emit('audit_log_updated', payload);
   }
+
+  // Broadcast item list change to all connected clients (immediate real-time sync)
+  broadcastItemsUpdated(payload?: any) {
+    this.server.emit('items_updated', payload);
+  }
 }

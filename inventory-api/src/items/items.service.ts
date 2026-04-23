@@ -183,10 +183,14 @@ export class ItemsService {
       await manager.save(ItemEvent, event);
 
       // Reload with relations so the caller gets a complete item object
-      return manager.findOne(Item, {
+      const result = await manager.findOne(Item, {
         where: { id: saved.id },
         relations: ['category', 'company', 'department', 'addedByUser', 'parentItem', 'parentItem.category', 'childItems', 'childItems.category'],
-      }) as Promise<Item>;
+      }) as Item;
+
+      this.notificationsService.handleItemUpdated({ itemId: result.id, userId, companyId: result.companyId, itemName: result.name }).catch(() => {});
+
+      return result;
     });
   }
 
