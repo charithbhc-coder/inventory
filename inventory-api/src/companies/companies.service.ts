@@ -41,6 +41,14 @@ export class CompaniesService {
     return paginate(items, total, page, limit);
   }
 
+  async getBranding(): Promise<{ id: string; name: string; code: string; logoUrl: string | null }[]> {
+    const companies = await this.companiesRepository.find({
+      where: { isActive: true },
+      select: ['id', 'name', 'code', 'logoUrl'],
+    });
+    return companies;
+  }
+
   async findOne(id: string): Promise<Company> {
     const company = await this.companiesRepository.findOne({
       where: { id },

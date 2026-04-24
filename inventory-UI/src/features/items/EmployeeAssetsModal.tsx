@@ -51,22 +51,22 @@ export default function EmployeeAssetsModal({ isOpen, onClose }: EmployeeAssetsM
     enabled: isOpen,
   });
 
-  // Fetch all companies to find the KTMG main company logo (for form right-side header)
-  const { data: companyData } = useQuery({
-    queryKey: ['companies', 'all-for-forms'],
-    queryFn: () => companyService.getCompanies({ limit: 100 }),
+  // Fetch company branding — no permission restriction, always fresh
+  const { data: brandingData } = useQuery({
+    queryKey: ['companies-branding'],
+    queryFn: () => companyService.getBranding(),
     enabled: isOpen,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   const mainCompanyLogoUrl = useMemo(() => {
-    const all = Array.isArray(companyData) ? companyData : (companyData as any)?.data || [];
+    const all = brandingData || [];
     const ktmg = all.find((c: any) =>
       c.code?.toUpperCase() === 'KTMG' ||
       c.name?.toLowerCase().includes('kids and teens')
     );
     return ktmg?.logoUrl || undefined;
-  }, [companyData]);
+  }, [brandingData]);
 
   const allItems: Item[] = useMemo(() => {
     const raw = Array.isArray(itemData) ? itemData : (itemData as any)?.data || [];

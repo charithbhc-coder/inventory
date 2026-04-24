@@ -43,6 +43,11 @@ export const companyService = {
     return data;
   },
 
+  getBranding: async (): Promise<{ id: string; name: string; code: string; logoUrl?: string }[]> => {
+    const { data } = await apiClient.get('/companies/branding');
+    return data;
+  },
+
   uploadLogo: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
