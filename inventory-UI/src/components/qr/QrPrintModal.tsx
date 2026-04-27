@@ -33,91 +33,10 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const qrCanvas = getCanvas();
     if (!qrCanvas) return;
 
-    const W_MM = labelW, H_MM = labelH;
-    // Render at 203 DPI (ZD230 native) so the image is crisp on the label printer
-    const DPI = 203;
-    const PX = (mm: number) => Math.round((mm / 25.4) * DPI);
+    // Use the raw QR canvas directly — no compositing, no @page size tricks.
+    // CSS mm units are accurate in print media, so 20mm × 20mm = exactly 2cm × 2cm.
+    const imgData = qrCanvas.toDataURL('image/png');
 
-    const W_PX = PX(W_MM);
-    const H_PX = PX(H_MM);
-
-    const out = document.createElement('canvas');
-    out.width = W_PX;
-    out.height = H_PX;
-    const ctx = out.getContext('2d')!;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W_PX, H_PX);
-
-    const isSmall = H_MM <= 35 && W_MM >= H_MM;
-
-    if (isSmall) {
-      // Horizontal layout: QR left | divider | text right
-      const PAD_PX = PX(2);
-      const QR_PX = H_PX - PAD_PX * 2;
-
-      const qrY = (H_PX - QR_PX) / 2;
-      ctx.drawImage(qrCanvas, PAD_PX, qrY, QR_PX, QR_PX);
-
-      const divX = PAD_PX + QR_PX + PX(1.5);
-      ctx.fillStyle = '#cccccc';
-      ctx.fillRect(divX, PAD_PX, 1, H_PX - PAD_PX * 2);
-
-      const textX = divX + PX(1.5);
-      const textW = W_PX - textX - PAD_PX;
-
-      ctx.fillStyle = '#aaaaaa';
-      ctx.font = `${PX(2.8)}px Arial`;
-      ctx.textAlign = 'left';
-      ctx.fillText('SCAN TO OPEN', textX, H_PX * 0.26);
-
-      let codeFontSize = PX(4.5);
-      ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
-      if (ctx.measureText(assetCode).width > textW) {
-        codeFontSize = Math.floor(codeFontSize * textW / ctx.measureText(assetCode).width);
-      }
-      ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
-      ctx.fillStyle = '#000000';
-      ctx.fillText(assetCode, textX, H_PX * 0.55);
-
-      const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '…' : itemName;
-      let nameFontSize = PX(3);
-      ctx.font = `600 ${nameFontSize}px Arial`;
-      if (ctx.measureText(safeName).width > textW) {
-        nameFontSize = Math.floor(nameFontSize * textW / ctx.measureText(safeName).width);
-      }
-      ctx.font = `600 ${nameFontSize}px Arial`;
-      ctx.fillStyle = '#444444';
-      ctx.fillText(safeName, textX, H_PX * 0.80);
-
-    } else {
-      // Vertical layout: QR centred, text below
-      const PAD_PX = PX(5);
-      const QR_PX = Math.min(W_PX - PAD_PX * 2, PX(H_MM * 0.6));
-      const qrX = (W_PX - QR_PX) / 2;
-
-      ctx.drawImage(qrCanvas, qrX, PAD_PX, QR_PX, QR_PX);
-
-      const baseY = PAD_PX + QR_PX + PX(3);
-      ctx.fillStyle = '#aaaaaa';
-      ctx.font = `${PX(3)}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.fillText('SCAN TO OPEN ASSET', W_PX / 2, baseY);
-
-      ctx.fillStyle = '#000000';
-      ctx.font = `900 ${PX(5)}px 'Courier New', monospace`;
-      ctx.fillText(assetCode, W_PX / 2, baseY + PX(7));
-
-      const safeName = itemName.length > 40 ? itemName.substring(0, 40) + '…' : itemName;
-      ctx.fillStyle = '#444444';
-      ctx.font = `600 ${PX(4)}px Arial`;
-      ctx.fillText(safeName, W_PX / 2, baseY + PX(14));
-    }
-
-    const imgData = out.toDataURL('image/png');
-
-    // Use a hidden iframe instead of window.open to avoid popup blockers
-    // and ensure the print dialog always targets the right content.
     const existingFrame = document.getElementById('qr-print-frame');
     if (existingFrame) existingFrame.remove();
 
@@ -131,33 +50,32 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
 
     doc.open();
     doc.write(`<!DOCTYPE html><html><head>
-<title>QR Label</title>
+<title>QR</title>
 <style>
-  @page { size: ${W_MM}mm ${H_MM}mm; margin: 0; }
+  @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: ${W_MM}mm; height: ${H_MM}mm; background: #fff; overflow: hidden; }
-  img { width: ${W_MM}mm; height: ${H_MM}mm; display: block; }
+  body { background: #fff; }
+  img { width: 20mm; height: 20mm; display: block; }
 </style>
 </head><body>
   <img src="${imgData}" />
 </body></html>`);
     doc.close();
 
-    // Wait for the image to fully load inside the iframe before printing
     const imgEl = doc.querySelector('img') as HTMLImageElement | null;
     const doPrint = () => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      // Remove the iframe after a short delay
       setTimeout(() => iframe.remove(), 1000);
     };
 
     if (imgEl && !imgEl.complete) {
       imgEl.onload = doPrint;
     } else {
-      setTimeout(doPrint, 150);
+      setTimeout(doPrint, 200);
     }
   };
+
 
   const handleSave = () => {
     const canvas = getCanvas();
