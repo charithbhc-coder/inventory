@@ -33,69 +33,96 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const qrCanvas = getCanvas();
     if (!qrCanvas) return;
 
-    const imgData = qrCanvas.toDataURL('image/png');
+    // --- Canvas layout at 203 DPI (ZD230 native) ---
+    const DPI = 203;
+    const PX = (mm: number) => Math.round((mm / 25.4) * DPI);
 
+    const W_PX = PX(labelW);
+    const H_PX = PX(labelH);
+    const QR_PX  = PX(20);  // 2cm QR
+    const PAD_PX = PX(2);   // 2mm padding
+    const GAP_PX = PX(2);   // 2mm gap between QR and text
+
+    const out = document.createElement('canvas');
+    out.width  = W_PX;
+    out.height = H_PX;
+    const ctx = out.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W_PX, H_PX);
+
+    // QR: left side, vertically centred
+    const qrX = PAD_PX;
+    const qrY = Math.round((H_PX - QR_PX) / 2);
+    ctx.drawImage(qrCanvas, qrX, qrY, QR_PX, QR_PX);
+
+    // Text column: right of QR
+    const textX = qrX + QR_PX + GAP_PX;
+    const textW = W_PX - textX - PAD_PX;
+    const midY  = H_PX / 2;
+
+    // Asset ID — upper half, bold monospace, auto-shrink to fit width
+    let codeFontPx = PX(4.5);
+    ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
+    while (ctx.measureText(assetCode).width > textW && codeFontPx > PX(2.5)) {
+      codeFontPx -= 1;
+      ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
+    }
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(assetCode, textX, midY - PX(1));
+
+    // Item name — lower half, regular sans-serif, auto-shrink to fit width
+    const safeName = itemName.length > 22 ? itemName.substring(0, 22) + '\u2026' : itemName;
+    let nameFontPx = PX(3.5);
+    ctx.font = `600 ${nameFontPx}px Arial`;
+    while (ctx.measureText(safeName).width > textW && nameFontPx > PX(2)) {
+      nameFontPx -= 1;
+      ctx.font = `600 ${nameFontPx}px Arial`;
+    }
+    ctx.fillStyle = '#444444';
+    ctx.textBaseline = 'top';
+    ctx.fillText(safeName, textX, midY + PX(1));
+
+    const imgData = out.toDataURL('image/png');
+
+    // --- Off-screen iframe ---
+    // IMPORTANT: use left:-9999px, NOT visibility:hidden without a left offset.
+    // visibility:hidden at 0,0 placed a 50x25mm invisible block over the modal
+    // and captured all mouse clicks, making the modal appear unresponsive.
     const existingFrame = document.getElementById('qr-print-frame');
     if (existingFrame) existingFrame.remove();
 
-    // Create a hidden iframe for the print job
     const iframe = document.createElement('iframe');
     iframe.id = 'qr-print-frame';
-    // Match the iframe container to the sticker dimensions
-    iframe.style.cssText = `position:fixed; visibility:hidden; width:${labelW}mm; height:${labelH}mm;`;
+    iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${labelW}mm;height:${labelH}mm;border:0;background:white`;
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
+    // img at exact CSS mm = physical label size. Centering is baked into canvas.
     doc.open();
-    doc.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Print QR</title>
-        <style>
-          /* 1. Tell the printer driver the exact size of the physical sticker */
-          @page { 
-            size: ${labelW}mm ${labelH}mm; 
-            margin: 0; 
-          }
-          
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          
-          html, body { 
-            width: ${labelW}mm; 
-            height: ${labelH}mm; 
-            background: #fff; 
-            overflow: hidden; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          }
-
-          img {
-            /* 2. Force the QR to be exactly 2cm x 2cm */
-            width: 20mm; 
-            height: 20mm;
-            display: block;
-            /* 3. Ensures crisp edges on thermal printers (preventing blur) */
-            image-rendering: pixelated; 
-            -webkit-print-color-adjust: exact;
-          }
-        </style>
-      </head>
-      <body>
-        <img src="${imgData}" />
-      </body>
-      </html>
-    `);
+    doc.write(`<!DOCTYPE html><html><head><title></title><style>
+  @page { margin: 0; }
+  * { margin: 0; padding: 0; }
+  body { background: #fff; }
+  img {
+    display: block;
+    width: ${labelW}mm;
+    height: ${labelH}mm;
+    image-rendering: pixelated;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+</style></head><body>
+  <img src="${imgData}" />
+</body></html>`);
     doc.close();
 
-    // Small delay to allow the browser to render the image in the iframe
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      // Remove frame after print dialog is closed
       setTimeout(() => iframe.remove(), 2000);
     }, 500);
   };
