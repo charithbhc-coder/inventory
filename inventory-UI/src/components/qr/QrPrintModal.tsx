@@ -34,53 +34,46 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     if (!qrCanvas) return;
 
     const imgData = qrCanvas.toDataURL('image/png');
-    const W = labelW, H = labelH;
 
     const existingFrame = document.getElementById('qr-print-frame');
     if (existingFrame) existingFrame.remove();
 
-    // Off-screen iframe at the exact label size so print() captures a real layout.
+    // Give the iframe real pixel dimensions (off-screen) so the browser
+    // actually renders its contents. width:0/hidden iframes are never painted.
     const iframe = document.createElement('iframe');
     iframe.id = 'qr-print-frame';
-    iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${W}mm;height:${H}mm;border:0;background:white`;
+    iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${labelW}mm;height:${labelH}mm;border:0;background:white`;
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
-    // Landscape small label (e.g. 50×25): QR on left, text on right.
-    // Otherwise: QR centred, text below.
-    const isSmall = H <= 35 && W >= H;
-    const qrSize = isSmall ? Math.min(H - 4, 22) : Math.min(W - 10, H * 0.6);
-    const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '…' : itemName;
-
-    const layoutHtml = isSmall
-      ? `<div style="display:flex;align-items:center;width:100%;height:100%;padding:2mm;gap:2mm;box-sizing:border-box;">
-           <img src="${imgData}" style="width:${qrSize}mm;height:${qrSize}mm;flex-shrink:0;display:block"/>
-           <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:1mm;overflow:hidden">
-             <div style="font-size:7pt;font-weight:900;font-family:'Courier New',monospace;color:#000;word-break:break-all;line-height:1.15">${assetCode}</div>
-             <div style="font-size:5.5pt;color:#444;font-weight:600;line-height:1.25">${safeName}</div>
-           </div>
-         </div>`
-      : `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:3mm;gap:2mm;box-sizing:border-box;">
-           <img src="${imgData}" style="width:${qrSize}mm;height:${qrSize}mm;display:block"/>
-           <div style="font-size:10pt;font-weight:900;font-family:'Courier New',monospace;color:#000;text-align:center">${assetCode}</div>
-           <div style="font-size:7pt;color:#444;font-weight:600;text-align:center">${safeName}</div>
-         </div>`;
-
+    // Absolute centering works in all print contexts.
+    // No @page size override: let the ZD230 Windows driver control the label dimensions.
     doc.open();
     doc.write(`<!DOCTYPE html><html><head><title></title>
 <style>
-  @page { size: ${W}mm ${H}mm; margin: 0; }
+  @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: ${W}mm; height: ${H}mm; background: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-  img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 100%; height: 100%; background: #fff; overflow: hidden; }
+  img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20mm;
+    height: 20mm;
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 </style>
 </head><body>
-  ${layoutHtml}
+  <img src="${imgData}" />
 </body></html>`);
     doc.close();
 
+    // 500ms lets the browser fully paint the iframe before print() fires.
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
