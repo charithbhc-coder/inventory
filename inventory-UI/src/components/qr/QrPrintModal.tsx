@@ -60,17 +60,18 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const textW = W_PX - textX - PAD_PX;
     const midY  = H_PX / 2;
 
-    // Asset ID — upper half, bold monospace, auto-shrink then clip
+    // Asset ID — upper half, bold monospace
+    // Use textW - PX(1.5) as target (1.5mm safety margin) because measureText()
+    // is slightly inaccurate and the last char clips without it.
     let codeFontPx = PX(4.5);
-    ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
-    while (ctx.measureText(assetCode).width > textW && codeFontPx > PX(2)) {
+    ctx.font = `bold ${codeFontPx}px 'Courier New', monospace`;
+    while (ctx.measureText(assetCode).width > textW - PX(1.5) && codeFontPx > 8) {
       codeFontPx -= 1;
-      ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
+      ctx.font = `bold ${codeFontPx}px 'Courier New', monospace`;
     }
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
-    // Clip so text never bleeds past the text column even if it can't shrink enough
     ctx.save();
     ctx.beginPath();
     ctx.rect(textX, 0, textW, midY);
@@ -78,11 +79,11 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     ctx.fillText(assetCode, textX, midY - PX(1));
     ctx.restore();
 
-    // Item name — lower half, regular sans-serif, auto-shrink then clip
-    const safeName = itemName.length > 22 ? itemName.substring(0, 22) + '\u2026' : itemName;
+    // Item name — lower half, regular sans-serif
+    const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '\u2026' : itemName;
     let nameFontPx = PX(3.5);
     ctx.font = `600 ${nameFontPx}px Arial`;
-    while (ctx.measureText(safeName).width > textW && nameFontPx > PX(2)) {
+    while (ctx.measureText(safeName).width > textW - PX(1) && nameFontPx > 8) {
       nameFontPx -= 1;
       ctx.font = `600 ${nameFontPx}px Arial`;
     }
