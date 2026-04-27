@@ -42,7 +42,7 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const iframe = document.createElement('iframe');
     iframe.id = 'qr-print-frame';
     // Match the iframe container to the sticker dimensions
-    iframe.style.cssText = `position:fixed; visibility:hidden; width:${labelW}mm; height:${labelH}mm;`;
+    iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${labelW}mm;height:${labelH}mm;border:0;background:white`;
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
