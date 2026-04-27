@@ -60,19 +60,25 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const textW = W_PX - textX - PAD_PX;
     const midY  = H_PX / 2;
 
-    // Asset ID — upper half, bold monospace, auto-shrink to fit width
+    // Asset ID — upper half, bold monospace, auto-shrink then clip
     let codeFontPx = PX(4.5);
     ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
-    while (ctx.measureText(assetCode).width > textW && codeFontPx > PX(2.5)) {
+    while (ctx.measureText(assetCode).width > textW && codeFontPx > PX(2)) {
       codeFontPx -= 1;
       ctx.font = `900 ${codeFontPx}px 'Courier New', monospace`;
     }
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
+    // Clip so text never bleeds past the text column even if it can't shrink enough
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(textX, 0, textW, midY);
+    ctx.clip();
     ctx.fillText(assetCode, textX, midY - PX(1));
+    ctx.restore();
 
-    // Item name — lower half, regular sans-serif, auto-shrink to fit width
+    // Item name — lower half, regular sans-serif, auto-shrink then clip
     const safeName = itemName.length > 22 ? itemName.substring(0, 22) + '\u2026' : itemName;
     let nameFontPx = PX(3.5);
     ctx.font = `600 ${nameFontPx}px Arial`;
@@ -82,7 +88,12 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     }
     ctx.fillStyle = '#444444';
     ctx.textBaseline = 'top';
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(textX, midY, textW, H_PX - midY);
+    ctx.clip();
     ctx.fillText(safeName, textX, midY + PX(1));
+    ctx.restore();
 
     const imgData = out.toDataURL('image/png');
 
