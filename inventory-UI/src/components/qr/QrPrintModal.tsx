@@ -3,7 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { X, Printer, Download } from 'lucide-react';
 
 const LABEL_PRESETS = [
-  { label: '50×25mm', w: 50, h: 25 },
+  { label: 'ZD230 50×25mm', w: 50, h: 25 },
   { label: '62×29mm', w: 62, h: 29 },
   { label: '100×50mm', w: 100, h: 50 },
   { label: 'A4', w: 210, h: 297 },
@@ -66,20 +66,29 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
          <div style="font-size:${codePt}pt;font-weight:900;font-family:'Courier New',monospace;color:#000;letter-spacing:.05em;text-align:center">${assetCode}</div>
          <div style="font-size:${namePt}pt;color:#444;font-weight:600;text-align:center;max-width:${W - 10}mm">${safeName}</div>`;
 
-    const printWin = window.open('', '_blank', 'width=320,height=200');
+    const printWin = window.open('', '_blank', 'width=400,height=300');
     if (!printWin) { alert('Allow pop-ups for this site to print QR labels.'); return; }
 
     printWin.document.write(`<!DOCTYPE html><html><head>
 <title>Label – ${assetCode}</title>
 <style>
-  @page{size:${W}mm ${H}mm;margin:0}
+  @page{size:${W}mm ${H}mm;margin:0!important}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{width:${W}mm;height:${H}mm;overflow:hidden;background:#fff}
+  html,body{width:${W}mm;height:${H}mm;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{${bodyStyle}font-family:Arial,sans-serif;}
+  @media print{html,body{width:${W}mm;height:${H}mm}}
 </style></head>
 <body>
   ${contentHtml}
-  <script>window.onload=function(){setTimeout(function(){window.print();},150);}</script>
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+        setTimeout(function(){ window.close(); }, 500);
+      }, 200);
+    };
+  </script>
 </body></html>`);
     printWin.document.close();
   };
