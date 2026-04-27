@@ -33,16 +33,26 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const qrCanvas = getCanvas();
     if (!qrCanvas) return;
 
-    // Use the raw QR canvas directly — no compositing, no @page size tricks.
-    // CSS mm units are accurate in print media, so 20mm × 20mm = exactly 2cm × 2cm.
+    // Export the raw QR canvas as PNG — no compositing needed.
     const imgData = qrCanvas.toDataURL('image/png');
 
     const existingFrame = document.getElementById('qr-print-frame');
     if (existingFrame) existingFrame.remove();
 
+    // IMPORTANT: the iframe must have real dimensions and be positioned off-screen,
+    // NOT hidden with width:0/height:0/visibility:hidden — a zero-size hidden iframe
+    // is never rendered by the browser, so print() would capture a blank document.
     const iframe = document.createElement('iframe');
     iframe.id = 'qr-print-frame';
-    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden;';
+    iframe.style.cssText = [
+      'position:fixed',
+      'left:-9999px',
+      'top:0',
+      'width:50mm',    // match your label width so layout is previewed correctly
+      'height:25mm',
+      'border:0',
+      'background:white',
+    ].join(';');
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -54,26 +64,33 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
 <style>
   @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #fff; }
-  img { width: 20mm; height: 20mm; display: block; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  img {
+    width: 20mm;
+    height: 20mm;
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 </style>
 </head><body>
   <img src="${imgData}" />
 </body></html>`);
     doc.close();
 
-    const imgEl = doc.querySelector('img') as HTMLImageElement | null;
-    const doPrint = () => {
+    // Give the browser time to fully paint the iframe content before printing.
+    setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      setTimeout(() => iframe.remove(), 1000);
-    };
-
-    if (imgEl && !imgEl.complete) {
-      imgEl.onload = doPrint;
-    } else {
-      setTimeout(doPrint, 200);
-    }
+      setTimeout(() => iframe.remove(), 1500);
+    }, 500);
   };
 
 
