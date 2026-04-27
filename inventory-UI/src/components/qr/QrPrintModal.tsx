@@ -75,26 +75,25 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
       ctx.textAlign = 'left';
       ctx.fillText('SCAN TO OPEN', textX, H_PX * 0.26);
 
-      // Asset code — shrink font if too wide
-      const maxCodeFont = PX(4.5);
-      let codeFontSize = maxCodeFont;
+      // Asset code — fit font to available width
+      let codeFontSize = PX(4.5);
       ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
-      while (ctx.measureText(assetCode).width > textW && codeFontSize > PX(2.5)) {
-        codeFontSize -= 1;
-        ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
+      if (ctx.measureText(assetCode).width > textW) {
+        codeFontSize = Math.floor(codeFontSize * textW / ctx.measureText(assetCode).width);
       }
+      ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
       ctx.fillStyle = '#000000';
       ctx.fillText(assetCode, textX, H_PX * 0.55);
 
-      // Item name
+      // Item name — fit font to available width
       const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '…' : itemName;
-      ctx.fillStyle = '#444444';
-      ctx.font = `600 ${PX(3)}px Arial`;
-      while (ctx.measureText(safeName).width > textW && ctx.font) {
-        const cur = parseInt(ctx.font);
-        if (cur <= PX(2)) break;
-        ctx.font = `600 ${cur - 1}px Arial`;
+      let nameFontSize = PX(3);
+      ctx.font = `600 ${nameFontSize}px Arial`;
+      if (ctx.measureText(safeName).width > textW) {
+        nameFontSize = Math.floor(nameFontSize * textW / ctx.measureText(safeName).width);
       }
+      ctx.font = `600 ${nameFontSize}px Arial`;
+      ctx.fillStyle = '#444444';
       ctx.fillText(safeName, textX, H_PX * 0.80);
 
     } else {
