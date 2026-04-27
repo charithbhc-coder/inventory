@@ -30,41 +30,98 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     wrapperRef.current?.querySelector('canvas') ?? null;
 
   const handlePrint = () => {
-    const canvas = getCanvas();
-    if (!canvas) return;
-    const qrDataUrl = canvas.toDataURL('image/png');
-    const safeName = itemName.length > 32 ? itemName.substring(0, 32) + '…' : itemName;
+    const qrCanvas = getCanvas();
+    if (!qrCanvas) return;
 
-    const W = labelW, H = labelH;
-    const isSmall = H <= 35; // compact horizontal layout for small labels
+    const W_MM = labelW, H_MM = labelH;
+    // Render at 203 DPI (ZD230 native) so the image is crisp on the label printer
+    const DPI = 203;
+    const PX = (mm: number) => Math.round((mm / 25.4) * DPI);
 
-    // For small labels (e.g. 50×25mm): QR left | code+name right
-    // For larger labels / A4: centered QR with text below
-    const bodyStyle = isSmall
-      ? `display:flex;align-items:center;padding:1.5mm;gap:2mm;`
-      : `display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5mm;gap:3mm;`;
+    const W_PX = PX(W_MM);
+    const H_PX = PX(H_MM);
 
-    const qrSizeMm = isSmall ? Math.min(H - 3, W * 0.42) : Math.min(W - 10, H * 0.65);
-    const codePt   = isSmall ? 6.5  : 11;
-    const namePt   = isSmall ? 5.5  : 9;
-    const hintPt   = isSmall ? 4.5  : 7;
+    const out = document.createElement('canvas');
+    out.width = W_PX;
+    out.height = H_PX;
+    const ctx = out.getContext('2d')!;
 
-    const contentHtml = isSmall
-      ? `<div class="qr" style="width:${qrSizeMm}mm;height:${qrSizeMm}mm;flex-shrink:0">
-           <img src="${qrDataUrl}" style="width:100%;height:100%;display:block;image-rendering:crisp-edges"/>
-         </div>
-         <div style="width:.3mm;height:${qrSizeMm}mm;background:#ccc;flex-shrink:0"></div>
-         <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:1mm;overflow:hidden">
-           <div style="font-size:${hintPt}pt;color:#aaa;text-transform:uppercase;letter-spacing:.07em">Scan to open</div>
-           <div style="font-size:${codePt}pt;font-weight:900;font-family:'Courier New',monospace;color:#000;letter-spacing:.03em;word-break:break-all;line-height:1.25">${assetCode}</div>
-           <div style="font-size:${namePt}pt;color:#444;font-weight:600;line-height:1.3;word-break:break-word">${safeName}</div>
-         </div>`
-      : `<div style="width:${qrSizeMm}mm;height:${qrSizeMm}mm">
-           <img src="${qrDataUrl}" style="width:100%;height:100%;display:block;image-rendering:crisp-edges"/>
-         </div>
-         <div style="font-size:${hintPt}pt;color:#aaa;text-transform:uppercase;letter-spacing:.1em">Scan to open asset</div>
-         <div style="font-size:${codePt}pt;font-weight:900;font-family:'Courier New',monospace;color:#000;letter-spacing:.05em;text-align:center">${assetCode}</div>
-         <div style="font-size:${namePt}pt;color:#444;font-weight:600;text-align:center;max-width:${W - 10}mm">${safeName}</div>`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W_PX, H_PX);
+
+    const isSmall = H_MM <= 35 && W_MM >= H_MM;
+
+    if (isSmall) {
+      // Horizontal layout: QR left (20mm square, vertically centered) | divider | text right
+      const PAD_PX = PX(2);
+      const QR_PX = H_PX - PAD_PX * 2; // fill height minus 2mm top+bottom padding (~20mm)
+
+      // Draw QR centred vertically
+      const qrY = (H_PX - QR_PX) / 2;
+      ctx.drawImage(qrCanvas, PAD_PX, qrY, QR_PX, QR_PX);
+
+      // Divider line
+      const divX = PAD_PX + QR_PX + PX(1.5);
+      ctx.fillStyle = '#cccccc';
+      ctx.fillRect(divX, PAD_PX, 1, H_PX - PAD_PX * 2);
+
+      // Text area
+      const textX = divX + PX(1.5);
+      const textW = W_PX - textX - PAD_PX;
+
+      // "SCAN TO OPEN" hint
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = `${PX(2.8)}px Arial`;
+      ctx.textAlign = 'left';
+      ctx.fillText('SCAN TO OPEN', textX, H_PX * 0.26);
+
+      // Asset code — shrink font if too wide
+      const maxCodeFont = PX(4.5);
+      let codeFontSize = maxCodeFont;
+      ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
+      while (ctx.measureText(assetCode).width > textW && codeFontSize > PX(2.5)) {
+        codeFontSize -= 1;
+        ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
+      }
+      ctx.fillStyle = '#000000';
+      ctx.fillText(assetCode, textX, H_PX * 0.55);
+
+      // Item name
+      const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '…' : itemName;
+      ctx.fillStyle = '#444444';
+      ctx.font = `600 ${PX(3)}px Arial`;
+      while (ctx.measureText(safeName).width > textW && ctx.font) {
+        const cur = parseInt(ctx.font);
+        if (cur <= PX(2)) break;
+        ctx.font = `600 ${cur - 1}px Arial`;
+      }
+      ctx.fillText(safeName, textX, H_PX * 0.80);
+
+    } else {
+      // Vertical layout: QR centred, text below
+      const PAD_PX = PX(5);
+      const QR_PX = Math.min(W_PX - PAD_PX * 2, PX(H_MM * 0.6));
+      const qrX = (W_PX - QR_PX) / 2;
+
+      ctx.drawImage(qrCanvas, qrX, PAD_PX, QR_PX, QR_PX);
+
+      const baseY = PAD_PX + QR_PX + PX(3);
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = `${PX(3)}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText('SCAN TO OPEN ASSET', W_PX / 2, baseY);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = `900 ${PX(5)}px 'Courier New', monospace`;
+      ctx.fillText(assetCode, W_PX / 2, baseY + PX(7));
+
+      const safeName = itemName.length > 40 ? itemName.substring(0, 40) + '…' : itemName;
+      ctx.fillStyle = '#444444';
+      ctx.font = `600 ${PX(4)}px Arial`;
+      ctx.fillText(safeName, W_PX / 2, baseY + PX(14));
+    }
+
+    const imgData = out.toDataURL('image/png');
 
     const printWin = window.open('', '_blank', 'width=400,height=300');
     if (!printWin) { alert('Allow pop-ups for this site to print QR labels.'); return; }
@@ -72,20 +129,19 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     printWin.document.write(`<!DOCTYPE html><html><head>
 <title>Label – ${assetCode}</title>
 <style>
-  @page{size:${W}mm ${H}mm;margin:0!important}
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{width:${W}mm;height:${H}mm;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body{${bodyStyle}font-family:Arial,sans-serif;}
-  @media print{html,body{width:${W}mm;height:${H}mm}}
+  @page{size:${W_MM}mm ${H_MM}mm;margin:0}
+  *{margin:0;padding:0}
+  html,body{width:${W_MM}mm;height:${H_MM}mm;overflow:hidden;background:#fff}
+  img{width:${W_MM}mm;height:${H_MM}mm;display:block}
 </style></head>
 <body>
-  ${contentHtml}
+  <img src="${imgData}" style="width:${W_MM}mm;height:${H_MM}mm"/>
   <script>
     window.onload = function() {
       setTimeout(function() {
         window.focus();
         window.print();
-        setTimeout(function(){ window.close(); }, 500);
+        setTimeout(function(){ window.close(); }, 600);
       }, 200);
     };
   </script>
