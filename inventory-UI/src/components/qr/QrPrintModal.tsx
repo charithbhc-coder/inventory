@@ -52,30 +52,25 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const isSmall = H_MM <= 35 && W_MM >= H_MM;
 
     if (isSmall) {
-      // Horizontal layout: QR left (20mm square, vertically centered) | divider | text right
+      // Horizontal layout: QR left | divider | text right
       const PAD_PX = PX(2);
-      const QR_PX = H_PX - PAD_PX * 2; // fill height minus 2mm top+bottom padding (~20mm)
+      const QR_PX = H_PX - PAD_PX * 2;
 
-      // Draw QR centred vertically
       const qrY = (H_PX - QR_PX) / 2;
       ctx.drawImage(qrCanvas, PAD_PX, qrY, QR_PX, QR_PX);
 
-      // Divider line
       const divX = PAD_PX + QR_PX + PX(1.5);
       ctx.fillStyle = '#cccccc';
       ctx.fillRect(divX, PAD_PX, 1, H_PX - PAD_PX * 2);
 
-      // Text area
       const textX = divX + PX(1.5);
       const textW = W_PX - textX - PAD_PX;
 
-      // "SCAN TO OPEN" hint
       ctx.fillStyle = '#aaaaaa';
       ctx.font = `${PX(2.8)}px Arial`;
       ctx.textAlign = 'left';
       ctx.fillText('SCAN TO OPEN', textX, H_PX * 0.26);
 
-      // Asset code — fit font to available width
       let codeFontSize = PX(4.5);
       ctx.font = `900 ${codeFontSize}px 'Courier New', monospace`;
       if (ctx.measureText(assetCode).width > textW) {
@@ -85,7 +80,6 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
       ctx.fillStyle = '#000000';
       ctx.fillText(assetCode, textX, H_PX * 0.55);
 
-      // Item name — fit font to available width
       const safeName = itemName.length > 24 ? itemName.substring(0, 24) + '…' : itemName;
       let nameFontSize = PX(3);
       ctx.font = `600 ${nameFontSize}px Arial`;
@@ -122,30 +116,47 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
 
     const imgData = out.toDataURL('image/png');
 
-    const printWin = window.open('', '_blank', 'width=400,height=300');
-    if (!printWin) { alert('Allow pop-ups for this site to print QR labels.'); return; }
+    // Use a hidden iframe instead of window.open to avoid popup blockers
+    // and ensure the print dialog always targets the right content.
+    const existingFrame = document.getElementById('qr-print-frame');
+    if (existingFrame) existingFrame.remove();
 
-    printWin.document.write(`<!DOCTYPE html><html><head>
-<title></title>
+    const iframe = document.createElement('iframe');
+    iframe.id = 'qr-print-frame';
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head>
+<title>QR Label</title>
 <style>
-  @page{size:${W_MM}mm ${H_MM}mm;margin:0mm}
-  *{margin:0;padding:0}
-  html,body{width:${W_MM}mm;height:${H_MM}mm;overflow:hidden;background:#fff}
-  img{width:${W_MM}mm;height:${H_MM}mm;display:block;page-break-inside:avoid}
-</style></head>
-<body>
-  <img src="${imgData}" style="width:${W_MM}mm;height:${H_MM}mm"/>
-  <script>
-    window.onload = function() {
-      setTimeout(function() {
-        window.focus();
-        window.print();
-        setTimeout(function(){ window.close(); }, 600);
-      }, 200);
-    };
-  </script>
+  @page { size: ${W_MM}mm ${H_MM}mm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: ${W_MM}mm; height: ${H_MM}mm; background: #fff; overflow: hidden; }
+  img { width: ${W_MM}mm; height: ${H_MM}mm; display: block; }
+</style>
+</head><body>
+  <img src="${imgData}" />
 </body></html>`);
-    printWin.document.close();
+    doc.close();
+
+    // Wait for the image to fully load inside the iframe before printing
+    const imgEl = doc.querySelector('img') as HTMLImageElement | null;
+    const doPrint = () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      // Remove the iframe after a short delay
+      setTimeout(() => iframe.remove(), 1000);
+    };
+
+    if (imgEl && !imgEl.complete) {
+      imgEl.onload = doPrint;
+    } else {
+      setTimeout(doPrint, 150);
+    }
   };
 
   const handleSave = () => {
