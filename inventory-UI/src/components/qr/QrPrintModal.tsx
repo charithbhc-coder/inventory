@@ -33,32 +33,13 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const qrCanvas = getCanvas();
     if (!qrCanvas) return;
 
-    // Render the label at 203 DPI — center the 2cm QR in pixel space, not CSS.
-    const DPI = 203;
-    const PX = (mm: number) => Math.round((mm / 25.4) * DPI);
-
-    const W_PX = PX(labelW);
-    const H_PX = PX(labelH);
-    const QR_PX = PX(20); // 2cm
-
-    const out = document.createElement('canvas');
-    out.width  = W_PX;
-    out.height = H_PX;
-    const ctx = out.getContext('2d')!;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W_PX, H_PX);
-
-    // Draw QR centred in the canvas (pixel math — no CSS tricks)
-    const qrX = Math.round((W_PX - QR_PX) / 2);
-    const qrY = Math.round((H_PX - QR_PX) / 2);
-    ctx.drawImage(qrCanvas, qrX, qrY, QR_PX, QR_PX);
-
-    const imgData = out.toDataURL('image/png');
+    const imgData = qrCanvas.toDataURL('image/png');
 
     const existingFrame = document.getElementById('qr-print-frame');
     if (existingFrame) existingFrame.remove();
 
-    // Off-screen iframe with real mm dimensions so the browser renders it.
+    // Give the iframe real pixel dimensions (off-screen) so the browser
+    // actually renders its contents. width:0/hidden iframes are never painted.
     const iframe = document.createElement('iframe');
     iframe.id = 'qr-print-frame';
     iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${labelW}mm;height:${labelH}mm;border:0;background:white`;
@@ -67,20 +48,28 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
-    // CSS mm units are accurate in print — sets image to exact label size.
-    // Centering is baked into the canvas so no CSS positioning needed.
+    // Absolute centering works in all print contexts.
+    // No @page size override: let the ZD230 Windows driver control the label dimensions.
     doc.open();
     doc.write(`<!DOCTYPE html><html><head><title></title>
 <style>
   @page { margin: 0; }
-  * { margin: 0; padding: 0; }
-  body { background: #fff; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
     display: block;
-    width: ${labelW}mm;
-    height: ${labelH}mm;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
   }
 </style>
 </head><body>
@@ -88,6 +77,7 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
 </body></html>`);
     doc.close();
 
+    // 500ms lets the browser fully paint the iframe before print() fires.
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
