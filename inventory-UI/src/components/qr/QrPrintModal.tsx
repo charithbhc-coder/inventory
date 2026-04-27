@@ -126,12 +126,12 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     if (!printWin) { alert('Allow pop-ups for this site to print QR labels.'); return; }
 
     printWin.document.write(`<!DOCTYPE html><html><head>
-<title>Label – ${assetCode}</title>
+<title></title>
 <style>
-  @page{size:${W_MM}mm ${H_MM}mm;margin:0}
+  @page{size:${W_MM}mm ${H_MM}mm;margin:0mm}
   *{margin:0;padding:0}
   html,body{width:${W_MM}mm;height:${H_MM}mm;overflow:hidden;background:#fff}
-  img{width:${W_MM}mm;height:${H_MM}mm;display:block}
+  img{width:${W_MM}mm;height:${H_MM}mm;display:block;page-break-inside:avoid}
 </style></head>
 <body>
   <img src="${imgData}" style="width:${W_MM}mm;height:${H_MM}mm"/>
@@ -294,6 +294,13 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
               />
             </div>
           </div>
+        </div>
+
+        {/* Print tip */}
+        <div style={{ margin: '0 20px 12px', padding: '8px 12px', borderRadius: 8, background: 'rgba(255,224,83,0.07)', border: '1px solid rgba(255,224,83,0.18)' }}>
+          <p style={{ fontSize: 10, color: 'rgba(255,224,83,0.8)', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
+            In the print dialog: select <b>ZD230</b> as printer, then under <b>More settings</b> uncheck <b>Headers and footers</b>.
+          </p>
         </div>
 
         {/* Actions */}
