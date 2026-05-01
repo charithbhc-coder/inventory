@@ -284,14 +284,16 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10, padding: '0 16px 16px', flexWrap: 'wrap' }}>
           <button
+            className="hover-card"
             onClick={handlePrint}
-            style={{ flex: '1 1 120px', padding: '12px', borderRadius: 10, border: 'none', background: '#1b2d3e', color: '#ffe053', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', minHeight: 44 }}
+            style={{ flex: '1 1 120px', padding: '12px', borderRadius: 10, border: 'none', background: 'var(--text-main)', color: 'var(--bg-card)', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', minHeight: 44, transition: 'all 0.2s' }}
           >
             <Printer size={15} /> Print
           </button>
           <button
+            className="hover-card"
             onClick={handleSave}
-            style={{ flex: '1 1 120px', padding: '12px', borderRadius: 10, border: '1px solid rgba(255,224,83,0.25)', background: 'rgba(255,224,83,0.08)', color: '#ffe053', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', minHeight: 44 }}
+            style={{ flex: '1 1 120px', padding: '12px', borderRadius: 10, border: '2px solid var(--text-main)', background: 'transparent', color: 'var(--text-main)', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', minHeight: 44, transition: 'all 0.2s' }}
           >
             <Download size={15} /> Save PNG
           </button>
