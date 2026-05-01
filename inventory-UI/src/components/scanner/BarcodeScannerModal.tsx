@@ -52,26 +52,18 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           qrbox: { width: 260, height: 260 }, // square — matches QR labels
           aspectRatio: 1.0,
           disableFlip: false,
+          videoConstraints: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
         };
 
-        try {
-          // 2. Try starting with high-res constraints for better macro focus
-          await html5QrCode.start(
-            { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-            config,
-            handleScan,
-            () => { /* ignore parse errors */ }
-          );
-        } catch (highResError) {
-          // 3. Fallback: If device rejects high-res (e.g. OverconstrainedError), use defaults
-          console.warn('High-res camera start failed, falling back to default constraints.', highResError);
-          await html5QrCode.start(
-            { facingMode: 'environment' },
-            config,
-            handleScan,
-            () => { /* ignore parse errors */ }
-          );
-        }
+        await html5QrCode.start(
+          { facingMode: 'environment' },
+          config,
+          handleScan,
+          () => { /* ignore parse errors */ }
+        );
 
         setIsCameraStarted(true);
       } catch (err: any) {
