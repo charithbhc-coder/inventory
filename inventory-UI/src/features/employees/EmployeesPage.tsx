@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UserCheck, Search, Building2, LayoutGrid, Package, QrCode, PowerOff, ShieldAlert, History, Activity, FileText } from 'lucide-react';
+import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText } from 'lucide-react';
 import { itemService, Item } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
