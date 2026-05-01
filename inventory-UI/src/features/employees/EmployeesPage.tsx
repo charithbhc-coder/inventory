@@ -270,7 +270,7 @@ export default function EmployeesPage() {
           borderRight: isMobile ? 'none' : '1px solid var(--border-dark)', 
           display: isMobile && showDetailOnMobile ? 'none' : 'flex',
           flexDirection: 'column',
-          background: 'rgba(0,0,0,0.2)'
+          background: 'transparent'
         }}>
           {/* List Toolbar */}
           <div style={{ padding: 20, borderBottom: '1px solid var(--border-dark)' }}>
@@ -326,7 +326,7 @@ export default function EmployeesPage() {
                        }}
                        className="hover-card"
                      >
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)' }}>
                            {emp.name.charAt(0)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -368,7 +368,7 @@ export default function EmployeesPage() {
                      {isMobile && (
                         <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
                      )}
-                     <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800 }}>
+                     <div style={{ width: 64, height: 64, borderRadius: 16, background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: '1px solid rgba(0,0,0,0.1)' }}>
                         {selectedEmployee.name.charAt(0)}
                      </div>
                      <div>
@@ -384,18 +384,18 @@ export default function EmployeesPage() {
                      {/* Active: print issuance + offboard */}
                      {selectedEmployee.isActive && (
                        <button 
-                         className="hover-card"
+                         className="btn-print"
                          onClick={() => handlePrintIssuance(selectedEmployee)}
-                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                        >
                          <FileText size={14}/> Print Issuance
                        </button>
                      )}
                      {/* Both active & deactivated: print handover */}
                      <button 
-                       className="hover-card"
+                       className="btn-print"
                        onClick={() => handlePrintHandover(selectedEmployee)}
-                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                      >
                        <FileText size={14}/> Print Handover
                      </button>
@@ -430,10 +430,10 @@ export default function EmployeesPage() {
                      )}
                   </div>
 
-                  <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                           <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
+                           <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>

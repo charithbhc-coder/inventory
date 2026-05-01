@@ -1332,6 +1332,24 @@ tbody tr:hover td {
   display: none !important;
 }
 
+.hover-card {
+  transition: all 0.2s;
+}
+.hover-card:hover {
+  transform: scale(1.02);
+}
+
+.btn-print {
+  transition: all 0.2s;
+}
+.btn-print:hover {
+  background: #ffe053 !important;
+  color: #000 !important;
+  border-color: #ffe053 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 224, 83, 0.4);
+}
+
 @media (min-width: 769px) {
   .hidden-desktop {
     display: none !important;
