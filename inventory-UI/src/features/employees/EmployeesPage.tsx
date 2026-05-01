@@ -190,7 +190,7 @@ export default function EmployeesPage() {
   const StatusBadge = ({ status }: { status: string }) => {
     const s = status === 'IN_USE' ? { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981' } : { bg: 'rgba(71, 85, 105, 0.12)', color: '#475569' };
     return (
-      <div style={{ padding: '4px 8px', borderRadius: 50, fontSize: 10, fontWeight: 800, background: s.bg, color: s.color, textTransform: 'uppercase' }}>
+      <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', minWidth: 80, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, background: s.bg, color: s.color, textTransform: 'uppercase' }}>
         {status.replace(/_/g, ' ')}
       </div>
     );
@@ -327,7 +327,7 @@ export default function EmployeesPage() {
                        className="hover-card"
                      >
                         <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)' }}>
-                           {emp.name.charAt(0)}
+                           {emp.name.trim().charAt(0)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
@@ -356,6 +356,7 @@ export default function EmployeesPage() {
         {/* RIGHT PANEL - Employee Details */}
         <div style={{ 
           flex: 1, 
+          minWidth: 0, /* Fix flexbox blowout */
           display: (!isMobile || showDetailOnMobile) ? 'flex' : 'none',
           flexDirection: 'column',
           background: 'var(--bg-card)'
@@ -368,8 +369,8 @@ export default function EmployeesPage() {
                      {isMobile && (
                         <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
                      )}
-                     <div style={{ width: 64, height: 64, borderRadius: 16, background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: '1px solid rgba(0,0,0,0.1)' }}>
-                        {selectedEmployee.name.charAt(0)}
+                     <div style={{ width: 64, height: 64, borderRadius: 16, background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }}>
+                        {selectedEmployee.name.trim().charAt(0)}
                      </div>
                      <div>
                         <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
