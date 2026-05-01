@@ -363,8 +363,8 @@ export default function EmployeesPage() {
           {selectedEmployee ? (
             <>
                {/* Detail Header */}
-               <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--border-dark)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+               <div style={{ padding: isMobile ? '16px' : '24px 32px', borderBottom: '1px solid var(--border-dark)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center', width: '100%' }}>
                      {isMobile && (
                         <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
                      )}
@@ -418,7 +418,7 @@ export default function EmployeesPage() {
                </div>
 
                {/* Detail Content (Assets Table) */}
-               <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+               <div style={{ flex: 1, padding: isMobile ? '16px' : 32, overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
                         {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets (History)'}
@@ -431,8 +431,9 @@ export default function EmployeesPage() {
                   </div>
 
                   <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
-                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
+                     <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
+                           <thead>
                            <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
@@ -475,7 +476,8 @@ export default function EmployeesPage() {
                               </tr>
                            ))}
                         </tbody>
-                     </table>
+                        </table>
+                     </div>
                   </div>
 
                   {/* Asset Pagination */}
