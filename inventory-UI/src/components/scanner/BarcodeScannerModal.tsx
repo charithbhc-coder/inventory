@@ -38,27 +38,41 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
     const timer = setTimeout(async () => {
       try {
+        // 1. Explicitly request camera permissions first. This triggers the browser popup safely.
+        await Html5Qrcode.getCameras();
+
         const html5QrCode = new Html5Qrcode(containerId, { 
           verbose: false,
-          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // QR only — faster, no barcode overhead
+          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // QR only
         });
         qrCodeRef.current = html5QrCode;
 
-        await html5QrCode.start(
-          { 
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          {
-            fps: 30,
-            qrbox: { width: 260, height: 260 }, // square — matches QR labels
-            aspectRatio: 1.0,
-            disableFlip: false,
-          },
-          handleScan,
-          () => { /* ignore parse errors */ }
-        );
+        const config = {
+          fps: 30,
+          qrbox: { width: 260, height: 260 }, // square — matches QR labels
+          aspectRatio: 1.0,
+          disableFlip: false,
+        };
+
+        try {
+          // 2. Try starting with high-res constraints for better macro focus
+          await html5QrCode.start(
+            { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+            config,
+            handleScan,
+            () => { /* ignore parse errors */ }
+          );
+        } catch (highResError) {
+          // 3. Fallback: If device rejects high-res (e.g. OverconstrainedError), use defaults
+          console.warn('High-res camera start failed, falling back to default constraints.', highResError);
+          await html5QrCode.start(
+            { facingMode: 'environment' },
+            config,
+            handleScan,
+            () => { /* ignore parse errors */ }
+          );
+        }
+
         setIsCameraStarted(true);
       } catch (err: any) {
         console.error('Failed to start camera', err);
