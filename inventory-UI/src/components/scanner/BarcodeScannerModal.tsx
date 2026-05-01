@@ -38,7 +38,10 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
     const timer = setTimeout(async () => {
       try {
-        const html5QrCode = new Html5Qrcode(containerId, { verbose: false });
+        const html5QrCode = new Html5Qrcode(containerId, { 
+          verbose: false,
+          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // QR only — faster, no barcode overhead
+        });
         qrCodeRef.current = html5QrCode;
 
         await html5QrCode.start(
@@ -47,9 +50,6 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             fps: 30,
             qrbox: { width: 260, height: 260 }, // square — matches QR labels
             aspectRatio: 1.0,
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE, // QR only — faster, no barcode overhead
-            ],
             disableFlip: false,
           },
           handleScan,
