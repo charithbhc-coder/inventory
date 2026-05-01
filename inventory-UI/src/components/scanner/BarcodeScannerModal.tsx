@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats, CameraDevice } from 'html5-qrcode';
-import { X, Camera, AlertCircle, RefreshCw, Zap, SwitchCamera } from 'lucide-react';
+import { X, Camera, AlertCircle, RefreshCw, Zap, SwitchCamera, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface BarcodeScannerModalProps {
@@ -9,14 +9,16 @@ interface BarcodeScannerModalProps {
   onScan: (decodedText: string) => void;
 }
 
+type Phase = 'permission' | 'loading' | 'scanning' | 'error' | 'success';
+
 export default function BarcodeScannerModal({ isOpen, onClose, onScan }: BarcodeScannerModalProps) {
-  const [isCameraStarted, setIsCameraStarted] = useState(false);
+  const [phase, setPhase] = useState<Phase>('permission');
   const [error, setError] = useState<string | null>(null);
   const [scanned, setScanned] = useState<string | null>(null);
-  
+
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
-  
+
   const qrCodeRef = useRef<Html5Qrcode | null>(null);
   const containerId = 'reader-viewport';
 
@@ -26,92 +28,99 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
     }
   }, []);
 
-  // 1. Fetch cameras once when modal opens
+  // Reset on close
   useEffect(() => {
-    let isMounted = true;
-    
-    if (isOpen) {
-      Html5Qrcode.getCameras()
-        .then(devices => {
-          if (!isMounted) return;
-          if (devices && devices.length > 0) {
-            setCameras(devices);
-            
-            // Try to guess the back camera based on labels
-            let defaultId = devices[0].id;
-            for (const d of devices) {
-              const lbl = d.label.toLowerCase();
-              if (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment')) {
-                defaultId = d.id;
-                break;
-              }
-            }
-            // Fallback: often the last camera is the back camera on Android
-            if (defaultId === devices[0].id && devices.length > 1) {
-              defaultId = devices[devices.length - 1].id;
-            }
-            
-            setActiveCameraId(defaultId);
-          } else {
-            setError('No cameras found.');
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            setError('Camera access denied. Please allow camera permissions.');
-            toast.error('Camera permission required.');
-          }
-        });
-    } else {
-      // Reset state on close
-      setIsCameraStarted(false);
+    if (!isOpen) {
+      stopScanner();
+      setPhase('permission');
       setError(null);
       setScanned(null);
       setCameras([]);
       setActiveCameraId(null);
     }
-    
-    return () => { isMounted = false; };
-  }, [isOpen]);
+  }, [isOpen, stopScanner]);
 
-  // 2. Start scanner when activeCameraId is set or changed
+  // Request permission & enumerate cameras
+  const requestPermissionAndStart = useCallback(async () => {
+    setPhase('loading');
+    setError(null);
+    try {
+      // Explicitly request back camera permission first
+      await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => { stream.getTracks().forEach(t => t.stop()); })
+        .catch(() => {
+          // fallback: try any camera
+          return navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { stream.getTracks().forEach(t => t.stop()); });
+        });
+
+      const devices = await Html5Qrcode.getCameras();
+      if (!devices || devices.length === 0) {
+        setError('No cameras found on this device.');
+        setPhase('error');
+        return;
+      }
+
+      setCameras(devices);
+
+      // Prefer back/environment camera
+      let defaultId = devices[0].id;
+      for (const d of devices) {
+        const lbl = d.label.toLowerCase();
+        if (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment')) {
+          defaultId = d.id;
+          break;
+        }
+      }
+      // On Android the last camera is often the back camera
+      if (defaultId === devices[0].id && devices.length > 1) {
+        defaultId = devices[devices.length - 1].id;
+      }
+
+      setActiveCameraId(defaultId);
+    } catch {
+      setError('Camera permission denied. Please allow camera access in your browser settings and try again.');
+      toast.error('Camera permission required.');
+      setPhase('error');
+    }
+  }, []);
+
+  // Start scanner when activeCameraId is set/changed
   useEffect(() => {
     let isMounted = true;
     if (!isOpen || !activeCameraId) return;
 
     const startScanner = async () => {
       try {
-        await stopScanner(); // clear any previous instance
+        await stopScanner();
         if (!isMounted) return;
 
-        const html5QrCode = new Html5Qrcode(containerId, { 
+        const html5QrCode = new Html5Qrcode(containerId, {
           verbose: false,
-          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
         });
         qrCodeRef.current = html5QrCode;
 
         const config = {
           fps: 30,
-          qrbox: { width: 260, height: 260 },
+          qrbox: { width: 240, height: 240 },
           aspectRatio: 1.0,
           disableFlip: false,
           videoConstraints: {
+            deviceId: { exact: activeCameraId },
             width: { ideal: 1920 },
-            height: { ideal: 1080 }
+            height: { ideal: 1080 },
           }
         };
 
         const handleScan = (text: string) => {
           if (!isMounted) return;
-          
-          // IMPORTANT: Do NOT call .stop() inside the scan callback. 
-          // Pause prevents further scans while we show success, avoiding crashes.
           if (qrCodeRef.current?.isScanning) {
             try { qrCodeRef.current.pause(); } catch { /* ignore */ }
           }
-          
           setScanned(text);
-          setTimeout(() => { if (isMounted) onScan(text); }, 400); 
+          setPhase('success');
+          setTimeout(() => { if (isMounted) onScan(text); }, 400);
         };
 
         await html5QrCode.start(
@@ -121,12 +130,13 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           () => { /* ignore */ }
         );
 
-        if (isMounted) setIsCameraStarted(true);
+        if (isMounted) setPhase('scanning');
         else await stopScanner();
       } catch (err) {
         if (isMounted) {
           console.error('Camera failed to start:', err);
-          setError('Failed to start camera feed. It might be in use by another app.');
+          setError('Failed to start camera. It may be in use by another app.');
+          setPhase('error');
         }
       }
     };
@@ -143,17 +153,19 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
     if (cameras.length <= 1) return;
     const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
     const nextIndex = (currentIndex + 1) % cameras.length;
-    setIsCameraStarted(false); // briefly show loading ring
+    setPhase('loading');
     setActiveCameraId(cameras[nextIndex].id);
   };
 
   if (!isOpen) return null;
 
+  const isCameraActive = phase === 'scanning';
+
   return (
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
+        {/* ── Header ───────────────────────────────── */}
         <div style={s.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={s.iconCircle}>
@@ -164,46 +176,60 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
               <p style={s.subtitle}>Point camera at a QR code label</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {cameras.length > 1 && (
-              <button onClick={handleFlipCamera} style={s.actionBtn} title="Switch Camera">
-                <SwitchCamera size={18} />
-              </button>
-            )}
-            <button onClick={onClose} style={s.actionBtn}>
-              <X size={20} />
-            </button>
-          </div>
+          {/* Close button always visible in header */}
+          <button onClick={onClose} style={s.actionBtn} title="Close">
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Camera Body */}
+        {/* ── Camera Body ───────────────────────────── */}
         <div style={s.body}>
 
+          {/* Permission Gate */}
+          {phase === 'permission' && (
+            <div style={s.centered}>
+              <div style={s.permissionRing}>
+                <ShieldCheck size={36} color="var(--accent-yellow)" />
+              </div>
+              <span style={s.permissionTitle}>Camera Access Required</span>
+              <span style={s.permissionDesc}>
+                This scanner uses your device's back camera to read QR codes. Tap the button below to grant access.
+              </span>
+              <button onClick={requestPermissionAndStart} style={s.grantBtn}>
+                <Camera size={16} style={{ marginRight: 8 }} />
+                Open Camera
+              </button>
+            </div>
+          )}
+
           {/* Loading */}
-          {!isCameraStarted && !error && !scanned && (
+          {phase === 'loading' && (
             <div style={s.centered}>
               <RefreshCw size={36} className="spin" color="var(--accent-yellow)" />
-              <span style={{ marginTop: 14, color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 13 }}>
-                {cameras.length === 0 ? 'Requesting Permissions...' : 'Starting Camera...'}
+              <span style={s.loadingText}>
+                {cameras.length === 0 ? 'Requesting Camera Permission…' : 'Starting Camera…'}
               </span>
             </div>
           )}
 
           {/* Error */}
-          {error && (
+          {phase === 'error' && (
             <div style={s.centered}>
               <AlertCircle size={36} color="#ef4444" />
-              <p style={{ marginTop: 14, textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.6 }}>
-                {error}
-              </p>
+              <p style={s.errorText}>{error}</p>
+              <button onClick={requestPermissionAndStart} style={s.retryBtn}>
+                Try Again
+              </button>
               {cameras.length > 1 && (
-                <button onClick={handleFlipCamera} style={s.retryBtn}>Try Another Camera</button>
+                <button onClick={handleFlipCamera} style={{ ...s.retryBtn, marginTop: 8 }}>
+                  Try Another Camera
+                </button>
               )}
             </div>
           )}
 
           {/* Success Flash */}
-          {scanned && (
+          {phase === 'success' && scanned && (
             <div style={s.centered}>
               <div style={s.successRing}>
                 <Zap size={32} color="#10b981" />
@@ -217,14 +243,14 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
             </div>
           )}
 
-          {/* Camera viewport — hidden when not scanning */}
+          {/* Camera viewport — always mounted, hidden when not scanning */}
           <div
             id={containerId}
-            style={{ ...s.reader, display: (isCameraStarted && !scanned && !error) ? 'block' : 'none' }}
+            style={{ ...s.reader, display: isCameraActive ? 'block' : 'none' }}
           />
 
-          {/* Scan frame overlay */}
-          {isCameraStarted && !scanned && !error && (
+          {/* Scan frame corners */}
+          {isCameraActive && (
             <div style={s.scanOverlay}>
               <div style={corner('topLeft')} />
               <div style={corner('topRight')} />
@@ -233,10 +259,35 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
               <div style={s.scanLine} />
             </div>
           )}
+
+          {/* ── Floating controls inside camera view ── */}
+          {isCameraActive && (
+            <>
+              {/* Close button (top-right inside viewport) */}
+              <button
+                onClick={onClose}
+                style={s.floatingClose}
+                title="Close scanner"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Flip camera button (bottom-center of viewport) */}
+              {cameras.length > 1 && (
+                <button
+                  onClick={handleFlipCamera}
+                  style={s.floatingFlip}
+                  title="Switch Camera"
+                >
+                  <SwitchCamera size={22} />
+                </button>
+              )}
+            </>
+          )}
         </div>
 
-        {/* Footer */}
-        {isCameraStarted && !scanned && !error && (
+        {/* ── Footer ───────────────────────────────── */}
+        {isCameraActive && (
           <div style={s.footer}>
             <div style={s.footerDot} />
             <span>Scanning for KTMG-VAULT asset QR codes</span>
@@ -268,12 +319,16 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           60%  { transform: scale(1.12); }
           100% { transform: scale(1);   opacity: 1; }
         }
+        @keyframes permissionPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,224,83,0.25); }
+          50%       { box-shadow: 0 0 0 14px rgba(255,224,83,0); }
+        }
       `}</style>
     </div>
   );
 }
 
-// ─── Corner bracket helper ────────────────────────────────────────────────────
+// ─── Corner bracket helper ─────────────────────────────────────────────────────
 const CORNER_BASE: React.CSSProperties = { position: 'absolute', width: 22, height: 22 };
 const YELLOW = '3px solid var(--accent-yellow)';
 const cornerMap: Record<string, React.CSSProperties> = {
@@ -284,7 +339,7 @@ const cornerMap: Record<string, React.CSSProperties> = {
 };
 const corner = (pos: string): React.CSSProperties => ({ ...CORNER_BASE, ...cornerMap[pos] });
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
   overlay: {
     position: 'fixed', inset: 0,
@@ -292,7 +347,7 @@ const s: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(12px)',
     zIndex: 9999,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 20,
+    padding: '16px',
   },
   modal: {
     width: '100%', maxWidth: 400,
@@ -302,11 +357,14 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column',
     boxShadow: '0 40px 100px rgba(0,0,0,0.9)',
     border: '1px solid rgba(255,255,255,0.08)',
+    // ensure it doesn't exceed viewport height on mobile
+    maxHeight: '90vh',
   },
   header: {
-    padding: '20px',
+    padding: '18px 20px',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     borderBottom: '1px solid rgba(255,255,255,0.07)',
+    flexShrink: 0,
   },
   iconCircle: {
     width: 40, height: 40, borderRadius: 12,
@@ -328,6 +386,7 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%', aspectRatio: '1',
     background: '#000', overflow: 'hidden',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
   reader: {
     position: 'absolute', inset: 0,
@@ -336,8 +395,43 @@ const s: Record<string, React.CSSProperties> = {
   centered: {
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
-    padding: 32, width: '100%',
+    padding: 28, width: '100%', textAlign: 'center',
   },
+
+  // Permission phase
+  permissionRing: {
+    width: 80, height: 80, borderRadius: '50%',
+    background: 'rgba(255,224,83,0.1)',
+    border: '2px solid rgba(255,224,83,0.35)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginBottom: 18,
+    animation: 'permissionPulse 2s ease-in-out infinite',
+  },
+  permissionTitle: {
+    fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 10,
+  },
+  permissionDesc: {
+    fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6,
+    maxWidth: 280, marginBottom: 24,
+  },
+  grantBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '13px 28px',
+    background: 'var(--accent-yellow, #ffe04b)',
+    border: 'none', borderRadius: 12,
+    color: '#1a1a1a', fontSize: 14, fontWeight: 800,
+    cursor: 'pointer',
+    boxShadow: '0 4px 20px rgba(255,224,83,0.35)',
+  },
+
+  loadingText: {
+    marginTop: 14, color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 13,
+  },
+  errorText: {
+    marginTop: 14, color: 'rgba(255,255,255,0.6)', fontSize: 13,
+    lineHeight: 1.6, maxWidth: 280,
+  },
+
   scanOverlay: {
     position: 'absolute',
     top: '50%', left: '50%',
@@ -353,18 +447,44 @@ const s: Record<string, React.CSSProperties> = {
     boxShadow: '0 0 8px var(--accent-yellow)',
     animation: 'scanMove 1.8s ease-in-out infinite',
   },
+
+  // Floating controls inside camera viewport
+  floatingClose: {
+    position: 'absolute', top: 12, right: 12,
+    width: 38, height: 38, borderRadius: '50%',
+    background: 'rgba(0,0,0,0.65)',
+    backdropFilter: 'blur(6px)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    color: '#fff', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 10,
+  },
+  floatingFlip: {
+    position: 'absolute', bottom: 16, left: '50%',
+    transform: 'translateX(-50%)',
+    width: 52, height: 52, borderRadius: '50%',
+    background: 'rgba(0,0,0,0.65)',
+    backdropFilter: 'blur(6px)',
+    border: '2px solid rgba(255,255,255,0.22)',
+    color: '#fff', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 10,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+  },
+
   footer: {
     padding: '12px 20px',
     display: 'flex', alignItems: 'center', gap: 8,
     fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.3)',
     borderTop: '1px solid rgba(255,255,255,0.06)',
+    flexShrink: 0,
   },
   footerDot: {
     width: 6, height: 6, borderRadius: '50%',
     background: '#10b981', boxShadow: '0 0 6px #10b981', flexShrink: 0,
   },
   retryBtn: {
-    marginTop: 20, padding: '10px 24px',
+    marginTop: 16, padding: '10px 24px',
     background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.15)',
     borderRadius: 10, color: '#fff',
