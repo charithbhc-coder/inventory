@@ -29,7 +29,7 @@ export function getPaginationOptions(query: {
   if (isNaN(limitNum)) limitNum = 20;
 
   const page = Math.max(1, pageNum);
-  const limit = Math.min(100, Math.max(1, limitNum));
+  const limit = Math.min(10000, Math.max(1, limitNum));
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 }
