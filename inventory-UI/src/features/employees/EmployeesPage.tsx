@@ -122,7 +122,7 @@ export default function EmployeesPage() {
         const key = item.assignedToName.toLowerCase().trim();
         if (!activeMap.has(key)) {
           activeMap.set(key, {
-            name: item.assignedToName,
+            name: item.assignedToName.trim(),
             employeeId: item.assignedToEmployeeId || '',
             departmentId: item.departmentId || '',
             departmentName: item.department?.name || 'Unknown Dept',
@@ -145,7 +145,7 @@ export default function EmployeesPage() {
         if (!activeMap.has(key)) {
           if (!deactMap.has(key)) {
             deactMap.set(key, {
-              name: pastName,
+              name: pastName.trim(),
               employeeId: (item as any).previousAssignedToEmployeeId || '',
               departmentId: item.departmentId || '',
               departmentName: item.department?.name || '-',
