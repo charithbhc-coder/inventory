@@ -45,7 +45,11 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
         qrCodeRef.current = html5QrCode;
 
         await html5QrCode.start(
-          { facingMode: 'environment' },
+          { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
           {
             fps: 30,
             qrbox: { width: 260, height: 260 }, // square — matches QR labels
