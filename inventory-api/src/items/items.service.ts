@@ -286,9 +286,14 @@ export class ItemsService implements OnModuleInit {
       const saved = await manager.save(Item, item);
 
       // Determine event type
-      const eventType = dto.assignedToName
+      let eventType = dto.assignedToName
         ? ItemEventType.ASSIGNED_TO_PERSON
         : ItemEventType.ASSIGNED_TO_DEPARTMENT;
+        
+      // If it was already in use, it is a transfer
+      if (prevStatus === ItemStatus.IN_USE && (item.previousAssignedToName || prevDeptId)) {
+         eventType = ItemEventType.TRANSFERRED;
+      }
 
       const event = manager.create(ItemEvent, {
         itemId: saved.id,
@@ -297,6 +302,7 @@ export class ItemsService implements OnModuleInit {
         toStatus: saved.status,
         fromDepartmentId: prevDeptId,
         toDepartmentId: dto.departmentId || item.departmentId,
+        fromPersonName: item.previousAssignedToName,
         toPersonName: dto.assignedToName,
         toPersonEmployeeId: dto.assignedToEmployeeId || null,
         performedByUserId: userId,
