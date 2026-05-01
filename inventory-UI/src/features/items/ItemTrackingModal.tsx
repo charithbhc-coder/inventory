@@ -104,7 +104,7 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
         </div>
 
         {/* Top Header Information */}
-        <div style={styles.heroSection}>
+        <div style={styles.heroSection} className="tracking-hero">
           <div style={styles.heroImageWrap}>
             {resolvedImage ? (
               <img 
@@ -120,28 +120,29 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
               <ImageIcon size={32} color="var(--text-muted)" style={{ opacity: 0.5 }} />
             )}
           </div>
-          <div>
+          <div style={styles.heroText}>
             <h3 style={styles.heroName}>{item.name}</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               <StatusBadge status={item.status} />
               <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.barcode}</span>
             </div>
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(255, 224, 83, 0.05)', borderRadius: 10, border: '1px solid rgba(255, 224, 83, 0.2)', width: 'fit-content' }}>
                 <MapPin size={14} color="var(--accent-yellow)" />
-                <span style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 700, textAlign: 'left' }}>
                   {item.company?.name || 'KTMG'} / {item.department?.name || 'General'}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: 10, border: '1px solid rgba(59, 130, 246, 0.2)', width: 'fit-content' }}>
                 <User size={14} color="#3b82f6" />
-                <span style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 700, textAlign: 'left' }}>
                   {item.assignedToName ? `Holder: ${item.assignedToName}` : 'In Storage / Warehouse'}
                 </span>
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Tab Switcher */}
         <div style={{ display: 'flex', gap: 32, marginBottom: 24, borderBottom: '1px solid var(--border-dark)', justifyContent: 'center' }}>
@@ -175,31 +176,88 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
             <div style={{ textAlign: 'center', padding: '40px 0' }}><div className="loading-spinner" /></div>
           ) : activeTab === 'ownership' ? (
             /* Ownership History Table */
-            <div style={{ 
-              padding: '16px', 
-              background: 'rgba(255, 255, 255, 0.03)', 
-              borderRadius: 16, 
-              border: '1px solid var(--border-dark)',
-              backdropFilter: 'blur(10px)',
-              margin: '0 10px'
-            }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ 
-                    background: 'rgba(255, 255, 255, 0.05)', 
-                    backdropFilter: 'blur(5px)',
-                    borderBottom: '1px solid var(--border-dark)' 
-                  }}>
-                    <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Assigned To</th>
-                    <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Employee ID</th>
-                    <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>From Date</th>
-                    <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Released Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    {(() => {
+            <div className="ownership-history-container">
+              <div className="desktop-only">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      backdropFilter: 'blur(5px)',
+                      borderBottom: '1px solid var(--border-dark)' 
+                    }}>
+                      <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Assigned To</th>
+                      <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Employee ID</th>
+                      <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>From Date</th>
+                      <th style={{ background: 'transparent', textAlign: 'left', padding: '14px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Released Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      {(() => {
+                      const tenures: any[] = [];
+                      const sortedEvents = [...events].reverse();
+                      let currentTenure: any = null;
+
+                      sortedEvents.forEach((ev: any) => {
+                        const holder = ev.toPersonName || (ev.toDepartment?.name ? `Dept: ${ev.toDepartment.name}` : null);
+                        
+                        if (ev.eventType === 'ASSIGNED_TO_PERSON' || ev.eventType === 'ASSIGNED_TO_DEPARTMENT' || ev.eventType === 'ITEM_ADDED' || ev.eventType === 'TRANSFERRED') {
+                          if (holder) {
+                            if (currentTenure) {
+                              currentTenure.releasedDate = new Date(ev.createdAt).toLocaleDateString();
+                            }
+                            currentTenure = {
+                              holder: holder,
+                              employeeId: ev.toPersonEmployeeId || null,
+                              fromDate: new Date(ev.createdAt).toLocaleDateString(),
+                              releasedDate: 'Present'
+                            };
+                            tenures.push(currentTenure);
+                          }
+                        } else if (ev.eventType === 'UNASSIGNED') {
+                          if (currentTenure) {
+                            currentTenure.releasedDate = new Date(ev.createdAt).toLocaleDateString();
+                            currentTenure = null;
+                          }
+                        }
+                      });
+
+                      if (tenures.length === 0) return (
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                            No formal assignments recorded.
+                          </td>
+                        </tr>
+                      );
+
+                      return [...tenures].reverse().map((t, i) => (
+                        <tr key={i} style={{ 
+                          borderBottom: '1px solid var(--border-dark)', 
+                          transition: 'background 0.2s' 
+                        }} className="history-row-hover">
+                          <td style={{ padding: '16px 14px' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', display: 'block' }}>{t.holder}</span>
+                          </td>
+                          <td style={{ padding: '16px 14px' }}>
+                            {t.employeeId ? (
+                              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'monospace', padding: '3px 8px', background: 'rgba(255,224,83,0.1)', color: 'var(--accent-yellow)', borderRadius: 6, border: '1px solid rgba(255,224,83,0.2)' }}>
+                                {t.employeeId}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>{t.fromDate}</td>
+                          <td style={{ padding: '16px 14px', fontSize: 13, color: t.releasedDate === 'Present' ? 'var(--accent-yellow)' : 'var(--text-muted)', fontWeight: t.releasedDate === 'Present' ? 700 : 400 }}>{t.releasedDate}</td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mobile-only-list">
+                 {(() => {
                     const tenures: any[] = [];
-                    // Process timeline events chronologically
                     const sortedEvents = [...events].reverse();
                     let currentTenure: any = null;
 
@@ -222,44 +280,42 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
                       } else if (ev.eventType === 'UNASSIGNED') {
                         if (currentTenure) {
                           currentTenure.releasedDate = new Date(ev.createdAt).toLocaleDateString();
-                          currentTenure = null; // No active tenure after unassign
+                          currentTenure = null;
                         }
                       }
                     });
 
-                    if (tenures.length === 0) return (
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>
-                          No formal assignments recorded.
-                        </td>
-                      </tr>
-                    );
+                    if (tenures.length === 0) return <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>No formal assignments.</div>;
 
                     return [...tenures].reverse().map((t, i) => (
-                      <tr key={i} style={{ 
-                        borderBottom: '1px solid var(--border-dark)', 
-                        transition: 'background 0.2s' 
-                      }} className="history-row-hover">
-                        <td style={{ padding: '16px 14px' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', display: 'block' }}>{t.holder}</span>
-                        </td>
-                        <td style={{ padding: '16px 14px' }}>
-                          {t.employeeId ? (
-                            <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'monospace', padding: '3px 8px', background: 'rgba(255,224,83,0.1)', color: 'var(--accent-yellow)', borderRadius: 6, border: '1px solid rgba(255,224,83,0.2)' }}>
-                              {t.employeeId}
+                      <div key={i} style={{ 
+                        padding: '16px', marginBottom: 12, borderRadius: 12, 
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-dark)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)' }}>{t.holder}</span>
+                          {t.employeeId && (
+                            <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'monospace', padding: '2px 6px', background: 'rgba(255,224,83,0.1)', color: 'var(--accent-yellow)', borderRadius: 4 }}>
+                              #{t.employeeId}
                             </span>
-                          ) : (
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>
                           )}
-                        </td>
-                        <td style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>{t.fromDate}</td>
-                        <td style={{ padding: '16px 14px', fontSize: 13, color: t.releasedDate === 'Present' ? 'var(--accent-yellow)' : 'var(--text-muted)', fontWeight: t.releasedDate === 'Present' ? 700 : 400 }}>{t.releasedDate}</td>
-                      </tr>
+                        </div>
+                        <div style={{ display: 'flex', gap: 20 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>From</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 600 }}>{t.fromDate}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 2 }}>Released</div>
+                            <div style={{ fontSize: 12, color: t.releasedDate === 'Present' ? 'var(--accent-yellow)' : 'var(--text-main)', fontWeight: 600 }}>{t.releasedDate}</div>
+                          </div>
+                        </div>
+                      </div>
                     ));
                   })()}
-                </tbody>
-              </table>
+              </div>
             </div>
+
           ) : (
             <div className="zigzag-timeline">
               <div className="timeline-center-line" />
@@ -417,22 +473,49 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
         }
 
         /* Mobile Responsive Override */
-        @media (max-width: 600px) {
+        @media (max-width: 650px) {
+          .pure-glass-modal {
+            padding: 20px !important;
+            max-height: 95vh;
+            border-radius: 0;
+            width: 100%;
+          }
+          .tracking-hero {
+            flex-direction: column !important;
+            text-align: center;
+            gap: 16px !important;
+          }
+          .hero-text {
+            width: 100%;
+          }
           .timeline-center-line {
-            left: 24px;
-            transform-origin: top left;
+            left: 20px !important;
           }
           .zz-icon {
-            left: 24px;
+            left: 20px !important;
           }
           .zigzag-item.left, .zigzag-item.right {
             justify-content: flex-end;
             flex-direction: row;
           }
           .zz-content {
-            width: calc(100% - 64px);
+            width: calc(100% - 60px) !important;
+            padding: 12px 16px !important;
+          }
+          .desktop-only {
+            display: none !important;
+          }
+          .mobile-only-list {
+            display: block !important;
           }
         }
+
+        @media (min-width: 651px) {
+          .mobile-only-list {
+            display: none !important;
+          }
+        }
+
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }

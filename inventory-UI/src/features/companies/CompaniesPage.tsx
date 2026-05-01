@@ -230,36 +230,37 @@ export default function CompaniesPage() {
             <button 
               title="View Profile"
               onClick={e => { e.stopPropagation(); navigate(`/companies/${info.row.original.id}`); }}
-              style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)', borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', height: 32, width: 32, justifyContent: 'center' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)'; }}
+              style={{ background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', height: 34, width: 34, justifyContent: 'center', flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)'; }}
             >
-              <Eye size={16} />
+              <Eye size={18} strokeWidth={2.5} />
             </button>
             <button 
               title="Edit Base Info"
               onClick={e => { e.stopPropagation(); setSelectedCompany(info.row.original); setIsModalOpen(true); }}
-              style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#8b5cf6', display: 'flex', alignItems: 'center', height: 32, width: 32, justifyContent: 'center' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.08)'; }}
+              style={{ background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#8b5cf6', display: 'flex', alignItems: 'center', height: 34, width: 34, justifyContent: 'center', flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.12)'; }}
             >
-              <Edit size={16} />
+              <Edit size={18} strokeWidth={2.5} />
             </button>
             <button 
               title={info.row.original.isActive ? "Deactivate Company" : "Activate Company"}
               onClick={e => { e.stopPropagation(); toggleStatusMutation.mutate(info.row.original.id); }}
               style={{ 
-                background: info.row.original.isActive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', 
-                border: `1px solid ${info.row.original.isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}`, 
+                background: info.row.original.isActive ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)', 
+                border: `1px solid ${info.row.original.isActive ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`, 
                 borderRadius: 8, padding: '7px', cursor: 'pointer', 
                 color: info.row.original.isActive ? '#ef4444' : '#10b981', 
-                display: 'flex', alignItems: 'center', height: 32, width: 32, justifyContent: 'center', transition: 'all 0.2s'
+                display: 'flex', alignItems: 'center', height: 34, width: 34, justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = info.row.original.isActive ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)'; }}
             >
-              {info.row.original.isActive ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+              {info.row.original.isActive ? <ShieldAlert size={18} strokeWidth={2.5} /> : <ShieldCheck size={18} strokeWidth={2.5} />}
             </button>
+
           </div>
         );
       },
@@ -644,7 +645,16 @@ export default function CompaniesPage() {
             width: 100%;
             justify-content: center;
           }
+          /* Ensure table row content doesn't force height too much on mobile */
+          td {
+            padding: 12px 16px !important;
+          }
+          /* Improve action icons visibility on small screens */
+          [id="actions"] {
+            min-width: 140px;
+          }
         }
+
       `}</style>
     </div>
   );
