@@ -9,9 +9,10 @@ interface AssignModalProps {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
+  modalTitle?: string;
 }
 
-export default function AssignModal({ item, isOpen, onClose }: AssignModalProps) {
+export default function AssignModal({ item, isOpen, onClose, modalTitle }: AssignModalProps) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     departmentId: item.departmentId || '',
@@ -144,7 +145,7 @@ export default function AssignModal({ item, isOpen, onClose }: AssignModalProps)
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={styles.iconBox}><UserPlus size={20} /></div>
             <div>
-              <h3 style={styles.title}>{item.assignedToName ? 'Edit Assignment' : 'Assign Asset'}</h3>
+              <h3 style={styles.title}>{modalTitle ?? (item.assignedToName ? 'Edit Assignment' : 'Assign Asset')}</h3>
               <p style={styles.subtitle}>{item.barcode} — {item.name}</p>
             </div>
           </div>

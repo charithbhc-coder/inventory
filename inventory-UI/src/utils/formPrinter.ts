@@ -26,14 +26,18 @@ export interface PrintableItem {
 
 const sharedStyles = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 30px 40px; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 30px 40px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
   .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 14px; margin-bottom: 16px; }
   .header-center { text-align: center; flex: 1; }
   .header-center h1 { font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
   .header-center h2 { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border: 2px solid #000; display: inline-block; padding: 4px 16px; margin-top: 4px; }
   .logo-box { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; }
   .logo-box img { width: 100%; height: 100%; object-fit: contain; }
-  .logo-fallback { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+  .logo-fallback { width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; text-align: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; }
   table { width: 100%; border-collapse: collapse; margin: 12px 0; }
   table th, table td { border: 1px solid #000; padding: 8px 10px; font-size: 11px; }
   table th { font-weight: bold; background: #f0f0f0; text-align: left; }
@@ -50,7 +54,10 @@ const sharedStyles = `
   .highlight { font-weight: bold; }
   .stamp-area { border: 1px dashed #999; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #888; margin-top: 8px; }
   @media print {
-    body { padding: 20px 30px; }
+    body { padding: 20px 30px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
     @page { margin: 1cm; size: A4; }
     table { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }

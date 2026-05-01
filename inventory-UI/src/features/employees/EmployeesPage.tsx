@@ -45,6 +45,10 @@ export default function EmployeesPage() {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [isOffboardModalOpen, setIsOffboardModalOpen] = useState(false);
   const [isTransferRequestModalOpen, setIsTransferRequestModalOpen] = useState(false);
+  const [empPage, setEmpPage] = useState(1);
+  const [assetPage, setAssetPage] = useState(1);
+  const EMP_PER_PAGE = 20;
+  const ASSET_PER_PAGE = 8;
 
   const { hasPermission, user } = useAuthStore();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -55,13 +59,24 @@ export default function EmployeesPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch data
+  // Fetch active items (IN_USE) — separate query ensures we never miss employees due to pagination
   const { data: itemData, isLoading } = useQuery({
-    queryKey: ['items', 'all-for-employees', companyFilter, deptFilter],
+    queryKey: ['items', 'employees-active', companyFilter, deptFilter],
     queryFn: () => itemService.getItems({
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
-      limit: 1000,
+      status: 'IN_USE',
+      limit: 5000,
+    }),
+  });
+
+  // Fetch all items for deactivated detection (previousAssignedToName on WAREHOUSE items)
+  const { data: allItemData } = useQuery({
+    queryKey: ['items', 'employees-deact', companyFilter, deptFilter],
+    queryFn: () => itemService.getItems({
+      companyId: companyFilter || undefined,
+      departmentId: deptFilter || undefined,
+      limit: 5000,
     }),
   });
 
@@ -77,6 +92,7 @@ export default function EmployeesPage() {
   });
 
   const items = useMemo(() => Array.isArray(itemData) ? itemData : (itemData as any)?.data || [], [itemData]);
+  const allItems = useMemo(() => Array.isArray(allItemData) ? allItemData : (allItemData as any)?.data || [], [allItemData]);
   const companies = useMemo(() => Array.isArray(companyData) ? companyData : (companyData as any)?.data || [], [companyData]);
   const departments = useMemo(() => Array.isArray(deptData) ? deptData : (deptData as any)?.data || [], [deptData]);
 
@@ -100,10 +116,10 @@ export default function EmployeesPage() {
     const activeMap = new Map<string, EmployeeGroup>();
     const deactMap = new Map<string, EmployeeGroup>();
 
+    // Build active map from IN_USE items
     items.forEach((item: Item) => {
-      // Current Assignees (Active)
-      if (item.assignedToName && item.status === 'IN_USE') {
-        const key = item.assignedToName.toLowerCase();
+      if (item.assignedToName) {
+        const key = item.assignedToName.toLowerCase().trim();
         if (!activeMap.has(key)) {
           activeMap.set(key, {
             name: item.assignedToName,
@@ -118,34 +134,42 @@ export default function EmployeesPage() {
         }
         activeMap.get(key)!.items.push(item);
       }
+    });
 
-      // Past Assignees (Deactivated) - relying on previousAssignedToName
-      if ((item as any).previousAssignedToName && !(item as any).assignedToName) {
-         const pastName = (item as any).previousAssignedToName;
-         const key = pastName.toLowerCase();
-         if (!activeMap.has(key)) { // Only if not currently active
-           if (!deactMap.has(key)) {
-             deactMap.set(key, {
-               name: pastName,
-               employeeId: (item as any).previousAssignedToEmployeeId || '',
-               departmentId: item.departmentId || '',
-               departmentName: item.department?.name || '-',
-               companyId: item.companyId || '',
-               companyName: item.company?.name || '-',
-               items: [], // These are items they *used* to have
-               isActive: false
-             });
-           }
-           deactMap.get(key)!.items.push(item);
-         }
+    // Build deactivated map from ALL items via previousAssignedToName
+    allItems.forEach((item: Item) => {
+      const pastName = (item as any).previousAssignedToName;
+      if (pastName && !item.assignedToName) {
+        const key = pastName.toLowerCase().trim();
+        // Only add to deactivated if NOT currently active
+        if (!activeMap.has(key)) {
+          if (!deactMap.has(key)) {
+            deactMap.set(key, {
+              name: pastName,
+              employeeId: (item as any).previousAssignedToEmployeeId || '',
+              departmentId: item.departmentId || '',
+              departmentName: item.department?.name || '-',
+              companyId: item.companyId || '',
+              companyName: item.company?.name || '-',
+              items: [],
+              isActive: false
+            });
+          }
+          deactMap.get(key)!.items.push(item);
+        }
       }
     });
 
+    // Safety: remove from deactMap anyone who also appears in activeMap
+    for (const key of activeMap.keys()) deactMap.delete(key);
+
+    const sortAlpha = (a: EmployeeGroup, b: EmployeeGroup) => a.name.localeCompare(b.name);
+
     return {
-      activeEmployees: Array.from(activeMap.values()),
-      deactivatedEmployees: Array.from(deactMap.values())
+      activeEmployees: Array.from(activeMap.values()).sort(sortAlpha),
+      deactivatedEmployees: Array.from(deactMap.values()).sort(sortAlpha)
     };
-  }, [items]);
+  }, [items, allItems]);
 
   // Apply search
   const currentList = tab === 'ACTIVE' ? activeEmployees : deactivatedEmployees;
@@ -281,10 +305,10 @@ export default function EmployeesPage() {
                 <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>No employees found</div>
              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {filteredEmployees.map(emp => (
+                  {pagedEmployees.map(emp => (
                      <button
                        key={emp.name}
-                       onClick={() => { setSelectedEmployee(emp); if (isMobile) setShowDetailOnMobile(true); }}
+                       onClick={() => { setSelectedEmployee(emp); setAssetPage(1); if (isMobile) setShowDetailOnMobile(true); }}
                        style={{ 
                          display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, border: '1px solid',
                          borderColor: selectedEmployee?.name === emp.name ? 'var(--accent-yellow)' : 'var(--border-dark)',
@@ -293,7 +317,7 @@ export default function EmployeesPage() {
                        }}
                        className="hover-card"
                      >
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
                            {emp.name.charAt(0)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -307,6 +331,15 @@ export default function EmployeesPage() {
                      </button>
                   ))}
                 </div>
+             )}
+             
+             {/* Employee Pagination */}
+             {totalEmpPages > 1 && (
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, padding: '0 8px' }}>
+                 <button disabled={empPage === 1} onClick={() => setEmpPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
+                 <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {empPage} of {totalEmpPages}</span>
+                 <button disabled={empPage === totalEmpPages} onClick={() => setEmpPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === totalEmpPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === totalEmpPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
+               </div>
              )}
           </div>
         </div>
@@ -326,7 +359,7 @@ export default function EmployeesPage() {
                      {isMobile && (
                         <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
                      )}
-                     <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800 }}>
+                     <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800 }}>
                         {selectedEmployee.name.charAt(0)}
                      </div>
                      <div>
@@ -342,6 +375,7 @@ export default function EmployeesPage() {
                      {/* Active: print issuance + offboard */}
                      {selectedEmployee.isActive && (
                        <button 
+                         className="hover-card"
                          onClick={() => handlePrintIssuance(selectedEmployee)}
                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                        >
@@ -350,6 +384,7 @@ export default function EmployeesPage() {
                      )}
                      {/* Both active & deactivated: print handover */}
                      <button 
+                       className="hover-card"
                        onClick={() => handlePrintHandover(selectedEmployee)}
                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                      >
@@ -393,11 +428,11 @@ export default function EmployeesPage() {
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
                               <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
-                              <th style={{ padding: '14px 20px', textAlign: 'right', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Actions</th>
+                              <th style={{ padding: '14px 20px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Actions</th>
                            </tr>
                         </thead>
                         <tbody>
-                           {selectedEmployee.items.map(item => (
+                           {pagedAssets.map(item => (
                               <tr key={item.id} style={{ borderBottom: '1px solid var(--border-dark)' }}>
                                  <td style={{ padding: '16px 20px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -410,13 +445,14 @@ export default function EmployeesPage() {
                                  </td>
                                  <td style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-main)' }}>{item.category?.name || '-'}</td>
                                  <td style={{ padding: '16px 20px' }}><StatusBadge status={item.status} /></td>
-                                 <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                       <button onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><QrCode size={14}/></button>
-                                       <button onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><Activity size={14}/></button>
+                                 <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                       <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14}/></button>
+                                       <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14}/></button>
                                        {selectedEmployee.isActive && (
                                           <button 
                                              onClick={() => handleTransferClick(item)}
+                                             className="hover-card"
                                              style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                                           >
                                              {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
@@ -432,6 +468,15 @@ export default function EmployeesPage() {
                         </tbody>
                      </table>
                   </div>
+
+                  {/* Asset Pagination */}
+                  {totalAssetPages > 1 && (
+                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
+                        <button disabled={assetPage === 1} onClick={() => setAssetPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {assetPage} of {totalAssetPages}</span>
+                        <button disabled={assetPage === totalAssetPages} onClick={() => setAssetPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === totalAssetPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === totalAssetPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
+                     </div>
+                  )}
                </div>
             </>
           ) : (
@@ -450,6 +495,7 @@ export default function EmployeesPage() {
            item={transferItem}
            isOpen={isAssignModalOpen}
            onClose={() => { setIsAssignModalOpen(false); setTransferItem(null); }}
+           modalTitle="Transfer Asset"
          />
       )}
       
