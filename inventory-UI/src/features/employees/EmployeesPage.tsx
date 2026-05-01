@@ -177,6 +177,15 @@ export default function EmployeesPage() {
     emp.name.toLowerCase().includes(search.toLowerCase()) || 
     emp.employeeId.toLowerCase().includes(search.toLowerCase())
   );
+  
+  // Apply pagination
+  const totalEmpPages = Math.ceil(filteredEmployees.length / EMP_PER_PAGE);
+  const pagedEmployees = filteredEmployees.slice((empPage - 1) * EMP_PER_PAGE, empPage * EMP_PER_PAGE);
+
+  // Asset pagination
+  const selectedAssets = selectedEmployee?.items || [];
+  const totalAssetPages = Math.ceil(selectedAssets.length / ASSET_PER_PAGE);
+  const pagedAssets = selectedAssets.slice((assetPage - 1) * ASSET_PER_PAGE, assetPage * ASSET_PER_PAGE);
 
   const StatusBadge = ({ status }: { status: string }) => {
     const s = status === 'IN_USE' ? { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981' } : { bg: 'rgba(71, 85, 105, 0.12)', color: '#475569' };
