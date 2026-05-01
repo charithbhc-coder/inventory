@@ -1,7 +1,8 @@
 import {
   Search, Bell, Moon, Sun, Menu, User, LogOut, CheckCheck,
   Package, AlertCircle, Wrench, Shield, UserPlus, X,
-  Tag, Building2, Briefcase, Zap, Loader2, Camera, Key
+  Tag, Building2, Briefcase, Zap, Loader2, Camera, Key,
+  ArrowRight, UserCheck
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth.store';
@@ -174,6 +175,8 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
           case 'ACCOUNT_PERMISSIONS_UPDATED':
           case 'ACCOUNT_ROLE_UPDATED':
             return { icon: <Shield size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
+          case 'TRANSFER_REQUEST_SUBMITTED':
+            return { icon: <ArrowRight size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
           default:
             return { icon: <Bell size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
         }
@@ -185,6 +188,10 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
         if (n.type.includes('REPAIR')) return { icon: <Wrench size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
         if (n.type.includes('ASSIGN')) return { icon: <UserPlus size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
         if (n.type.includes('LICENSE')) return { icon: <Key size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
+        if (n.type.includes('TRANSFER_REQUEST_APPROVED')) return { icon: <ArrowRight size={14} color="#10b981" />, bg: 'rgba(16, 185, 129, 0.1)' };
+        if (n.type.includes('TRANSFER_REQUEST_REJECTED')) return { icon: <ArrowRight size={14} color="#ef4444" />, bg: 'rgba(239, 68, 68, 0.1)' };
+        if (n.type.includes('TRANSFER')) return { icon: <ArrowRight size={14} color="#8b5cf6" />, bg: 'rgba(139, 92, 246, 0.1)' };
+        if (n.type.includes('OFFBOARD') || n.type.includes('EMPLOYEE')) return { icon: <UserCheck size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
         return { icon: <Bell size={14} color="#f59e0b" />, bg: 'rgba(245, 158, 11, 0.1)' };
     }
   };
