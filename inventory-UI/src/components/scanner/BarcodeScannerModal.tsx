@@ -23,6 +23,8 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!isOpen) {
       setIsCameraStarted(false);
       setError(null);
@@ -32,24 +34,44 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
 
     const handleScan = async (text: string) => {
       await stopScanner();
+      if (!isMounted) return;
       setScanned(text);
-      setTimeout(() => onScan(text), 400); // brief green flash before navigating
+      setTimeout(() => { if (isMounted) onScan(text); }, 400); // brief green flash before navigating
     };
 
-    const timer = setTimeout(async () => {
+    const initCamera = async () => {
       try {
-        // 1. Explicitly request camera permissions first. This triggers the browser popup safely.
-        await Html5Qrcode.getCameras();
+        // 1. Explicitly request camera permissions FIRST. 
+        // We removed setTimeout so this runs immediately on user click, avoiding browser popup blockers.
+        const devices = await Html5Qrcode.getCameras();
+        
+        if (!isMounted) return;
+        if (!devices || devices.length === 0) throw new Error('No cameras found.');
+
+        // 2. Manually find the back camera. 'facingMode' is unreliable on some Android browsers.
+        let backCameraId = devices[0].id;
+        for (const device of devices) {
+          const label = device.label.toLowerCase();
+          if (label.includes('back') || label.includes('rear') || label.includes('environment')) {
+            backCameraId = device.id;
+            break;
+          }
+        }
+        
+        // Fallback: On many phones, the last camera in the array is the back camera if labels are generic
+        if (backCameraId === devices[0].id && devices.length > 1) {
+          backCameraId = devices[devices.length - 1].id;
+        }
 
         const html5QrCode = new Html5Qrcode(containerId, { 
           verbose: false,
-          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // QR only
+          formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
         });
         qrCodeRef.current = html5QrCode;
 
         const config = {
           fps: 30,
-          qrbox: { width: 260, height: 260 }, // square — matches QR labels
+          qrbox: { width: 260, height: 260 },
           aspectRatio: 1.0,
           disableFlip: false,
           videoConstraints: {
@@ -58,23 +80,33 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan }: Barcode
           }
         };
 
+        // 3. Start using the exact deviceId we found
         await html5QrCode.start(
-          { facingMode: 'environment' },
+          { deviceId: { exact: backCameraId } },
           config,
           handleScan,
           () => { /* ignore parse errors */ }
         );
 
-        setIsCameraStarted(true);
+        if (isMounted) {
+          setIsCameraStarted(true);
+        } else {
+          // If the user closed the modal while camera was starting
+          await stopScanner();
+        }
       } catch (err: any) {
-        console.error('Failed to start camera', err);
-        setError('Camera access denied. Please allow camera permissions and try again.');
-        toast.error('Camera permission required for scanning.');
+        if (isMounted) {
+          console.error('Failed to start camera', err);
+          setError('Camera access denied. Please allow camera permissions and try again.');
+          toast.error('Camera permission required for scanning.');
+        }
       }
-    }, 250);
+    };
+
+    initCamera();
 
     return () => {
-      clearTimeout(timer);
+      isMounted = false;
       stopScanner();
     };
   }, [isOpen, onScan, stopScanner]);
