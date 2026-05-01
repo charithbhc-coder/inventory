@@ -24,6 +24,7 @@ import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
+import { categoryService } from '@/services/category.service';
 import ItemModal from './ItemModal';
 import AssetDetailsDrawer from './AssetDetailsDrawer';
 import ItemTrackingModal from './ItemTrackingModal';
@@ -62,6 +63,7 @@ export default function ItemsPage() {
   const [search, setSearch] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -85,21 +87,26 @@ export default function ItemsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search');
   const urlOpen = searchParams.get('open');
+  const urlCategory = searchParams.get('category');
 
   // Sync Search from URL
   useEffect(() => {
     if (urlSearch) {
       setSearch(urlSearch);
     }
-  }, [urlSearch]);
+    if (urlCategory) {
+      setCategoryFilter(urlCategory);
+    }
+  }, [urlSearch, urlCategory]);
 
   /* ─── Queries ─── */
   const { data: itemData, isLoading } = useQuery({
-    queryKey: ['items', search, companyFilter, deptFilter, statusFilter, page],
+    queryKey: ['items', search, companyFilter, deptFilter, categoryFilter, statusFilter, page],
     queryFn: () => itemService.getItems({
       search,
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
+      categoryId: categoryFilter || undefined,
       status: statusFilter || undefined,
       page,
       limit: LIMIT,
@@ -117,11 +124,17 @@ export default function ItemsPage() {
     queryFn: () => departmentService.getDepartments(companyFilter || undefined, { limit: 100 }),
     enabled: !!companyFilter
   });
+  
+  const { data: catData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoryService.getCategories({ limit: 100 })
+  });
 
   const items = useMemo(() => Array.isArray(itemData) ? itemData : (itemData as any)?.data || [], [itemData]);
   const itemMeta = useMemo(() => (itemData as any)?.meta || { total: items.length, lastPage: 1, totalPages: 1 }, [itemData]);
   const companies = useMemo(() => Array.isArray(companyData) ? companyData : (companyData as any)?.data || [], [companyData]);
   const departments = useMemo(() => Array.isArray(deptData) ? deptData : (deptData as any)?.data || [], [deptData]);
+  const categories = useMemo(() => Array.isArray(catData) ? catData : (catData as any)?.data || [], [catData]);
 
   // Handle Deep Link 'open' or sync search
   useEffect(() => {
@@ -395,6 +408,18 @@ export default function ItemsPage() {
               >
                 <option value="">All Subsidiaries</option>
                 {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <div style={{ position: 'relative', flex: 1, minWidth: 150 }}>
+              <select 
+                value={categoryFilter}
+                onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+                style={{ ...styles.select, width: '100%' }}
+              >
+                <option value="">All Categories</option>
+                {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
