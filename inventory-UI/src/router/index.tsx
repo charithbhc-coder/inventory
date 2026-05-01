@@ -20,6 +20,8 @@ import CategoriesPage   from '@/features/categories/CategoriesPage';
 const ProfilePage      = lazy(() => import('@/features/profile/ProfilePage'));
 const AuditLogsPage    = lazy(() => import('@/features/audit-logs/AuditLogsPage'));
 import LicensesPage     from '@/features/licenses/LicensesPage';
+const EmployeesPage    = lazy(() => import('@/features/employees/EmployeesPage'));
+
 
 const router = createBrowserRouter([
   // Public / Guest routes
@@ -49,7 +51,9 @@ const router = createBrowserRouter([
           { path: '/items/:id',  element: <ItemDeepLinkPage /> },
           { path: '/categories',  element: <CategoriesPage /> },
           { path: '/licenses',    element: <LicensesPage /> },
+          { path: '/employees',   element: <EmployeesPage /> },
           { path: '/reports',     element: <ReportsPage /> },
+
           { path: '/logs',        element: <AuditLogsPage /> },
           { path: '/settings',    element: <SettingsPage /> },
           { path: '/profile',     element: <ProfilePage /> },

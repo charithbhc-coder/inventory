@@ -12,8 +12,10 @@ import {
   BarChart3,
   ListTodo,
   Settings,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
+
 import { useQuery } from '@tanstack/react-query';
 import { settingsService } from '@/services/settings.service';
 import { useAuthStore } from '@/store/auth.store';
@@ -25,10 +27,12 @@ const MENU_ITEMS = [
   { path: '/departments', label: 'DEPARTMENTS', icon: Network, permission: AdminPermission.VIEW_DEPARTMENTS },
   { path: '/categories', label: 'CATEGORIES', icon: Tag, permission: AdminPermission.VIEW_CATEGORIES },
   { path: '/items', label: 'ITEMS', icon: PackageSearch, permission: AdminPermission.VIEW_ITEMS },
+  { path: '/employees', label: 'EMPLOYEES', icon: UserCheck, permission: AdminPermission.VIEW_EMPLOYEES },
   { path: '/users', label: 'USERS', icon: Users, permission: AdminPermission.VIEW_USERS },
   { path: '/reports', label: 'REPORTS', icon: BarChart3, permission: AdminPermission.VIEW_REPORTS },
   { path: '/logs', label: 'AUDIT LOGS', icon: ListTodo, permission: AdminPermission.VIEW_AUDIT_LOGS },
 ];
+
 
 const FOOTER_ITEMS = [
   { path: '/settings', label: 'SETTINGS', icon: Settings, permission: AdminPermission.VIEW_SETTINGS },

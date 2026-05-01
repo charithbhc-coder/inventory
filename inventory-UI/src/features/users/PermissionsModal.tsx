@@ -42,6 +42,15 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    category: 'Employee Management',
+    permissions: [
+      { id: AdminPermission.VIEW_EMPLOYEES, label: 'View Employees', type: 'view' },
+      { id: AdminPermission.MANAGE_EMPLOYEES, label: 'Manage & Offboard', type: 'special' },
+      { id: AdminPermission.REQUEST_TRANSFERS, label: 'Request Transfers', type: 'special' },
+      { id: AdminPermission.APPROVE_TRANSFERS, label: 'Approve Transfers', type: 'special' },
+    ],
+  },
+  {
     category: 'Inventory Assets',
     permissions: [
       { id: AdminPermission.VIEW_ITEMS, label: 'View', type: 'view' },
