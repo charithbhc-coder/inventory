@@ -183,12 +183,12 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
     >
       <div
         style={{
-          background: '#121212',
+          background: 'var(--bg-card)',
           borderRadius: 20,
           overflow: 'hidden',
           width: '100%',
           maxWidth: 420,
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--border-dark)',
           boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
           maxHeight: 'calc(100vh - 32px)',
           overflowY: 'auto',
@@ -198,13 +198,13 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
         {/* Header */}
         <div style={{
           padding: '16px 16px 14px', display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)',
-          position: 'sticky', top: 0, background: '#121212', zIndex: 1,
+          alignItems: 'center', borderBottom: '1px solid var(--border-dark)',
+          position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1,
         }}>
-          <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#fff' }}>
+          <span style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-main)' }}>
             Asset QR Code
           </span>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', cursor: 'pointer', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: 'var(--bg-dark)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
             <X size={16} />
           </button>
         </div>
@@ -233,14 +233,14 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
               {assetCode}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#999', fontWeight: 600, marginTop: 10, textAlign: 'center', padding: '0 8px' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginTop: 10, textAlign: 'center', padding: '0 8px' }}>
             {itemName}
           </div>
         </div>
 
         {/* Label size controls */}
         <div style={{ padding: '16px' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: '#666', marginBottom: 8, letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8, letterSpacing: '0.08em' }}>
             Label Size
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -251,9 +251,9 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
                 style={{
                   padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
                   border: '1px solid',
-                  borderColor: labelW === p.w && labelH === p.h ? '#ffe053' : 'rgba(255,255,255,0.1)',
+                  borderColor: labelW === p.w && labelH === p.h ? 'var(--accent-yellow)' : 'var(--border-dark)',
                   background: labelW === p.w && labelH === p.h ? 'rgba(255,224,83,0.12)' : 'transparent',
-                  color: labelW === p.w && labelH === p.h ? '#ffe053' : '#777',
+                  color: labelW === p.w && labelH === p.h ? 'var(--accent-yellow)' : 'var(--text-muted)',
                   minHeight: 32,
                 }}
               >
@@ -261,23 +261,23 @@ export default function QrPrintModal({ isOpen, onClose, itemId, itemName, assetC
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 10, color: '#666', fontWeight: 700, whiteSpace: 'nowrap' }}>W</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 100px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, whiteSpace: 'nowrap' }}>W</span>
               <input
                 type="number" value={labelW} onChange={e => setLabelW(Number(e.target.value))}
-                style={{ flex: 1, padding: '7px 8px', borderRadius: 6, border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#fff', textAlign: 'center', fontSize: 13, minWidth: 0 }}
+                style={{ flex: 1, padding: '7px 8px', borderRadius: 6, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', textAlign: 'center', fontSize: 13, minWidth: 60 }}
               />
             </div>
-            <span style={{ color: '#444', fontSize: 16, fontWeight: 300 }}>×</span>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 10, color: '#666', fontWeight: 700, whiteSpace: 'nowrap' }}>H</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 16, fontWeight: 300 }}>×</span>
+            <div style={{ flex: '1 1 100px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, whiteSpace: 'nowrap' }}>H</span>
               <input
                 type="number" value={labelH} onChange={e => setLabelH(Number(e.target.value))}
-                style={{ flex: 1, padding: '7px 8px', borderRadius: 6, border: '1px solid #2a2a2a', background: '#0a0a0a', color: '#fff', textAlign: 'center', fontSize: 13, minWidth: 0 }}
+                style={{ flex: 1, padding: '7px 8px', borderRadius: 6, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', textAlign: 'center', fontSize: 13, minWidth: 60 }}
               />
             </div>
-            <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>mm</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>mm</span>
           </div>
         </div>
 
