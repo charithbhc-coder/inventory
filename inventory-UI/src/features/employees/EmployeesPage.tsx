@@ -5,8 +5,10 @@ import { itemService, Item } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
 import { useAuthStore } from '@/store/auth.store';
-import { AdminPermission, ItemStatus } from '@/types';
+import { AdminPermission } from '@/types';
 import toast from 'react-hot-toast';
+import { printAssetHandoverForm, printAssetIssuanceForm, PrintableItem, EmployeeInfo } from '@/utils/formPrinter';
+
 
 import AssignModal from '@/features/items/AssignModal';
 import QrPrintModal from '@/components/qr/QrPrintModal';
@@ -78,6 +80,21 @@ export default function EmployeesPage() {
   const companies = useMemo(() => Array.isArray(companyData) ? companyData : (companyData as any)?.data || [], [companyData]);
   const departments = useMemo(() => Array.isArray(deptData) ? deptData : (deptData as any)?.data || [], [deptData]);
 
+  // Company branding for logos
+  const { data: brandingData } = useQuery({
+    queryKey: ['companies-branding'],
+    queryFn: () => companyService.getBranding(),
+    staleTime: 0,
+  });
+  const mainCompanyLogoUrl = useMemo(() => {
+    const all = brandingData || [];
+    const ktmg = all.find((c: any) =>
+      c.code?.toUpperCase() === 'KTMG' ||
+      c.name?.toLowerCase().includes('kids and teens')
+    );
+    return ktmg?.logoUrl || undefined;
+  }, [brandingData]);
+
   // Group items by employee
   const { activeEmployees, deactivatedEmployees } = useMemo(() => {
     const activeMap = new Map<string, EmployeeGroup>();
@@ -144,6 +161,45 @@ export default function EmployeesPage() {
         {status.replace(/_/g, ' ')}
       </div>
     );
+  };
+
+  // Helper: build employee/item objects for form printing
+  const buildPrintData = (emp: EmployeeGroup, itemsToPrint: Item[]): [EmployeeInfo, PrintableItem[]] => {
+    const companyObj = companies.find((c: any) => c.id === emp.companyId);
+    const employeeInfo: EmployeeInfo = {
+      name: emp.name,
+      employeeId: emp.employeeId || '',
+      department: emp.departmentName,
+      company: emp.companyName,
+      companyLogoUrl: companyObj?.logoUrl || undefined,
+      mainCompanyLogoUrl,
+    };
+    const printableItems: PrintableItem[] = itemsToPrint.map(item => ({
+      name: item.name,
+      barcode: item.barcode,
+      serialNumber: item.serialNumber || undefined,
+      condition: item.condition,
+      category: item.category?.name,
+      remarks: item.remarks || undefined,
+    }));
+    return [employeeInfo, printableItems];
+  };
+
+  const handlePrintIssuance = async (emp: EmployeeGroup) => {
+    if (!emp.items.length) { toast.error('No assets to print.'); return; }
+    const [empInfo, printItems] = buildPrintData(emp, emp.items);
+    toast.loading('Preparing issuance form...', { id: 'print' });
+    await printAssetIssuanceForm(empInfo, printItems);
+    toast.dismiss('print');
+  };
+
+  const handlePrintHandover = async (emp: EmployeeGroup, overrideItems?: Item[]) => {
+    const itemsToPrint = overrideItems ?? emp.items;
+    if (!itemsToPrint.length) { toast.error('No assets to include in handover form.'); return; }
+    const [empInfo, printItems] = buildPrintData(emp, itemsToPrint);
+    toast.loading('Preparing handover form...', { id: 'print' });
+    await printAssetHandoverForm(empInfo, printItems);
+    toast.dismiss('print');
   };
 
   const handleTransferClick = (item: Item) => {
@@ -282,14 +338,37 @@ export default function EmployeesPage() {
                      </div>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                     {/* Active: print issuance + offboard */}
+                     {selectedEmployee.isActive && (
+                       <button 
+                         onClick={() => handlePrintIssuance(selectedEmployee)}
+                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                       >
+                         <FileText size={14}/> Print Issuance
+                       </button>
+                     )}
+                     {/* Both active & deactivated: print handover */}
+                     <button 
+                       onClick={() => handlePrintHandover(selectedEmployee)}
+                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                     >
+                       <FileText size={14}/> Print Handover
+                     </button>
+                     {/* Active: bulk offboard */}
                      {hasPermission(AdminPermission.MANAGE_EMPLOYEES) && selectedEmployee.isActive && (
                         <button 
                            onClick={() => setIsOffboardModalOpen(true)}
-                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(225, 29, 72, 0.3)', background: 'rgba(225, 29, 72, 0.05)', color: '#e11d48', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(225, 29, 72, 0.3)', background: 'rgba(225, 29, 72, 0.05)', color: '#e11d48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                         >
-                           <PowerOff size={16} /> Bulk Offboard
+                           <PowerOff size={14} /> Offboard & Return All
                         </button>
+                     )}
+                     {/* Deactivated: re-activate (Super Admin only) */}
+                     {!selectedEmployee.isActive && isSuperAdmin && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 10, background: 'rgba(71,85,105,0.1)', border: '1px solid var(--border-dark)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
+                           <PowerOff size={13}/> Deactivated
+                        </div>
                      )}
                   </div>
                </div>
@@ -298,12 +377,13 @@ export default function EmployeesPage() {
                <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
-                        {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets'}
+                        {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets (History)'}
                      </h3>
-                     <div style={{ display: 'flex', gap: 8 }}>
-                        <button style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}><FileText size={14}/> Print Issuance</button>
-                        <button style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}><FileText size={14}/> Print Handover</button>
-                     </div>
+                     {!selectedEmployee.isActive && selectedEmployee.items.length > 0 && (
+                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                         These are assets this employee <strong>previously held</strong>. They are now returned.
+                       </div>
+                     )}
                   </div>
 
                   <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
@@ -333,7 +413,7 @@ export default function EmployeesPage() {
                                  <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                        <button onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><QrCode size={14}/></button>
-                                       <button onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="History" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><Activity size={14}/></button>
+                                       <button onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><Activity size={14}/></button>
                                        {selectedEmployee.isActive && (
                                           <button 
                                              onClick={() => handleTransferClick(item)}
@@ -341,6 +421,9 @@ export default function EmployeesPage() {
                                           >
                                              {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
                                           </button>
+                                       )}
+                                       {!selectedEmployee.isActive && (
+                                          <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>Returned</span>
                                        )}
                                     </div>
                                  </td>
@@ -402,10 +485,7 @@ export default function EmployeesPage() {
            onClose={() => setIsOffboardModalOpen(false)}
            employeeName={selectedEmployee.name}
            items={selectedEmployee.items}
-           onPrintHandover={() => {
-              // Stub for print handover
-              toast.success('Printing handover form...');
-           }}
+           onPrintHandover={() => handlePrintHandover(selectedEmployee)}
          />
       )}
     </div>
