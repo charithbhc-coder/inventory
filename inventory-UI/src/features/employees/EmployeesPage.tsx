@@ -503,7 +503,7 @@ export default function EmployeesPage() {
                                     className="hover-card"
                                     style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                                   >
-                                    {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
+                                    Request Transfer
                                   </button>
                                 )}
                                 {item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase() && (

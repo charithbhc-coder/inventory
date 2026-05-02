@@ -326,7 +326,7 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
               disabled={mutation.isPending}
               style={{ minWidth: 160 }}
             >
-              {mutation.isPending ? (item.assignedToName ? 'Updating...' : 'Assigning...') : (item.assignedToName ? 'Update Assignment' : 'Confirm Assignment')}
+              {mutation.isPending ? (item.assignedToName ? 'Transferring...' : 'Assigning...') : (item.assignedToName ? 'Confirm Transfer' : 'Confirm Assignment')}
             </button>
           </div>
         </form>
