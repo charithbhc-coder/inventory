@@ -127,7 +127,14 @@ export class ItemsService implements OnModuleInit {
       .leftJoinAndSelect('item.addedByUser', 'addedByUser');
 
     if (query.companyId) qb.andWhere('item.companyId = :companyId', { companyId: query.companyId });
-    if (query.status) qb.andWhere('item.status = :status', { status: query.status });
+    if (query.status) {
+      if (typeof query.status === 'string' && query.status.includes(',')) {
+        const statuses = query.status.split(',');
+        qb.andWhere('item.status IN (:...statuses)', { statuses });
+      } else {
+        qb.andWhere('item.status = :status', { status: query.status });
+      }
+    }
     if (query.categoryId) qb.andWhere('item.categoryId = :categoryId', { categoryId: query.categoryId });
     if (query.departmentId) qb.andWhere('item.departmentId = :departmentId', { departmentId: query.departmentId });
     if (query.isWorking) qb.andWhere('item.isWorking = :isWorking', { isWorking: query.isWorking === 'true' });

@@ -64,6 +64,7 @@ export default function ItemsPage() {
   const [deptFilter, setDeptFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [viewTab, setViewTab] = useState<'ACTIVE' | 'ARCHIVED'>('ACTIVE');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -98,15 +99,20 @@ export default function ItemsPage() {
     }
   }, [urlSearch, urlCategory]);
 
+  const effectiveStatusFilter = useMemo(() => {
+    if (viewTab === 'ARCHIVED') return 'LOST,DISPOSED';
+    return statusFilter;
+  }, [viewTab, statusFilter]);
+
   /* ─── Queries ─── */
   const { data: itemData, isLoading } = useQuery({
-    queryKey: ['items', search, companyFilter, deptFilter, categoryFilter, statusFilter, page],
+    queryKey: ['items', search, companyFilter, deptFilter, categoryFilter, effectiveStatusFilter, page],
     queryFn: () => itemService.getItems({
       search,
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
       categoryId: categoryFilter || undefined,
-      status: statusFilter || undefined,
+      status: effectiveStatusFilter || undefined,
       page,
       limit: LIMIT,
     }),
@@ -348,6 +354,38 @@ export default function ItemsPage() {
       {/* Main Content Card */}
       <div className="dark-card" style={{ padding: '24px 0 0', overflow: 'hidden' }}>
         
+        {/* View Tabs */}
+        <div style={{ display: 'flex', padding: '0 24px', marginBottom: 20, gap: 12 }}>
+          <button 
+            onClick={() => { setViewTab('ACTIVE'); setPage(1); setStatusFilter(''); }}
+            style={{
+              padding: '10px 24px', borderRadius: '12px', fontSize: 13, fontWeight: 800,
+              background: viewTab === 'ACTIVE' ? 'var(--accent-yellow)' : 'rgba(255,255,255,0.03)',
+              color: viewTab === 'ACTIVE' ? '#000' : 'var(--text-muted)',
+              border: viewTab === 'ACTIVE' ? 'none' : '1px solid var(--border-dark)',
+              cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: 8
+            }}
+          >
+            <Package size={16} />
+            Inventory Matrix
+          </button>
+          <button 
+            onClick={() => { setViewTab('ARCHIVED'); setPage(1); setStatusFilter(''); }}
+            style={{
+              padding: '10px 24px', borderRadius: '12px', fontSize: 13, fontWeight: 800,
+              background: viewTab === 'ARCHIVED' ? '#e11d48' : 'rgba(255,255,255,0.03)',
+              color: viewTab === 'ARCHIVED' ? '#fff' : 'var(--text-muted)',
+              border: viewTab === 'ARCHIVED' ? 'none' : '1px solid var(--border-dark)',
+              cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: 8
+            }}
+          >
+            <Activity size={16} />
+            Lost & Disposed Assets
+          </button>
+        </div>
+
         {/* Filters Toolbar */}
         <div className="filter-toolbar" style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           
@@ -369,22 +407,23 @@ export default function ItemsPage() {
           </div>
 
           <div className="filter-group" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', flex: '2 1 400px' }}>
-            {/* Status Filter */}
-            <div style={{ position: 'relative', flex: 1, minWidth: 150 }}>
-              <select 
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                style={{ ...styles.select, width: '100%' }}
-              >
-                <option value="">All Statuses</option>
-                <option value="WAREHOUSE">Warehouse</option>
-                <option value="IN_USE">In Use</option>
-                <option value="IN_REPAIR">In Repair</option>
-                <option value="SENT_TO_REPAIR">Sent To Repair</option>
-                <option value="LOST">Lost</option>
-                <option value="DISPOSED">Disposed</option>
-              </select>
-            </div>
+            {/* Status Filter - Only shown in ACTIVE tab */}
+            {viewTab === 'ACTIVE' && (
+              <div style={{ position: 'relative', flex: 1, minWidth: 150 }}>
+                <select 
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  style={{ ...styles.select, width: '100%' }}
+                >
+                  <option value="">All Active Statuses</option>
+                  <option value="WAREHOUSE">Warehouse</option>
+                  <option value="IN_USE">In Use</option>
+                  <option value="IN_REPAIR">In Repair</option>
+                  <option value="SENT_TO_REPAIR">Sent to Repair</option>
+                  <option value="IN_TRANSIT">In Transit</option>
+                </select>
+              </div>
+            )}
 
             {/* Subsidiary Filter */}
             <div style={{ position: 'relative', flex: 1, minWidth: 150 }}>
