@@ -32,7 +32,7 @@ export default function EmployeesPage() {
   const [companyFilter, setCompanyFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [tab, setTab] = useState<'ACTIVE' | 'DEACTIVATED'>('ACTIVE');
-  
+
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeGroup | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
@@ -80,13 +80,13 @@ export default function EmployeesPage() {
     }),
   });
 
-  const { data: companyData } = useQuery({ 
-    queryKey: ['companies', 'active'], 
-    queryFn: () => companyService.getCompanies({ limit: 100 }) 
+  const { data: companyData } = useQuery({
+    queryKey: ['companies', 'active'],
+    queryFn: () => companyService.getCompanies({ limit: 100 })
   });
 
-  const { data: deptData } = useQuery({ 
-    queryKey: ['departments', companyFilter], 
+  const { data: deptData } = useQuery({
+    queryKey: ['departments', companyFilter],
     queryFn: () => departmentService.getDepartments(companyFilter || undefined, { limit: 100 }),
     enabled: !!companyFilter
   });
@@ -173,11 +173,11 @@ export default function EmployeesPage() {
 
   // Apply search
   const currentList = tab === 'ACTIVE' ? activeEmployees : deactivatedEmployees;
-  const filteredEmployees = currentList.filter(emp => 
-    emp.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredEmployees = currentList.filter(emp =>
+    emp.name.toLowerCase().includes(search.toLowerCase()) ||
     emp.employeeId.toLowerCase().includes(search.toLowerCase())
   );
-  
+
   // Apply pagination
   const totalEmpPages = Math.ceil(filteredEmployees.length / EMP_PER_PAGE);
   const pagedEmployees = filteredEmployees.slice((empPage - 1) * EMP_PER_PAGE, empPage * EMP_PER_PAGE);
@@ -241,10 +241,10 @@ export default function EmployeesPage() {
       setIsAssignModalOpen(true);
     } else {
       if (hasPermission(AdminPermission.REQUEST_TRANSFERS)) {
-         setTransferItem(item);
-         setIsTransferRequestModalOpen(true);
+        setTransferItem(item);
+        setIsTransferRequestModalOpen(true);
       } else {
-         toast.error("You don't have permission to transfer items.");
+        toast.error("You don't have permission to transfer items.");
       }
     }
   };
@@ -263,99 +263,99 @@ export default function EmployeesPage() {
 
       {/* Main Layout */}
       <div className="dark-card" style={{ flex: 1, display: 'flex', overflow: 'hidden', height: '75vh', padding: 0 }}>
-        
+
         {/* LEFT PANEL - Employee List */}
-        <div style={{ 
-          width: isMobile ? '100%' : 380, 
-          borderRight: isMobile ? 'none' : '1px solid var(--border-dark)', 
+        <div style={{
+          width: isMobile ? '100%' : 380,
+          borderRight: isMobile ? 'none' : '1px solid var(--border-dark)',
           display: isMobile && showDetailOnMobile ? 'none' : 'flex',
           flexDirection: 'column',
           background: 'transparent'
         }}>
           {/* List Toolbar */}
           <div style={{ padding: 20, borderBottom: '1px solid var(--border-dark)' }}>
-             <div style={{ position: 'relative', marginBottom: 12 }}>
-                <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: 12 }} />
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px 10px 40px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 13, outline: 'none' }}
-                />
-             </div>
-             <div style={{ display: 'flex', gap: 8 }}>
-               <select value={companyFilter} onChange={e => { setCompanyFilter(e.target.value); setDeptFilter(''); }} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 12, outline: 'none' }}>
-                 <option value="">All Companies</option>
-                 {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-               </select>
-               <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} disabled={!companyFilter} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 12, outline: 'none', opacity: !companyFilter ? 0.5 : 1 }}>
-                 <option value="">All Depts</option>
-                 {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-               </select>
-             </div>
-             
-             {/* Tabs */}
-             <div style={{ display: 'flex', marginTop: 16, background: 'var(--bg-card)', padding: 4, borderRadius: 10, border: '1px solid var(--border-dark)' }}>
-                <button onClick={() => setTab('ACTIVE')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'ACTIVE' ? 'var(--bg-dark)' : 'transparent', color: tab === 'ACTIVE' ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                   Active ({activeEmployees.length})
-                </button>
-                <button onClick={() => setTab('DEACTIVATED')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'DEACTIVATED' ? 'var(--bg-dark)' : 'transparent', color: tab === 'DEACTIVATED' ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                   Deactivated ({deactivatedEmployees.length})
-                </button>
-             </div>
+            <div style={{ position: 'relative', marginBottom: 12 }}>
+              <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: 12 }} />
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px 10px 40px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 13, outline: 'none' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select value={companyFilter} onChange={e => { setCompanyFilter(e.target.value); setDeptFilter(''); }} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 12, outline: 'none' }}>
+                <option value="">All Companies</option>
+                {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} disabled={!companyFilter} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-dark)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 12, outline: 'none', opacity: !companyFilter ? 0.5 : 1 }}>
+                <option value="">All Depts</option>
+                {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', marginTop: 16, background: 'var(--bg-card)', padding: 4, borderRadius: 10, border: '1px solid var(--border-dark)' }}>
+              <button onClick={() => setTab('ACTIVE')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'ACTIVE' ? 'var(--bg-dark)' : 'transparent', color: tab === 'ACTIVE' ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                Active ({activeEmployees.length})
+              </button>
+              <button onClick={() => setTab('DEACTIVATED')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'DEACTIVATED' ? 'var(--bg-dark)' : 'transparent', color: tab === 'DEACTIVATED' ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                Deactivated ({deactivatedEmployees.length})
+              </button>
+            </div>
           </div>
 
           {/* List Content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-             {isLoading ? (
-                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
-             ) : filteredEmployees.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>No employees found</div>
-             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {pagedEmployees.map(emp => (
-                     <button
-                       key={emp.name}
-                       onClick={() => { setSelectedEmployee(emp); setAssetPage(1); if (isMobile) setShowDetailOnMobile(true); }}
-                       style={{ 
-                         display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, border: '1px solid',
-                         borderColor: selectedEmployee?.name === emp.name ? 'var(--accent-yellow)' : 'var(--border-dark)',
-                         background: selectedEmployee?.name === emp.name ? 'rgba(255, 224, 83, 0.05)' : 'var(--bg-card)',
-                         cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s'
-                       }}
-                       className="hover-card"
-                     >
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)' }}>
-                           {emp.name.trim().charAt(0)}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
-                           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.employeeId || 'No ID'} • {emp.departmentName}</div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 8 }}>
-                           <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent-yellow)' }}>{emp.items.length}</span>
-                           <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>ITEMS</span>
-                        </div>
-                     </button>
-                  ))}
-                </div>
-             )}
-             
-             {/* Employee Pagination */}
-             {totalEmpPages > 1 && (
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, padding: '0 8px' }}>
-                 <button disabled={empPage === 1} onClick={() => setEmpPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
-                 <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {empPage} of {totalEmpPages}</span>
-                 <button disabled={empPage === totalEmpPages} onClick={() => setEmpPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === totalEmpPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === totalEmpPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
-               </div>
-             )}
+            {isLoading ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
+            ) : filteredEmployees.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>No employees found</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {pagedEmployees.map(emp => (
+                  <button
+                    key={emp.name}
+                    onClick={() => { setSelectedEmployee(emp); setAssetPage(1); if (isMobile) setShowDetailOnMobile(true); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, border: '1px solid',
+                      borderColor: selectedEmployee?.name === emp.name ? 'var(--accent-yellow)' : 'var(--border-dark)',
+                      background: selectedEmployee?.name === emp.name ? 'rgba(255, 224, 83, 0.05)' : 'var(--bg-card)',
+                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s'
+                    }}
+                    className="hover-card"
+                  >
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)' }}>
+                      {emp.name.trim().charAt(0)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.employeeId || 'No ID'} • {emp.departmentName}</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent-yellow)' }}>{emp.items.length}</span>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>ITEMS</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Employee Pagination */}
+            {totalEmpPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, padding: '0 8px' }}>
+                <button disabled={empPage === 1} onClick={() => setEmpPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {empPage} of {totalEmpPages}</span>
+                <button disabled={empPage === totalEmpPages} onClick={() => setEmpPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: empPage === totalEmpPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: empPage === totalEmpPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* RIGHT PANEL - Employee Details */}
-        <div style={{ 
-          flex: 1, 
+        <div style={{
+          flex: 1,
           minWidth: 0, /* Fix flexbox blowout */
           display: (!isMobile || showDetailOnMobile) ? 'flex' : 'none',
           flexDirection: 'column',
@@ -363,139 +363,139 @@ export default function EmployeesPage() {
         }}>
           {selectedEmployee ? (
             <>
-               {/* Detail Header */}
-               <div style={{ padding: isMobile ? '16px' : '24px 32px', borderBottom: '1px solid var(--border-dark)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center', width: '100%' }}>
-                     {isMobile && (
-                        <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
-                     )}
-                     <div style={{ width: 64, height: 64, borderRadius: 16, background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }}>
-                        {selectedEmployee.name.trim().charAt(0)}
-                     </div>
-                     <div>
-                        <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
-                        <div style={{ display: 'flex', gap: 12, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
-                           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14}/> {selectedEmployee.employeeId || 'No ID'}</span>
-                           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Building2 size={14}/> {selectedEmployee.departmentName}</span>
-                        </div>
-                     </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                     {/* Active: print issuance + offboard */}
-                     {selectedEmployee.isActive && (
-                       <button 
-                         className="hover-card"
-                         onClick={() => handlePrintIssuance(selectedEmployee)}
-                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                       >
-                         <FileText size={14}/> Print Issuance
-                       </button>
-                     )}
-                     {/* Both active & deactivated: print handover */}
-                     <button 
-                       className="hover-card"
-                       onClick={() => handlePrintHandover(selectedEmployee)}
-                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.05)', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                     >
-                       <FileText size={14}/> Print Handover
-                     </button>
-                     {/* Active: bulk offboard */}
-                     {hasPermission(AdminPermission.MANAGE_EMPLOYEES) && selectedEmployee.isActive && (
-                        <button 
-                           onClick={() => setIsOffboardModalOpen(true)}
-                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(225, 29, 72, 0.3)', background: 'rgba(225, 29, 72, 0.05)', color: '#e11d48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                           <PowerOff size={14} /> Offboard & Return All
-                        </button>
-                     )}
-                     {/* Deactivated: re-activate (Super Admin only) */}
-                     {!selectedEmployee.isActive && isSuperAdmin && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 10, background: 'rgba(71,85,105,0.1)', border: '1px solid var(--border-dark)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
-                           <PowerOff size={13}/> Deactivated
-                        </div>
-                     )}
-                  </div>
-               </div>
-
-               {/* Detail Content (Assets Table) */}
-               <div style={{ flex: 1, padding: isMobile ? '16px' : 32, overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                     <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
-                        {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets (History)'}
-                     </h3>
-                     {!selectedEmployee.isActive && selectedEmployee.items.length > 0 && (
-                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                         These are assets this employee <strong>previously held</strong>. They are now returned.
-                       </div>
-                     )}
-                  </div>
-
-                  <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
-                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
-                           <thead>
-                           <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
-                              <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
-                              <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
-                              <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
-                              <th style={{ padding: '14px 20px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Actions</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {pagedAssets.map(item => (
-                              <tr key={item.id} style={{ borderBottom: '1px solid var(--border-dark)' }}>
-                                 <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-yellow)' }}><Package size={16}/></div>
-                                       <div>
-                                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>{item.name}</div>
-                                          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.barcode}</div>
-                                       </div>
-                                    </div>
-                                 </td>
-                                 <td style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-main)' }}>{item.category?.name || '-'}</td>
-                                 <td style={{ padding: '16px 20px' }}><StatusBadge status={item.status} /></td>
-                                 <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                                       <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14}/></button>
-                                       <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14}/></button>
-                                       {selectedEmployee.isActive && (
-                                          <button 
-                                             onClick={() => handleTransferClick(item)}
-                                             className="hover-card"
-                                             style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                                          >
-                                             {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
-                                          </button>
-                                       )}
-                                       {!selectedEmployee.isActive && (
-                                          <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>Returned</span>
-                                       )}
-                                    </div>
-                                 </td>
-                              </tr>
-                           ))}
-                        </tbody>
-                        </table>
-                     </div>
-                  </div>
-
-                  {/* Asset Pagination */}
-                  {totalAssetPages > 1 && (
-                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
-                        <button disabled={assetPage === 1} onClick={() => setAssetPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {assetPage} of {totalAssetPages}</span>
-                        <button disabled={assetPage === totalAssetPages} onClick={() => setAssetPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === totalAssetPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === totalAssetPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
-                     </div>
+              {/* Detail Header */}
+              <div style={{ padding: isMobile ? '16px' : '24px 32px', borderBottom: '1px solid var(--border-dark)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', width: '100%' }}>
+                  {isMobile && (
+                    <button onClick={() => setShowDetailOnMobile(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 24, cursor: 'pointer', marginRight: 8 }}>‹</button>
                   )}
-               </div>
+                  <div style={{ width: 64, height: 64, borderRadius: 16, background: '#ffe053', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }}>
+                    {selectedEmployee.name.trim().charAt(0)}
+                  </div>
+                  <div>
+                    <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
+                    <div style={{ display: 'flex', gap: 12, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> {selectedEmployee.employeeId || 'No ID'}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Building2 size={14} /> {selectedEmployee.departmentName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {/* Active: print issuance + offboard */}
+                  {selectedEmployee.isActive && (
+                    <button
+                      className="hover-card"
+                      onClick={() => handlePrintIssuance(selectedEmployee)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      <FileText size={14} /> Print Issuance
+                    </button>
+                  )}
+                  {/* Both active & deactivated: print handover */}
+                  <button
+                    className="hover-card"
+                    onClick={() => handlePrintHandover(selectedEmployee)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.05)', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    <FileText size={14} /> Print Handover
+                  </button>
+                  {/* Active: bulk offboard */}
+                  {hasPermission(AdminPermission.MANAGE_EMPLOYEES) && selectedEmployee.isActive && (
+                    <button
+                      onClick={() => setIsOffboardModalOpen(true)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(225, 29, 72, 0.3)', background: 'rgba(225, 29, 72, 0.05)', color: '#e11d48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      <PowerOff size={14} /> Offboard & Return All
+                    </button>
+                  )}
+                  {/* Deactivated: re-activate (Super Admin only) */}
+                  {!selectedEmployee.isActive && isSuperAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 10, background: 'rgba(71,85,105,0.1)', border: '1px solid var(--border-dark)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
+                      <PowerOff size={13} /> Deactivated
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Detail Content (Assets Table) */}
+              <div style={{ flex: 1, padding: isMobile ? '16px' : 32, overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
+                    {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets (History)'}
+                  </h3>
+                  {!selectedEmployee.isActive && selectedEmployee.items.length > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                      These are assets this employee <strong>previously held</strong>. They are now returned.
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
+                          <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
+                          <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
+                          <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
+                          <th style={{ padding: '14px 20px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedAssets.map(item => (
+                          <tr key={item.id} style={{ borderBottom: '1px solid var(--border-dark)' }}>
+                            <td style={{ padding: '16px 20px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-yellow)' }}><Package size={16} /></div>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>{item.name}</div>
+                                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.barcode}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-main)' }}>{item.category?.name || '-'}</td>
+                            <td style={{ padding: '16px 20px' }}><StatusBadge status={item.status} /></td>
+                            <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14} /></button>
+                                <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14} /></button>
+                                {selectedEmployee.isActive && (
+                                  <button
+                                    onClick={() => handleTransferClick(item)}
+                                    className="hover-card"
+                                    style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
+                                  </button>
+                                )}
+                                {!selectedEmployee.isActive && (
+                                  <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>Returned</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Asset Pagination */}
+                {totalAssetPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 16 }}>
+                    <button disabled={assetPage === 1} onClick={() => setAssetPage(p => p - 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === 1 ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === 1 ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Prev</button>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Page {assetPage} of {totalAssetPages}</span>
+                    <button disabled={assetPage === totalAssetPages} onClick={() => setAssetPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === totalAssetPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === totalAssetPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-               <UserCheck size={64} style={{ opacity: 0.1, marginBottom: 16 }} />
-               <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--text-main)' }}>Select an Employee</p>
-               <p style={{ margin: '4px 0 0', fontSize: 13 }}>Choose an employee from the list to view their assets</p>
+              <UserCheck size={64} style={{ opacity: 0.1, marginBottom: 16 }} />
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--text-main)' }}>Select an Employee</p>
+              <p style={{ margin: '4px 0 0', fontSize: 13 }}>Choose an employee from the list to view their assets</p>
             </div>
           )}
         </div>
@@ -503,48 +503,48 @@ export default function EmployeesPage() {
 
       {/* Reused Modals */}
       {transferItem && (
-         <AssignModal
-           item={transferItem}
-           isOpen={isAssignModalOpen}
-           onClose={() => { setIsAssignModalOpen(false); setTransferItem(null); }}
-           modalTitle="Transfer Asset"
-         />
+        <AssignModal
+          item={transferItem}
+          isOpen={isAssignModalOpen}
+          onClose={() => { setIsAssignModalOpen(false); setTransferItem(null); }}
+          modalTitle="Transfer Asset"
+        />
       )}
-      
+
       {transferItem && isTransferRequestModalOpen && (
-         <TransferRequestModal
-           item={transferItem}
-           isOpen={isTransferRequestModalOpen}
-           onClose={() => { setIsTransferRequestModalOpen(false); setTransferItem(null); }}
-         />
+        <TransferRequestModal
+          item={transferItem}
+          isOpen={isTransferRequestModalOpen}
+          onClose={() => { setIsTransferRequestModalOpen(false); setTransferItem(null); }}
+        />
       )}
-      
+
       {qrPrintItem && (
-         <QrPrintModal
-           isOpen={!!qrPrintItem}
-           onClose={() => setQrPrintItem(null)}
-           itemId={qrPrintItem.id}
-           itemName={qrPrintItem.name}
-           assetCode={qrPrintItem.barcode}
-         />
+        <QrPrintModal
+          isOpen={!!qrPrintItem}
+          onClose={() => setQrPrintItem(null)}
+          itemId={qrPrintItem.id}
+          itemName={qrPrintItem.name}
+          assetCode={qrPrintItem.barcode}
+        />
       )}
 
       {trackingItem && (
-         <ItemTrackingModal
-           item={trackingItem}
-           isOpen={isTrackingModalOpen}
-           onClose={() => { setIsTrackingModalOpen(false); setTrackingItem(null); }}
-         />
+        <ItemTrackingModal
+          item={trackingItem}
+          isOpen={isTrackingModalOpen}
+          onClose={() => { setIsTrackingModalOpen(false); setTrackingItem(null); }}
+        />
       )}
 
       {selectedEmployee && isOffboardModalOpen && (
-         <OffboardModal
-           isOpen={isOffboardModalOpen}
-           onClose={() => setIsOffboardModalOpen(false)}
-           employeeName={selectedEmployee.name}
-           items={selectedEmployee.items}
-           onPrintHandover={() => handlePrintHandover(selectedEmployee)}
-         />
+        <OffboardModal
+          isOpen={isOffboardModalOpen}
+          onClose={() => setIsOffboardModalOpen(false)}
+          employeeName={selectedEmployee.name}
+          items={selectedEmployee.items}
+          onPrintHandover={() => handlePrintHandover(selectedEmployee)}
+        />
       )}
     </div>
   );
