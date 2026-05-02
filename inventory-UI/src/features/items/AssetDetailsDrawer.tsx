@@ -147,7 +147,28 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </div>
             )}
 
-            {hasPermission(AdminPermission.ASSIGN_ITEMS) && (
+            {/* Dispose Lock Banner */}
+            {item.status === ItemStatus.DISPOSED && (
+              <div style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: 'rgba(15, 23, 42, 0.4)',
+                border: '1.5px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+              }}>
+                <Trash2 size={14} style={{ flexShrink: 0 }} />
+                Asset is DISPOSED — no further actions can be taken.
+              </div>
+            )}
+
+            {item.status !== ItemStatus.DISPOSED && hasPermission(AdminPermission.ASSIGN_ITEMS) && (
               <div style={{ position: 'relative', flex: 1, display: 'flex', gap: 8 }} title={
                 (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
                   ? 'Cannot assign — item is currently in repair'
@@ -180,7 +201,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 )}
               </div>
             )}
-            {hasPermission(AdminPermission.MANAGE_REPAIRS) && (
+            {item.status !== ItemStatus.DISPOSED && hasPermission(AdminPermission.MANAGE_REPAIRS) && (
               (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) ? (
                 <button className="hub-btn success" onClick={() => setActiveModal('return')}>
                   <CheckCircle2 size={16} />
@@ -202,7 +223,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 </div>
               )
             )}
-            {item.status === ItemStatus.LOST ? (
+            {item.status !== ItemStatus.DISPOSED && (item.status === ItemStatus.LOST ? (
               <button className="hub-btn success" onClick={() => setActiveModal('recover')} style={{ flex: 1.5 }}>
                 <CheckCircle2 size={16} />
                 <span>Found Asset</span>
@@ -228,8 +249,8 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   </button>
                 </div>
               )
-            )}
-            {hasPermission(AdminPermission.MANAGE_DISPOSALS) && (
+            ))}
+            {item.status !== ItemStatus.DISPOSED && hasPermission(AdminPermission.MANAGE_DISPOSALS) && (
               <button className="hub-btn danger" onClick={() => setActiveModal('dispose')} style={{ opacity: 0.8 }}>
                 <Trash2 size={16} />
                 <span>Dispose</span>

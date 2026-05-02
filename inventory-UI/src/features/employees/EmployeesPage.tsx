@@ -136,13 +136,20 @@ export default function EmployeesPage() {
       }
     });
 
-    // Build deactivated map from ALL items via previousAssignedToName
+    // Build deactivated map and append past items to active employees via previousAssignedToName
     allItems.forEach((item: Item) => {
       const pastName = (item as any).previousAssignedToName;
-      if (pastName && !item.assignedToName) {
+      if (pastName) {
         const key = pastName.toLowerCase().trim();
-        // Only add to deactivated if NOT currently active
-        if (!activeMap.has(key)) {
+        
+        if (activeMap.has(key)) {
+          // Employee is active, append to their history
+          const emp = activeMap.get(key)!;
+          if (!emp.items.some(i => i.id === item.id)) {
+            emp.items.push(item);
+          }
+        } else {
+          // Employee is deactivated
           if (!deactMap.has(key)) {
             deactMap.set(key, {
               name: pastName.trim(),
@@ -155,10 +162,22 @@ export default function EmployeesPage() {
               isActive: false
             });
           }
-          deactMap.get(key)!.items.push(item);
+          const emp = deactMap.get(key)!;
+          if (!emp.items.some(i => i.id === item.id)) {
+            emp.items.push(item);
+          }
         }
       }
     });
+
+    // Sort items so currently assigned are at the top, history at the bottom
+    for (const emp of activeMap.values()) {
+       emp.items.sort((a, b) => {
+         const aActive = a.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase() ? -1 : 1;
+         const bActive = b.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase() ? -1 : 1;
+         return aActive - bActive;
+       });
+    }
 
     // Safety: remove from deactMap anyone who also appears in activeMap
     for (const key of activeMap.keys()) deactMap.delete(key);
@@ -207,20 +226,33 @@ export default function EmployeesPage() {
       companyLogoUrl: companyObj?.logoUrl || undefined,
       mainCompanyLogoUrl,
     };
-    const printableItems: PrintableItem[] = itemsToPrint.map(item => ({
-      name: item.name,
-      barcode: item.barcode,
-      serialNumber: item.serialNumber || undefined,
-      condition: item.condition,
-      category: item.category?.name,
-      remarks: item.remarks || undefined,
-    }));
+    const printableItems: PrintableItem[] = itemsToPrint.map(item => {
+      let statusStr = 'Returned';
+      if (item.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase()) {
+        statusStr = 'Assigned';
+      } else if (item.status === 'DISPOSED') {
+        statusStr = 'Disposed';
+      } else if (item.status === 'LOST') {
+        statusStr = 'Lost';
+      }
+      
+      return {
+        name: item.name,
+        barcode: item.barcode,
+        serialNumber: item.serialNumber || undefined,
+        condition: item.condition,
+        category: item.category?.name,
+        remarks: item.remarks || undefined,
+        status: statusStr
+      };
+    });
     return [employeeInfo, printableItems];
   };
 
   const handlePrintIssuance = async (emp: EmployeeGroup) => {
-    if (!emp.items.length) { toast.error('No assets to print.'); return; }
-    const [empInfo, printItems] = buildPrintData(emp, emp.items);
+    const activeItems = emp.items.filter(i => i.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase());
+    if (!activeItems.length) { toast.error('No assigned assets to print issuance for.'); return; }
+    const [empInfo, printItems] = buildPrintData(emp, activeItems);
     toast.loading('Preparing issuance form...', { id: 'print' });
     await printAssetIssuanceForm(empInfo, printItems);
     toast.dismiss('print');
@@ -422,11 +454,16 @@ export default function EmployeesPage() {
               <div style={{ flex: 1, padding: isMobile ? '16px' : 32, overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
-                    {selectedEmployee.isActive ? 'Currently Assigned Assets' : 'Previously Held Assets (History)'}
+                    {selectedEmployee.isActive ? 'Assigned Assets & History' : 'Previously Held Assets (History)'}
                   </h3>
                   {!selectedEmployee.isActive && selectedEmployee.items.length > 0 && (
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                       These are assets this employee <strong>previously held</strong>. They are now returned.
+                    </div>
+                  )}
+                  {selectedEmployee.isActive && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Includes currently assigned assets and past returned/disposed assets.
                     </div>
                   )}
                 </div>
@@ -460,7 +497,7 @@ export default function EmployeesPage() {
                               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                                 <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14} /></button>
                                 <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14} /></button>
-                                {selectedEmployee.isActive && (
+                                {item.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase() && (
                                   <button
                                     onClick={() => handleTransferClick(item)}
                                     className="hover-card"
@@ -469,8 +506,10 @@ export default function EmployeesPage() {
                                     {isSuperAdmin ? 'Transfer' : 'Request Transfer'}
                                   </button>
                                 )}
-                                {!selectedEmployee.isActive && (
-                                  <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>Returned</span>
+                                {item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase() && (
+                                  <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
+                                    {item.status === 'DISPOSED' ? 'Disposed' : item.status === 'LOST' ? 'Lost' : 'Returned'}
+                                  </span>
                                 )}
                               </div>
                             </td>
@@ -542,7 +581,7 @@ export default function EmployeesPage() {
           isOpen={isOffboardModalOpen}
           onClose={() => setIsOffboardModalOpen(false)}
           employeeName={selectedEmployee.name}
-          items={selectedEmployee.items}
+          items={selectedEmployee.items.filter(i => i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
           onPrintHandover={() => handlePrintHandover(selectedEmployee)}
         />
       )}

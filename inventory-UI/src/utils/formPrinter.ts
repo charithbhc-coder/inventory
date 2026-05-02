@@ -22,6 +22,7 @@ export interface PrintableItem {
   category?: string;
   remarks?: string;
   purchasePrice?: string | number;
+  status?: string;
 }
 
 const sharedStyles = `
@@ -317,8 +318,8 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
       <tr>
         <th style="width:30px">#</th>
         <th>Item</th>
-        <th>Status</th>
-        <th>Remarks</th>
+        <th>Assignment Status</th>
+        <th>Serial / Barcode</th>
       </tr>
     </thead>
     <tbody>
@@ -326,8 +327,8 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
         <tr>
           <td style="text-align:center">${i + 1}</td>
           <td>${item.name}</td>
-          <td>${item.condition || 'Used'}</td>
-          <td>${item.serialNumber || item.barcode || ''}</td>
+          <td style="font-weight:bold">${item.status || 'Returned'}</td>
+          <td style="font-family:monospace;font-size:10px">${item.serialNumber || item.barcode || ''}</td>
         </tr>
       `).join('')}
       ${Array.from({ length: Math.max(0, 5 - items.length) }).map(() => `
