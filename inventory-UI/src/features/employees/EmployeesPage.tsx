@@ -385,18 +385,18 @@ export default function EmployeesPage() {
                      {/* Active: print issuance + offboard */}
                      {selectedEmployee.isActive && (
                        <button 
-                         className="btn-print"
+                         className="hover-card"
                          onClick={() => handlePrintIssuance(selectedEmployee)}
-                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                        >
                          <FileText size={14}/> Print Issuance
                        </button>
                      )}
                      {/* Both active & deactivated: print handover */}
                      <button 
-                       className="btn-print"
+                       className="hover-card"
                        onClick={() => handlePrintHandover(selectedEmployee)}
-                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.05)', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                      >
                        <FileText size={14}/> Print Handover
                      </button>
