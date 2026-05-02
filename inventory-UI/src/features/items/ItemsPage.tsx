@@ -28,7 +28,7 @@ import { categoryService } from '@/services/category.service';
 import ItemModal from './ItemModal';
 import AssetDetailsDrawer from './AssetDetailsDrawer';
 import ItemTrackingModal from './ItemTrackingModal';
-import EmployeeAssetsModal from './EmployeeAssetsModal';
+
 import QrPrintModal from '@/components/qr/QrPrintModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
@@ -71,7 +71,7 @@ export default function ItemsPage() {
   const [drawerItem, setDrawerItem] = useState<Item | null>(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
-  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+
   const [qrPrintItem, setQrPrintItem] = useState<Item | null>(null);
   const [page, setPage] = useState(1);
   const hasPermission = useAuthStore((s: any) => s.hasPermission);
@@ -303,19 +303,7 @@ export default function ItemsPage() {
           </p>
         </div>
         <div className="items-header-actions" style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => setIsEmployeeModalOpen(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-              borderRadius: 12, border: '1px solid var(--border-dark)', 
-              background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6',
-              fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer'
-            }}
-            className="hover-card"
-          >
-            <Users size={18} strokeWidth={2.5} />
-            Employee Asset View
-          </button>
+
           {hasPermission(AdminPermission.VIEW_LICENSES) && (
             <NavLink
               to="/licenses"
@@ -657,11 +645,7 @@ export default function ItemsPage() {
         onClose={() => setIsTrackingModalOpen(false)}
       />
 
-      {/* Employee Assets Modal */}
-      <EmployeeAssetsModal
-        isOpen={isEmployeeModalOpen}
-        onClose={() => setIsEmployeeModalOpen(false)}
-      />
+
 
       {/* QR Print Modal */}
       {qrPrintItem && (
