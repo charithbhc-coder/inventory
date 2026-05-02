@@ -17,8 +17,7 @@ import {
   LayoutGrid,
   Activity,
   Tags,
-  Key,
-  Users
+  Key
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
