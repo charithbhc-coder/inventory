@@ -14,6 +14,7 @@ import { Company } from '../../companies/entities/company.entity';
 import { Department } from '../../departments/entities/department.entity';
 import { ItemCategory } from './item-category.entity';
 import { User } from '../../users/entities/user.entity';
+import { GatePass } from './gate-pass.entity';
 
 @Entity('items')
 @Index(['companyId', 'status'])
@@ -156,6 +157,14 @@ export class Item {
 
   @OneToMany(() => Item, (item) => item.parentItem)
   childItems: Item[];
+
+  // --- Gate Pass Tracking ---
+  @Column({ type: 'uuid', nullable: true })
+  gatePassId: string | null;
+
+  @ManyToOne(() => GatePass, (gatePass) => gatePass.items, { nullable: true })
+  @JoinColumn({ name: 'gatePassId' })
+  gatePass: GatePass | null;
 
   // --- Metadata ---
   @Column({ type: 'text', nullable: true })

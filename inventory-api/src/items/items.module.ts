@@ -15,15 +15,18 @@ import { TransferRequestsController } from './transfer-requests.controller';
 import { TransferRequestsService } from './transfer-requests.service';
 import { UsersModule } from '../users/users.module';
 import { User } from '../users/entities/user.entity';
+import { GatePass } from './entities/gate-pass.entity';
+import { GatePassesController } from './gate-passes.controller';
+import { GatePassesService } from './gate-passes.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Item, ItemCategory, ItemEvent, Company, TransferRequest, User]),
+    TypeOrmModule.forFeature([Item, ItemCategory, ItemEvent, Company, TransferRequest, User, GatePass]),
     NotificationsModule,
     UsersModule,
   ],
-  controllers: [ItemsController, ItemCategoriesController, TransferRequestsController],
-  providers: [ItemsService, ItemCategoriesService, ItemsScheduler, TransferRequestsService],
+  controllers: [ItemsController, ItemCategoriesController, TransferRequestsController, GatePassesController],
+  providers: [ItemsService, ItemCategoriesService, ItemsScheduler, TransferRequestsService, GatePassesService],
   exports: [ItemsService, ItemCategoriesService, TransferRequestsService],
 })
 export class ItemsModule {}

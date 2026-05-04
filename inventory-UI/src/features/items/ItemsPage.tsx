@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createColumnHelper,
   flexRender,
@@ -18,7 +18,9 @@ import {
   Activity,
   Tags,
   Key,
-  FileText
+  FileText,
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
@@ -33,6 +35,7 @@ import QrPrintModal from '@/components/qr/QrPrintModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 import { printGatePassForm } from '@/utils/formPrinter';
+import gatePassService, { GatePass } from '@/services/gatePass.service';
 import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
 
@@ -77,12 +80,15 @@ export default function ItemsPage() {
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [isGatePassModalOpen, setIsGatePassModalOpen] = useState(false);
+  const [gatePassMode, setGatePassMode] = useState<'new' | 'append'>('new');
+  const [selectedGatePassId, setSelectedGatePassId] = useState('');
+  const [isActiveGatePassesOpen, setIsActiveGatePassesOpen] = useState(false);
   const [gatePassDetails, setGatePassDetails] = useState({
     destination: '',
-    vehicleNo: '',
-    driverName: '',
+    reason: '',
     authorizedBy: '',
   });
+  const queryClient = useQueryClient();
 
   const [qrPrintItem, setQrPrintItem] = useState<Item | null>(null);
   const [page, setPage] = useState(1);
@@ -160,6 +166,11 @@ export default function ItemsPage() {
   const { data: catData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories({ limit: 100 })
+  });
+
+  const { data: activeGatePasses = [] } = useQuery({
+    queryKey: ['gate-passes', 'active'],
+    queryFn: () => gatePassService.getActive(),
   });
 
   const items = useMemo(() => Array.isArray(itemData) ? itemData : (itemData as any)?.data || [], [itemData]);
@@ -351,12 +362,14 @@ export default function ItemsPage() {
   const selectedItems = selectedRows.map(r => r.original);
 
   const handleGenerateGatePass = () => {
-    // Validation
     const invalidItems = selectedItems.filter(item => item.status !== 'WAREHOUSE');
     if (invalidItems.length > 0) {
-      toast.error(`Only items in WAREHOUSE status can be added to a Gate Pass. Please return ${invalidItems.length} assigned/lost items first.`);
+      toast.error(`${invalidItems.length} selected item(s) are not in WAREHOUSE status. Only warehouse items can be sent via Gate Pass.`);
       return;
     }
+    setGatePassMode('new');
+    setSelectedGatePassId('');
+    setGatePassDetails({ destination: '', reason: '', authorizedBy: '' });
     setIsGatePassModalOpen(true);
   };
 
@@ -373,6 +386,41 @@ export default function ItemsPage() {
           </p>
         </div>
         <div className="items-header-actions" style={{ display: 'flex', gap: 12 }}>
+          {/* Active Gate Passes Tracker Button */}
+          <button
+            onClick={() => setIsActiveGatePassesOpen(true)}
+            className="hover-card"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+              borderRadius: 12, border: '1px solid rgba(99,102,241,0.3)', 
+              background: 'rgba(99,102,241,0.07)', color: '#6366f1',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', position: 'relative'
+            }}
+          >
+            <Clock size={18} strokeWidth={2.5} />
+            Gate Passes
+            {(activeGatePasses as GatePass[]).length > 0 && (
+              <span style={{ background: '#6366f1', color: '#fff', borderRadius: 20, padding: '1px 7px', fontSize: 11, fontWeight: 800 }}>
+                {(activeGatePasses as GatePass[]).length}
+              </span>
+            )}
+          </button>
+
+          {selectedItems.length > 0 && (
+            <button
+              onClick={handleGenerateGatePass}
+              className="hover-card"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+                borderRadius: 12, border: '1px solid rgba(59, 130, 246, 0.3)', 
+                background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', animation: 'slideUp 0.3s ease-out'
+              }}
+            >
+              <FileText size={18} strokeWidth={2.5} />
+              Gate Pass ({selectedItems.length})
+            </button>
+          )}
 
           {hasPermission(AdminPermission.VIEW_LICENSES) && (
             <NavLink
@@ -454,42 +502,6 @@ export default function ItemsPage() {
         {/* Filters Toolbar */}
         <div className="filter-toolbar" style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           
-          {/* Bulk Actions (Floating if selected) */}
-          {selectedItems.length > 0 && (
-            <div style={{
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              padding: '8px 16px',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              animation: 'slideUp 0.3s ease-out'
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#3b82f6' }}>
-                {selectedItems.length} items selected
-              </span>
-              <button 
-                onClick={handleGenerateGatePass}
-                className="hover-card"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-                  borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none',
-                  fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-                }}
-              >
-                <FileText size={16} />
-                Generate Gate Pass
-              </button>
-              <button 
-                onClick={() => setRowSelection({})}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}
-              >
-                Clear
-              </button>
-            </div>
-          )}
-
           {/* Search Box */}
           <div className="search-box-wrapper" style={{ position: 'relative', flex: '1 1 250px', minWidth: 200 }}>
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 16, top: 12 }} />
@@ -807,97 +819,190 @@ export default function ItemsPage() {
                   <FileText size={20} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Gate Pass Details</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{selectedItems.length} items to be transferred</p>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Gate Pass</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{selectedItems.length} item(s) selected</p>
                 </div>
               </div>
               <button onClick={() => setIsGatePassModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20}/></button>
             </div>
 
+            {/* Mode Toggle */}
+            <div style={{ padding: '16px 24px 0', display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setGatePassMode('new')}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: gatePassMode === 'new' ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: gatePassMode === 'new' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}
+              >
+                Create New Gate Pass
+              </button>
+              <button
+                onClick={() => setGatePassMode('append')}
+                disabled={(activeGatePasses as GatePass[]).length === 0}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: gatePassMode === 'append' ? '#6366f1' : 'rgba(255,255,255,0.05)', color: gatePassMode === 'append' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s', opacity: (activeGatePasses as GatePass[]).length === 0 ? 0.4 : 1 }}
+              >
+                Add to Existing ({(activeGatePasses as GatePass[]).length} active)
+              </button>
+            </div>
+
             <div style={{ padding: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Destination Subsidiary / Location</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Head Office / Branch Name"
-                    value={gatePassDetails.destination}
-                    onChange={e => setGatePassDetails({...gatePassDetails, destination: e.target.value})}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vehicle No</label>
-                    <input 
-                      type="text" 
-                      placeholder="WP CA-1234"
-                      value={gatePassDetails.vehicleNo}
-                      onChange={e => setGatePassDetails({...gatePassDetails, vehicleNo: e.target.value})}
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-                    />
+
+                {gatePassMode === 'append' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Select Active Gate Pass</label>
+                    <select
+                      value={selectedGatePassId}
+                      onChange={e => setSelectedGatePassId(e.target.value)}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">Select a Gate Pass...</option>
+                      {(activeGatePasses as GatePass[]).map((gp) => (
+                        <option key={gp.id} value={gp.id}>{gp.referenceNo} — {gp.destination} ({gp.items.length} items)</option>
+                      ))}
+                    </select>
+                    {selectedGatePassId && (
+                      <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', fontSize: 12, color: '#6366f1' }}>
+                        <strong>Note:</strong> These {selectedItems.length} item(s) will be appended to the selected Gate Pass and marked as IN_TRANSIT. The Gate Pass will be reprinted with all items.
+                      </div>
+                    )}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Driver Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Sunil Perera"
-                      value={gatePassDetails.driverName}
-                      onChange={e => setGatePassDetails({...gatePassDetails, driverName: e.target.value})}
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authorized By</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. IT Manager / Operations Head"
-                    value={gatePassDetails.authorizedBy}
-                    onChange={e => setGatePassDetails({...gatePassDetails, authorizedBy: e.target.value})}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-                  />
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Destination Subsidiary / Location</label>
+                      <select
+                        value={gatePassDetails.destination}
+                        onChange={e => setGatePassDetails({...gatePassDetails, destination: e.target.value})}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+                      >
+                        <option value="">Select a Destination...</option>
+                        {companies.map((c: any) => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reason for Transfer</label>
+                      <input type="text" placeholder="e.g. Sent for repair, Reallocation" value={gatePassDetails.reason}
+                        onChange={e => setGatePassDetails({...gatePassDetails, reason: e.target.value})}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authorized By</label>
+                      <input type="text" placeholder="e.g. IT Manager" value={gatePassDetails.authorizedBy}
+                        onChange={e => setGatePassDetails({...gatePassDetails, authorizedBy: e.target.value})}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-dark)', display: 'flex', gap: 12, background: 'rgba(255,255,255,0.02)' }}>
               <button onClick={() => setIsGatePassModalOpen(false)} style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-              <button 
-                disabled={!gatePassDetails.destination || !gatePassDetails.vehicleNo}
+              <button
+                disabled={gatePassMode === 'new' ? (!gatePassDetails.destination || !gatePassDetails.reason) : !selectedGatePassId}
                 onClick={async () => {
-                  const companyId = selectedItems[0]?.companyId;
-                  const company = companies.find((c: any) => c.id === companyId);
-                  const itemsToPrint = selectedItems.map(i => ({
-                    name: i.name,
-                    barcode: i.barcode,
-                    serialNumber: i.serialNumber || undefined,
-                    category: i.category?.name,
-                    condition: i.condition
-                  }));
-                  
-                  toast.loading('Generating Gate Pass...', { id: 'gatepass' });
+                  toast.loading('Processing Gate Pass...', { id: 'gatepass' });
                   try {
+                    let gatePassRecord: GatePass;
+                    const itemIds = selectedItems.map(i => i.id);
+
+                    if (gatePassMode === 'new') {
+                      gatePassRecord = await gatePassService.create({ itemIds, ...gatePassDetails });
+                    } else {
+                      gatePassRecord = await gatePassService.append(selectedGatePassId, itemIds);
+                    }
+
+                    // Print the gate pass PDF
+                    const companyId = selectedItems[0]?.companyId;
+                    const company = companies.find((c: any) => c.id === companyId);
+                    const itemsToPrint = gatePassRecord.items.map(i => ({
+                      name: i.name, barcode: i.barcode, serialNumber: undefined, category: undefined, condition: undefined
+                    }));
                     await printGatePassForm(
-                      {
-                        name: company?.name || 'Company',
-                        logoUrl: company?.logoUrl,
-                        mainCompanyLogoUrl
-                      },
+                      { name: company?.name || 'Company', logoUrl: (company as any)?.logoUrl, mainCompanyLogoUrl },
                       itemsToPrint,
-                      gatePassDetails
+                      { destination: gatePassRecord.destination, reason: gatePassRecord.reason, authorizedBy: gatePassRecord.authorizedBy }
                     );
-                    toast.success('Gate Pass Generated', { id: 'gatepass' });
+
+                    toast.success(`Gate Pass ${gatePassRecord.referenceNo} issued! Items marked IN_TRANSIT.`, { id: 'gatepass' });
+                    queryClient.invalidateQueries({ queryKey: ['items'] });
+                    queryClient.invalidateQueries({ queryKey: ['gate-passes', 'active'] });
                     setIsGatePassModalOpen(false);
                     setRowSelection({});
-                  } catch (err) {
-                    toast.error('Failed to generate Gate Pass', { id: 'gatepass' });
+                  } catch (err: any) {
+                    toast.error(err?.response?.data?.message || 'Failed to process Gate Pass', { id: 'gatepass' });
                   }
                 }}
-                style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: (!gatePassDetails.destination || !gatePassDetails.vehicleNo) ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', background: gatePassMode === 'new' ? '#3b82f6' : '#6366f1', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: (gatePassMode === 'new' ? (!gatePassDetails.destination || !gatePassDetails.reason) : !selectedGatePassId) ? 0.5 : 1 }}
               >
-                Print Gate Pass
+                {gatePassMode === 'new' ? '✓ Issue & Print Gate Pass' : '+ Append & Reprint'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Gate Passes Tracker Panel */}
+      {isActiveGatePassesOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 680, background: 'var(--bg-card)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border-dark)', boxShadow: '0 32px 64px rgba(0,0,0,0.4)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dark)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Clock size={20} color="#6366f1" />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Active Gate Passes</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{(activeGatePasses as GatePass[]).length} open gate pass(es)</p>
+                </div>
+              </div>
+              <button onClick={() => setIsActiveGatePassesOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20}/></button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(activeGatePasses as GatePass[]).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                  <CheckCircle2 size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
+                  <p>No active gate passes. All items are accounted for.</p>
+                </div>
+              ) : (
+                (activeGatePasses as GatePass[]).map((gp) => (
+                  <div key={gp.id} style={{ padding: 16, borderRadius: 12, border: '1px solid var(--border-dark)', background: 'rgba(255,255,255,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: '#6366f1' }}>{gp.referenceNo}</span>
+                          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', color: '#6366f1', fontWeight: 700 }}>IN TRANSIT</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>→ {gp.destination} &nbsp;|&nbsp; {gp.items.length} item(s) &nbsp;|&nbsp; {new Date(gp.createdAt).toLocaleDateString()}</p>
+                        {gp.reason && <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>Reason: {gp.reason}</p>}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Mark Gate Pass ${gp.referenceNo} as RETURNED? This will move all ${gp.items.length} item(s) back to WAREHOUSE.`)) return;
+                          toast.loading('Marking as returned...', { id: 'gp-return' });
+                          try {
+                            await gatePassService.markReturned(gp.id);
+                            toast.success(`${gp.referenceNo} marked as returned. Items back in WAREHOUSE.`, { id: 'gp-return' });
+                            queryClient.invalidateQueries({ queryKey: ['items'] });
+                            queryClient.invalidateQueries({ queryKey: ['gate-passes', 'active'] });
+                          } catch {
+                            toast.error('Failed to mark as returned', { id: 'gp-return' });
+                          }
+                        }}
+                        style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'rgba(16,185,129,0.1)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ✓ Mark Returned
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {gp.items.map(item => (
+                        <span key={item.id} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(99,102,241,0.08)', color: '#6366f1', fontFamily: 'monospace' }}>{item.barcode}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

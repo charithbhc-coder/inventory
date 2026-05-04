@@ -81,6 +81,12 @@ export enum ItemStatus {
   IN_TRANSIT = 'IN_TRANSIT',
 }
 
+export enum GatePassStatus {
+  ACTIVE = 'ACTIVE',
+  RETURNED = 'RETURNED',
+  CANCELLED = 'CANCELLED',
+}
+
 export enum ItemCondition {
   NEW = 'NEW',
   GOOD = 'GOOD',
@@ -108,6 +114,9 @@ export enum ItemEventType {
   FOUND = 'FOUND',
   NOTES_UPDATED = 'NOTES_UPDATED',
   TRANSFERRED = 'TRANSFERRED',
+  GATE_PASS_ISSUED = 'GATE_PASS_ISSUED',
+  ADDED_TO_GATE_PASS = 'ADDED_TO_GATE_PASS',
+  GATE_PASS_RETURNED = 'GATE_PASS_RETURNED',
 }
 
 export enum DisposalMethod {

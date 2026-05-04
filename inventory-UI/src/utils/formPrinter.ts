@@ -408,8 +408,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
 
 export interface GatePassInfo {
   destination: string;
-  vehicleNo: string;
-  driverName?: string;
+  reason?: string;
   authorizedBy?: string;
 }
 
@@ -455,8 +454,7 @@ export async function printGatePassForm(company: CompanyInfo, items: PrintableIt
       <p class="meta"><span class="highlight">Time:</span> ${time}</p>
     </div>
     <div style="text-align: right;">
-      <p class="meta"><span class="highlight">Vehicle No:</span> ${info.vehicleNo}</p>
-      <p class="meta"><span class="highlight">Driver Name:</span> ${info.driverName || 'N/A'}</p>
+      <p class="meta"><span class="highlight">Destination:</span> ${info.destination}</p>
     </div>
   </div>
 
@@ -491,7 +489,11 @@ export async function printGatePassForm(company: CompanyInfo, items: PrintableIt
 
   <div style="margin-top: 24px;">
     <div class="field-row">
-      <div class="field-label">AUTHORIZATION / REMARKS:</div>
+      <div class="field-label">REASON FOR TRANSFER:</div>
+      <div class="field-line">${info.reason || ''}</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">AUTHORIZATION:</div>
       <div class="field-line">${info.authorizedBy ? `Authorized by ${info.authorizedBy}` : ''}</div>
     </div>
   </div>
@@ -501,10 +503,6 @@ export async function printGatePassForm(company: CompanyInfo, items: PrintableIt
       <div class="sig-line"></div>
       <div class="sig-label">Authorized Signature</div>
       <div class="sig-label">(Company Stamp)</div>
-    </div>
-    <div class="sig-block">
-      <div class="sig-line"></div>
-      <div class="sig-label">Driver / Carrier Signature</div>
     </div>
     <div class="sig-block">
       <div class="sig-line"></div>
