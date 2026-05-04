@@ -79,6 +79,7 @@ export default function ItemsPage() {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
   const [rowSelection, setRowSelection] = useState({});
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isGatePassModalOpen, setIsGatePassModalOpen] = useState(false);
   const [gatePassMode, setGatePassMode] = useState<'new' | 'append'>('new');
   const [selectedGatePassId, setSelectedGatePassId] = useState('');
@@ -216,7 +217,7 @@ export default function ItemsPage() {
 
   /* ─── Columns ─── */
   const columns = useMemo(() => [
-    {
+    ...(isSelectionMode ? [{
       id: 'select',
       header: ({ table }: any) => (
         <input
@@ -232,10 +233,11 @@ export default function ItemsPage() {
           checked={row.getIsSelected()}
           disabled={!row.getCanSelect()}
           onChange={row.getToggleSelectedHandler()}
-          style={{ cursor: 'pointer', width: 16, height: 16 }}
+          onClick={e => e.stopPropagation()}
+          style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#3b82f6' }}
         />
       ),
-    },
+    }] : []),
     columnHelper.accessor('name', {
       header: 'ASSET NAME',
       cell: info => (
@@ -345,7 +347,7 @@ export default function ItemsPage() {
         </div>
       ),
     }),
-  ], [setDrawerItem, setIsDrawerOpen, setSelectedItem, setIsModalOpen, setTrackingItem, setIsTrackingModalOpen]);
+  ], [isSelectionMode, setDrawerItem, setIsDrawerOpen, setSelectedItem, setIsModalOpen, setTrackingItem, setIsTrackingModalOpen]);
 
   const table = useReactTable({
     data: items,
@@ -388,11 +390,23 @@ export default function ItemsPage() {
         <div className="items-header-actions" style={{ display: 'flex', gap: 12 }}>
           {/* Active Gate Passes Tracker Button */}
           <button
-            onClick={() => setIsActiveGatePassesOpen(true)}
+            onClick={() => {
+              if (isSelectionMode) {
+                // Exit selection mode — open the gate pass modal if items selected, else just exit
+                if (selectedItems.length > 0) {
+                  handleGenerateGatePass();
+                } else {
+                  setIsSelectionMode(false);
+                  setRowSelection({});
+                }
+              } else {
+                setIsActiveGatePassesOpen(true);
+              }
+            }}
             className="hover-card"
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-              borderRadius: 12, border: '1px solid rgba(99,102,241,0.3)', 
+              borderRadius: 12, border: '1px solid rgba(99,102,241,0.3)',
               background: 'rgba(99,102,241,0.07)', color: '#6366f1',
               fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', position: 'relative'
             }}
@@ -406,21 +420,36 @@ export default function ItemsPage() {
             )}
           </button>
 
-          {selectedItems.length > 0 && (
-            <button
-              onClick={handleGenerateGatePass}
-              className="hover-card"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
-                borderRadius: 12, border: '1px solid rgba(59, 130, 246, 0.3)', 
-                background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', animation: 'slideUp 0.3s ease-out'
-              }}
-            >
-              <FileText size={18} strokeWidth={2.5} />
-              Gate Pass ({selectedItems.length})
-            </button>
-          )}
+          {/* Gate Pass Selection Mode Button */}
+          <button
+            onClick={() => {
+              if (isSelectionMode && selectedItems.length > 0) {
+                handleGenerateGatePass();
+              } else {
+                setIsSelectionMode(s => !s);
+                setRowSelection({});
+              }
+            }}
+            className="hover-card"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+              borderRadius: 12,
+              border: isSelectionMode ? 'none' : '1px solid rgba(59, 130, 246, 0.3)',
+              background: isSelectionMode
+                ? (selectedItems.length > 0 ? '#3b82f6' : 'rgba(59,130,246,0.15)')
+                : 'rgba(59, 130, 246, 0.07)',
+              color: isSelectionMode ? (selectedItems.length > 0 ? '#fff' : '#3b82f6') : '#3b82f6',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            <FileText size={18} strokeWidth={2.5} />
+            {isSelectionMode
+              ? selectedItems.length > 0
+                ? `Generate Gate Pass (${selectedItems.length})`
+                : 'Select items from table…'
+              : 'New Gate Pass'
+            }
+          </button>
 
           {hasPermission(AdminPermission.VIEW_LICENSES) && (
             <NavLink
@@ -625,10 +654,15 @@ export default function ItemsPage() {
                     <tr 
                       key={row.id} 
                       onClick={() => {
-                        setDrawerItem(row.original);
-                        setIsDrawerOpen(true);
+                        if (isSelectionMode) {
+                          // In selection mode, row click toggles checkbox instead of opening drawer
+                          row.toggleSelected();
+                        } else {
+                          setDrawerItem(row.original);
+                          setIsDrawerOpen(true);
+                        }
                       }}
-                      style={{ borderBottom: '1px solid var(--border-dark)', cursor: 'pointer' }} 
+                      style={{ borderBottom: '1px solid var(--border-dark)', cursor: 'pointer', background: row.getIsSelected() ? 'rgba(59,130,246,0.06)' : undefined }} 
                       className="table-row-hover"
                     >
                       {row.getVisibleCells().map(cell => (

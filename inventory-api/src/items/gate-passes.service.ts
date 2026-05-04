@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { GatePass } from './entities/gate-pass.entity';
 import { Item } from './entities/item.entity';
 import { ItemEvent } from './entities/item-event.entity';
@@ -24,24 +24,24 @@ export class GatePassesService {
       throw new BadRequestException('At least one item is required');
     }
 
-    const items = await this.itemsRepo.findByIds(dto.itemIds);
+    const items = await this.itemsRepo.find({ where: { id: In(dto.itemIds) } });
     if (items.length !== dto.itemIds.length) {
       throw new NotFoundException('Some items were not found');
     }
 
     for (const item of items) {
       if (item.status !== ItemStatus.WAREHOUSE) {
-        throw new BadRequestException(`Item ${item.name} is not in WAREHOUSE status`);
+        throw new BadRequestException(`Item "${item.name}" is not in WAREHOUSE status. Only WAREHOUSE items can be issued a Gate Pass.`);
       }
     }
 
     return await this.dataSource.transaction(async (manager) => {
-      // Generate reference number (e.g. GP-4821)
+      // Generate reference number (e.g. GP-1001)
       const maxRef = await manager
         .createQueryBuilder(GatePass, 'gp')
-        .select('MAX(CAST(SUBSTRING(gp.referenceNo, 4) AS INT))', 'max')
+        .select("MAX(CAST(SUBSTRING(gp.referenceNo FROM 4) AS INTEGER))", 'max')
         .getRawOne();
-      const nextId = (maxRef?.max || 1000) + 1;
+      const nextId = (parseInt(maxRef?.max || '1000') ) + 1;
       const referenceNo = `GP-${nextId}`;
 
       const gatePass = manager.create(GatePass, {
@@ -57,6 +57,7 @@ export class GatePassesService {
 
       const events: ItemEvent[] = [];
       for (const item of items) {
+        const fromStatus = item.status;
         item.status = ItemStatus.IN_TRANSIT;
         item.gatePassId = savedGatePass.id;
         await manager.save(item);
@@ -64,18 +65,19 @@ export class GatePassesService {
         events.push(manager.create(ItemEvent, {
           itemId: item.id,
           eventType: ItemEventType.GATE_PASS_ISSUED,
+          fromStatus,
+          toStatus: ItemStatus.IN_TRANSIT,
           notes: `Sent to ${dto.destination} via Gate Pass ${referenceNo}. Reason: ${dto.reason || 'N/A'}. Authorized by: ${dto.authorizedBy || 'N/A'}.`,
-          createdByUserId: userId,
+          performedByUserId: userId,
         }));
       }
 
       await manager.save(events);
 
-      // Return with relation
       return (await manager.findOne(GatePass, {
         where: { id: savedGatePass.id },
         relations: ['items'],
-      }))!
+      }))!;
     });
   }
 
@@ -90,7 +92,7 @@ export class GatePassesService {
       throw new BadRequestException('At least one item is required');
     }
 
-    const items = await this.itemsRepo.findByIds(dto.itemIds);
+    const items = await this.itemsRepo.find({ where: { id: In(dto.itemIds) } });
     if (items.length !== dto.itemIds.length) {
       throw new NotFoundException('Some items were not found');
     }
@@ -99,9 +101,10 @@ export class GatePassesService {
       const events: ItemEvent[] = [];
       for (const item of items) {
         if (item.status !== ItemStatus.WAREHOUSE) {
-          throw new BadRequestException(`Item ${item.name} is not in WAREHOUSE status`);
+          throw new BadRequestException(`Item "${item.name}" is not in WAREHOUSE status`);
         }
 
+        const fromStatus = item.status;
         item.status = ItemStatus.IN_TRANSIT;
         item.gatePassId = gatePass.id;
         await manager.save(item);
@@ -109,8 +112,10 @@ export class GatePassesService {
         events.push(manager.create(ItemEvent, {
           itemId: item.id,
           eventType: ItemEventType.ADDED_TO_GATE_PASS,
+          fromStatus,
+          toStatus: ItemStatus.IN_TRANSIT,
           notes: `Appended to active Gate Pass ${gatePass.referenceNo}. Destination: ${gatePass.destination}.`,
-          createdByUserId: userId,
+          performedByUserId: userId,
         }));
       }
 
@@ -119,7 +124,7 @@ export class GatePassesService {
       return (await manager.findOne(GatePass, {
         where: { id: gatePass.id },
         relations: ['items'],
-      }))!
+      }))!;
     });
   }
 
@@ -143,8 +148,10 @@ export class GatePassesService {
         events.push(manager.create(ItemEvent, {
           itemId: item.id,
           eventType: ItemEventType.GATE_PASS_RETURNED,
+          fromStatus: ItemStatus.IN_TRANSIT,
+          toStatus: ItemStatus.WAREHOUSE,
           notes: `Returned from Gate Pass ${gatePass.referenceNo}. Notes: ${dto.notes || 'N/A'}.`,
-          createdByUserId: userId,
+          performedByUserId: userId,
         }));
       }
 
