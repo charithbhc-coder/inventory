@@ -405,3 +405,119 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
 
   openPrintFrame(html, filename);
 }
+
+export interface GatePassInfo {
+  destination: string;
+  vehicleNo: string;
+  driverName?: string;
+  authorizedBy?: string;
+}
+
+export interface CompanyInfo {
+  name: string;
+  logoUrl?: string;
+  mainCompanyLogoUrl?: string;
+}
+
+export async function printGatePassForm(company: CompanyInfo, items: PrintableItem[], info: GatePassInfo) {
+  const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const filename = `GatePass_${safeFilename(company.name)}_${new Date().getTime()}.pdf`;
+
+  const logoBase64 = company.logoUrl ? await urlToBase64(company.logoUrl) : null;
+  const mainLogoBase64 = company.mainCompanyLogoUrl ? await urlToBase64(company.mainCompanyLogoUrl) : null;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gate Pass - ${company.name}</title>
+  <style>${sharedStyles}</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-box">
+      ${logoBase64 ? `<img src="${logoBase64}" />` : `<div class="logo-fallback">${company.name}</div>`}
+    </div>
+    <div class="header-center">
+      <h1>${company.name}</h1>
+      <h2>GATE PASS / EXIT PERMIT</h2>
+    </div>
+    <div class="logo-box">
+      ${mainLogoBase64 ? `<img src="${mainLogoBase64}" />` : `<div class="logo-fallback">KTMG</div>`}
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <div>
+      <p class="meta"><span class="highlight">Pass No:</span> GP-${Math.floor(1000 + Math.random() * 9000)}</p>
+      <p class="meta"><span class="highlight">Date:</span> ${date}</p>
+      <p class="meta"><span class="highlight">Time:</span> ${time}</p>
+    </div>
+    <div style="text-align: right;">
+      <p class="meta"><span class="highlight">Vehicle No:</span> ${info.vehicleNo}</p>
+      <p class="meta"><span class="highlight">Driver Name:</span> ${info.driverName || 'N/A'}</p>
+    </div>
+  </div>
+
+  <div class="declaration">
+    Permission is hereby granted to move the following items from <span class="highlight">${company.name}</span> 
+    to <span class="highlight">${info.destination}</span>. These items are for official transfer/movement.
+  </div>
+
+  <div class="section-title">LIST OF ITEMS / ASSETS</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40px;">#</th>
+        <th>Item Description</th>
+        <th>Barcode / ID</th>
+        <th>Serial Number</th>
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map((item, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${item.name}</td>
+          <td style="font-family: monospace;">${item.barcode}</td>
+          <td>${item.serialNumber || '-'}</td>
+          <td>${item.category || '-'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div style="margin-top: 24px;">
+    <div class="field-row">
+      <div class="field-label">AUTHORIZATION / REMARKS:</div>
+      <div class="field-line">${info.authorizedBy ? `Authorized by ${info.authorizedBy}` : ''}</div>
+    </div>
+  </div>
+
+  <div class="sig-row" style="margin-top: 60px;">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Authorized Signature</div>
+      <div class="sig-label">(Company Stamp)</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Driver / Carrier Signature</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Security Check (Out Gate)</div>
+      <div class="sig-label">Time Out: ___________</div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+    This is a computer-generated document. Original copy to be retained by Security at the gate.
+  </div>
+</body>
+</html>`;
+
+  openPrintFrame(html, filename);
+}

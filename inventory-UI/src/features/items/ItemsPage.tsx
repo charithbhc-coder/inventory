@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   Activity,
   Tags,
-  Key
+  Key,
+  FileText
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
@@ -31,6 +32,9 @@ import ItemTrackingModal from './ItemTrackingModal';
 import QrPrintModal from '@/components/qr/QrPrintModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
+import { printGatePassForm } from '@/utils/formPrinter';
+import toast from 'react-hot-toast';
+import { X } from 'lucide-react';
 
 const columnHelper = createColumnHelper<Item>();
 
@@ -71,6 +75,14 @@ export default function ItemsPage() {
   const [drawerItem, setDrawerItem] = useState<Item | null>(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingItem, setTrackingItem] = useState<Item | null>(null);
+  const [rowSelection, setRowSelection] = useState({});
+  const [isGatePassModalOpen, setIsGatePassModalOpen] = useState(false);
+  const [gatePassDetails, setGatePassDetails] = useState({
+    destination: '',
+    vehicleNo: '',
+    driverName: '',
+    authorizedBy: '',
+  });
 
   const [qrPrintItem, setQrPrintItem] = useState<Item | null>(null);
   const [page, setPage] = useState(1);
@@ -123,6 +135,21 @@ export default function ItemsPage() {
     queryKey: ['companies', 'active'], 
     queryFn: () => companyService.getCompanies({ limit: 100 }) 
   });
+
+  const { data: brandingData } = useQuery({
+    queryKey: ['companies-branding'],
+    queryFn: () => companyService.getBranding(),
+    staleTime: 0,
+  });
+
+  const mainCompanyLogoUrl = useMemo(() => {
+    const all = brandingData || [];
+    const ktmg = all.find((c: any) =>
+      c.code?.toUpperCase() === 'KTMG' ||
+      c.name?.toLowerCase().includes('kids and teens')
+    );
+    return ktmg?.logoUrl || undefined;
+  }, [brandingData]);
 
   const { data: deptData } = useQuery({ 
     queryKey: ['departments', companyFilter], 
@@ -178,6 +205,26 @@ export default function ItemsPage() {
 
   /* ─── Columns ─── */
   const columns = useMemo(() => [
+    {
+      id: 'select',
+      header: ({ table }: any) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          style={{ cursor: 'pointer', width: 16, height: 16 }}
+        />
+      ),
+      cell: ({ row }: any) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={row.getToggleSelectedHandler()}
+          style={{ cursor: 'pointer', width: 16, height: 16 }}
+        />
+      ),
+    },
     columnHelper.accessor('name', {
       header: 'ASSET NAME',
       cell: info => (
@@ -292,8 +339,26 @@ export default function ItemsPage() {
   const table = useReactTable({
     data: items,
     columns,
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const selectedRows = table.getSelectedRowModel().rows;
+  const selectedItems = selectedRows.map(r => r.original);
+
+  const handleGenerateGatePass = () => {
+    // Validation
+    const invalidItems = selectedItems.filter(item => item.status !== 'WAREHOUSE');
+    if (invalidItems.length > 0) {
+      toast.error(`Only items in WAREHOUSE status can be added to a Gate Pass. Please return ${invalidItems.length} assigned/lost items first.`);
+      return;
+    }
+    setIsGatePassModalOpen(true);
+  };
 
   return (
     <div style={{ padding: '0 0 40px' }}>
@@ -387,8 +452,44 @@ export default function ItemsPage() {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="filter-toolbar" style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div className="filter-toolbar" style={{ padding: '0 24px 20px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           
+          {/* Bulk Actions (Floating if selected) */}
+          {selectedItems.length > 0 && (
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              padding: '8px 16px',
+              borderRadius: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              animation: 'slideUp 0.3s ease-out'
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#3b82f6' }}>
+                {selectedItems.length} items selected
+              </span>
+              <button 
+                onClick={handleGenerateGatePass}
+                className="hover-card"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+                  borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                <FileText size={16} />
+                Generate Gate Pass
+              </button>
+              <button 
+                onClick={() => setRowSelection({})}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           {/* Search Box */}
           <div className="search-box-wrapper" style={{ position: 'relative', flex: '1 1 250px', minWidth: 200 }}>
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 16, top: 12 }} />
@@ -696,6 +797,112 @@ export default function ItemsPage() {
         />
       )}
 
+      {/* Gate Pass Modal */}
+      {isGatePassModalOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}>
+          <div className="modal" style={{ width: '100%', maxWidth: 500, background: 'var(--bg-card)', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border-dark)', boxShadow: '0 32px 64px rgba(0,0,0,0.4)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dark)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Gate Pass Details</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{selectedItems.length} items to be transferred</p>
+                </div>
+              </div>
+              <button onClick={() => setIsGatePassModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20}/></button>
+            </div>
+
+            <div style={{ padding: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Destination Subsidiary / Location</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Head Office / Branch Name"
+                    value={gatePassDetails.destination}
+                    onChange={e => setGatePassDetails({...gatePassDetails, destination: e.target.value})}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vehicle No</label>
+                    <input 
+                      type="text" 
+                      placeholder="WP CA-1234"
+                      value={gatePassDetails.vehicleNo}
+                      onChange={e => setGatePassDetails({...gatePassDetails, vehicleNo: e.target.value})}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Driver Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Sunil Perera"
+                      value={gatePassDetails.driverName}
+                      onChange={e => setGatePassDetails({...gatePassDetails, driverName: e.target.value})}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authorized By</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. IT Manager / Operations Head"
+                    value={gatePassDetails.authorizedBy}
+                    onChange={e => setGatePassDetails({...gatePassDetails, authorizedBy: e.target.value})}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-dark)', display: 'flex', gap: 12, background: 'rgba(255,255,255,0.02)' }}>
+              <button onClick={() => setIsGatePassModalOpen(false)} style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-main)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button 
+                disabled={!gatePassDetails.destination || !gatePassDetails.vehicleNo}
+                onClick={async () => {
+                  const companyId = selectedItems[0]?.companyId;
+                  const company = companies.find((c: any) => c.id === companyId);
+                  const itemsToPrint = selectedItems.map(i => ({
+                    name: i.name,
+                    barcode: i.barcode,
+                    serialNumber: i.serialNumber || undefined,
+                    category: i.category?.name,
+                    condition: i.condition
+                  }));
+                  
+                  toast.loading('Generating Gate Pass...', { id: 'gatepass' });
+                  try {
+                    await printGatePassForm(
+                      {
+                        name: company?.name || 'Company',
+                        logoUrl: company?.logoUrl,
+                        mainCompanyLogoUrl
+                      },
+                      itemsToPrint,
+                      gatePassDetails
+                    );
+                    toast.success('Gate Pass Generated', { id: 'gatepass' });
+                    setIsGatePassModalOpen(false);
+                    setRowSelection({});
+                  } catch (err) {
+                    toast.error('Failed to generate Gate Pass', { id: 'gatepass' });
+                  }
+                }}
+                style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: (!gatePassDetails.destination || !gatePassDetails.vehicleNo) ? 0.6 : 1 }}
+              >
+                Print Gate Pass
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .loading-spinner {
           width: 30px;
@@ -709,6 +916,10 @@ export default function ItemsPage() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(10px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
         @media (max-width: 768px) {
           .items-header {
