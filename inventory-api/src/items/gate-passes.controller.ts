@@ -10,7 +10,7 @@ export class GatePassesController {
 
   @Post()
   create(@Body() dto: CreateGatePassDto, @Request() req: any) {
-    return this.gatePassesService.create(dto, req.user.userId);
+    return this.gatePassesService.create(dto, req.user.sub);
   }
 
   @Get('active')
@@ -20,11 +20,11 @@ export class GatePassesController {
 
   @Post(':id/append')
   append(@Param('id') id: string, @Body() dto: AppendToGatePassDto, @Request() req: any) {
-    return this.gatePassesService.append(id, dto, req.user.userId);
+    return this.gatePassesService.append(id, dto, req.user.sub);
   }
 
   @Post(':id/return')
   markReturned(@Param('id') id: string, @Body() dto: ReturnGatePassDto, @Request() req: any) {
-    return this.gatePassesService.markReturned(id, dto, req.user.userId);
+    return this.gatePassesService.markReturned(id, dto, req.user.sub);
   }
 }

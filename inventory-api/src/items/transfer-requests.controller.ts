@@ -17,7 +17,7 @@ export class TransferRequestsController {
     @Body() dto: any,
     @Request() req: any
   ) {
-    return this.transferRequestsService.createRequest(req.user.userId, itemId, dto);
+    return this.transferRequestsService.createRequest(req.user.sub, itemId, dto);
   }
 
   @Get('pending')
@@ -33,7 +33,7 @@ export class TransferRequestsController {
     @Body('notes') notes: string,
     @Request() req: any
   ) {
-    return this.transferRequestsService.approveRequest(id, req.user.userId, notes);
+    return this.transferRequestsService.approveRequest(id, req.user.sub, notes);
   }
 
   @Patch(':id/reject')
@@ -43,6 +43,6 @@ export class TransferRequestsController {
     @Body('notes') notes: string,
     @Request() req: any
   ) {
-    return this.transferRequestsService.rejectRequest(id, req.user.userId, notes);
+    return this.transferRequestsService.rejectRequest(id, req.user.sub, notes);
   }
 }
