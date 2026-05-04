@@ -116,6 +116,17 @@ function openPrintFrame(html: string, filename: string): void {
   };
 }
 
+/**
+ * Reusable helper to fetch logos via the API proxy to avoid CORS issues
+ */
+async function fetchLogoBase64(logoUrl?: string): Promise<string> {
+  if (!logoUrl) return '';
+  const token = (useAuthStore.getState() as any).accessToken;
+  const fullUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ROOT_URL}${logoUrl}`;
+  const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
+  return urlToBase64(proxyUrl, token);
+}
+
 function renderItemsTable(items: PrintableItem[]): string {
   const headers = ['#', 'Item Name', 'Barcode', 'Serial No.', 'Condition', 'Remarks'];
   return `
@@ -158,15 +169,6 @@ function buildLogoHtml(logoSource: string, companyName: string): string {
 export async function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const companyDisplay = employee.company || 'KTMG GROUP';
-  const token = (useAuthStore.getState() as any).accessToken;
-
-  const fetchLogoBase64 = async (logoUrl?: string): Promise<string> => {
-    if (!logoUrl) return '';
-    const fullUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ROOT_URL}${logoUrl}`;
-    const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    return urlToBase64(proxyUrl, token);
-  };
-
   const [leftLogoBase64, rightLogoBase64] = await Promise.all([
     fetchLogoBase64(employee.companyLogoUrl),
     fetchLogoBase64(employee.mainCompanyLogoUrl),
@@ -267,15 +269,6 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 export async function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const companyDisplay = employee.company || 'KTMG GROUP';
-  const token = (useAuthStore.getState() as any).accessToken;
-
-  const fetchLogoBase64 = async (logoUrl?: string): Promise<string> => {
-    if (!logoUrl) return '';
-    const fullUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ROOT_URL}${logoUrl}`;
-    const proxyUrl = `${API_ROOT_URL}/companies/logo-proxy?url=${encodeURIComponent(fullUrl)}`;
-    return urlToBase64(proxyUrl, token);
-  };
-
   const [leftLogoBase64, rightLogoBase64] = await Promise.all([
     fetchLogoBase64(employee.companyLogoUrl),
     fetchLogoBase64(employee.mainCompanyLogoUrl),
@@ -423,8 +416,10 @@ export async function printGatePassForm(company: CompanyInfo, items: PrintableIt
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const filename = `GatePass_${safeFilename(company.name)}_${new Date().getTime()}.pdf`;
 
-  const logoBase64 = company.logoUrl ? await urlToBase64(company.logoUrl) : null;
-  const mainLogoBase64 = company.mainCompanyLogoUrl ? await urlToBase64(company.mainCompanyLogoUrl) : null;
+  const [logoBase64, mainLogoBase64] = await Promise.all([
+    fetchLogoBase64(company.logoUrl),
+    fetchLogoBase64(company.mainCompanyLogoUrl),
+  ]);
 
   const html = `
 <!DOCTYPE html>
