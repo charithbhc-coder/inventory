@@ -320,18 +320,24 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
             <div className="zigzag-timeline">
               <div className="timeline-center-line" />
               {events.map((ev: any, idx: number) => {
-                    const isFailed = false; // Item events aren't 'failed' records
-                    const config = getActionDetails(ev.eventType, isFailed);
-                    
-                    let friendlyAction = ACTION_MAP[ev.eventType] || ev.eventType.replace(/_/g, ' ');
-                    if (ev.toPersonName) {
-                      friendlyAction = `Assigned to ${ev.toPersonName}`;
-                    } else if (ev.eventType === 'UNASSIGNED' && ev.fromPersonName) {
-                      friendlyAction = `Released from ${ev.fromPersonName}`;
-                    }
-
-                    const isLeft = idx % 2 === 0;
+                const isFailed = false;
+                const config = getActionDetails(ev.eventType, isFailed);
                 
+                const performer = ev.performedByUser?.email?.split('@')[0] || 'System';
+                let mainText = ACTION_MAP[ev.eventType] || ev.eventType.replace(/_/g, ' ');
+
+                if (ev.eventType === 'ASSIGNED_TO_PERSON' && ev.toPersonName) {
+                  mainText = `${performer} assigned this to ${ev.toPersonName}`;
+                } else if (ev.eventType === 'UNASSIGNED' && ev.fromPersonName) {
+                  mainText = `${performer} marked as returned from ${ev.fromPersonName}`;
+                } else if (ev.eventType === 'ITEM_ADDED') {
+                  mainText = `${performer} registered this asset`;
+                } else {
+                  mainText = `${performer}: ${mainText}`;
+                }
+
+                const isLeft = idx % 2 === 0;
+            
                 return (
                   <div key={ev.id} className={`zigzag-item ${isLeft ? 'left' : 'right'}`} style={{ animationDelay: `${idx * 0.15 + 0.2}s` }}>
                     <div className="zz-icon" style={{ background: config.bg, color: config.color, borderColor: config.color }}>
@@ -339,11 +345,15 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
                     </div>
                     <div className="zz-content">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                        <h4 style={styles.tlTitle}>{friendlyAction}</h4>
+                        <h4 style={styles.tlTitle}>{mainText}</h4>
                         <span style={styles.tlTime}>{formatDistanceToNow(new Date(ev.createdAt), { addSuffix: true })}</span>
                       </div>
                       
-                      <p style={styles.tlDesc}>Action by <strong style={{ color: 'var(--text-main)' }}>{ev.performedByUser?.email?.split('@')[0] || 'System'}</strong></p>
+                      {ev.toPersonEmployeeId && (
+                        <p style={{ ...styles.tlDesc, fontSize: 11, fontWeight: 700, color: 'var(--accent-yellow)', marginTop: 4 }}>
+                          Employee ID: {ev.toPersonEmployeeId}
+                        </p>
+                      )}
                       
                       {(ev.toLocation || ev.toDepartment?.name || ev.notes) && (
                         <div style={styles.tlMeta}>

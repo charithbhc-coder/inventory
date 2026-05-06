@@ -73,11 +73,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [itemFile, setItemFile] = useState<File | null>(null);
 
   const { data: companies = [] } = useQuery({ queryKey: ['companies', 'active'], queryFn: () => companyService.getCompanies() });
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => categoryService.getCategories() });
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => categoryService.getCategories({ limit: 500 }) });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', formData.companyId],
-    queryFn: () => departmentService.getDepartments(formData.companyId),
+    queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
     enabled: !!formData.companyId
   });
 

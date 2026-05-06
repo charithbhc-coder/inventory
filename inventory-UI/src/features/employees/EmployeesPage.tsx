@@ -190,6 +190,9 @@ export default function EmployeesPage() {
     };
   }, [items, allItems]);
 
+  const activeCount = useMemo(() => activeEmployees.length, [activeEmployees]);
+  const deactivatedCount = useMemo(() => deactivatedEmployees.length, [deactivatedEmployees]);
+
   // Apply search
   const currentList = tab === 'ACTIVE' ? activeEmployees : deactivatedEmployees;
   const filteredEmployees = currentList.filter(emp =>
@@ -206,7 +209,14 @@ export default function EmployeesPage() {
   const totalAssetPages = Math.ceil(selectedAssets.length / ASSET_PER_PAGE);
   const pagedAssets = selectedAssets.slice((assetPage - 1) * ASSET_PER_PAGE, assetPage * ASSET_PER_PAGE);
 
-  const StatusBadge = ({ status }: { status: string }) => {
+  const StatusBadge = ({ status, isHistory }: { status: string; isHistory?: boolean }) => {
+    if (isHistory) {
+      return (
+        <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', minWidth: 80, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, background: 'rgba(71, 85, 105, 0.12)', color: '#475569', textTransform: 'uppercase' }}>
+          RETURNED
+        </div>
+      );
+    }
     const s = status === 'IN_USE' ? { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981' } : { bg: 'rgba(71, 85, 105, 0.12)', color: '#475569' };
     return (
       <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', minWidth: 80, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, background: s.bg, color: s.color, textTransform: 'uppercase' }}>
@@ -330,10 +340,10 @@ export default function EmployeesPage() {
             {/* Tabs */}
             <div style={{ display: 'flex', marginTop: 16, background: 'var(--bg-card)', padding: 4, borderRadius: 10, border: '1px solid var(--border-dark)' }}>
               <button onClick={() => setTab('ACTIVE')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'ACTIVE' ? 'var(--bg-dark)' : 'transparent', color: tab === 'ACTIVE' ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                Active ({activeEmployees.length})
+                Current Holders ({activeCount})
               </button>
               <button onClick={() => setTab('DEACTIVATED')} style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: tab === 'DEACTIVATED' ? 'var(--bg-dark)' : 'transparent', color: tab === 'DEACTIVATED' ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                Deactivated ({deactivatedEmployees.length})
+                Previous Holders ({deactivatedCount})
               </button>
             </div>
           </div>
@@ -365,9 +375,11 @@ export default function EmployeesPage() {
                       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{emp.employeeId || 'No ID'} • {emp.departmentName}</div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent-yellow)' }}>{emp.items.length}</span>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>ITEMS</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 8, minWidth: 50 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: emp.isActive ? 'var(--accent-yellow)' : 'var(--text-muted)' }}>
+                        {emp.isActive ? emp.items.filter(i => i.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase()).length : '0'}
+                      </span>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{emp.isActive ? 'ITEMS' : 'PAST'}</span>
                     </div>
                   </button>
                 ))}
@@ -442,9 +454,9 @@ export default function EmployeesPage() {
                     </button>
                   )}
                   {/* Deactivated: re-activate (Super Admin only) */}
-                  {!selectedEmployee.isActive && isSuperAdmin && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 10, background: 'rgba(71,85,105,0.1)', border: '1px solid var(--border-dark)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
-                      <PowerOff size={13} /> Deactivated
+                  {!selectedEmployee.isActive && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 10, background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', color: '#f43f5e', fontSize: 11, fontWeight: 700 }}>
+                      <PowerOff size={13} /> Previous Holder
                     </div>
                   )}
                 </div>
@@ -492,7 +504,12 @@ export default function EmployeesPage() {
                               </div>
                             </td>
                             <td style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-main)' }}>{item.category?.name || '-'}</td>
-                            <td style={{ padding: '16px 20px' }}><StatusBadge status={item.status} /></td>
+                            <td style={{ padding: '16px 20px' }}>
+                              <StatusBadge 
+                                status={item.status} 
+                                isHistory={item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase()} 
+                              />
+                            </td>
                             <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                                 <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14} /></button>
