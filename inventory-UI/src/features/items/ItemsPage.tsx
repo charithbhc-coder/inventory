@@ -131,7 +131,8 @@ export default function ItemsPage() {
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
       categoryId: categoryFilter || undefined,
-      status: effectiveStatusFilter || undefined,
+      status: effectiveStatusFilter === 'UNASSIGNED' ? undefined : (effectiveStatusFilter || undefined),
+      assignedTo: effectiveStatusFilter === 'UNASSIGNED' ? 'null' : undefined,
       page,
       limit: LIMIT,
     }),
@@ -558,6 +559,7 @@ export default function ItemsPage() {
                   style={{ ...styles.select, width: '100%' }}
                 >
                   <option value="">All Active Statuses</option>
+                  <option value="UNASSIGNED">Unassigned Assets</option>
                   <option value="WAREHOUSE">Warehouse</option>
                   <option value="IN_USE">In Use</option>
                   <option value="IN_REPAIR">In Repair</option>

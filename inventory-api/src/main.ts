@@ -7,6 +7,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Trust proxy to get correct IP behind load balancers / Nginx
+  app.set('trust proxy', 1);
+
   // Security Headers
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },

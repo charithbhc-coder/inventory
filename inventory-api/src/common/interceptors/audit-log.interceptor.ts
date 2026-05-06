@@ -8,6 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { DataSource } from 'typeorm';
+import * as requestIp from 'request-ip';
 import { AuditLog } from '../../audit-logs/entities/audit-log.entity';
 
 const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -40,13 +41,15 @@ export class AuditLogInterceptor implements NestInterceptor {
           const sanitizedBody = this.sanitizeBody(request.body);
           const responseMetadata = this.extractResponseMetadata(data);
 
+          const clientIp = requestIp.getClientIp(request) || ip || request.connection?.remoteAddress?.substring(0, 50) || 'unknown';
+
           const auditLog = this.dataSource.getRepository(AuditLog).create({
             userId: user.sub,
             userEmail: user.email || 'system-admin@internal.com',
             action,
             entityType,
             entityId,
-            ipAddress: ip || request.connection?.remoteAddress?.substring(0, 50) || 'unknown',
+            ipAddress: clientIp,
             userAgent: (headers['user-agent'] || 'unknown').substring(0, 500),
             companyId: user.companyId || null,
             newValues: { 

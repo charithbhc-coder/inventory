@@ -16,6 +16,7 @@ import {
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as requestIp from 'request-ip';
 import { s3Storage } from '../storage/s3.storage';
 import { AuthService } from './auth.service';
 import {
@@ -39,7 +40,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   async login(@Body() dto: LoginDto, @Req() req: Request) {
-    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const clientIp = requestIp.getClientIp(req) || req.ip;
+    const meta = { ip: clientIp, userAgent: req.headers['user-agent'] };
     return this.authService.login(dto.email, dto.password, meta);
   }
 
@@ -50,7 +52,8 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Req() req: Request,
   ) {
-    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const clientIp = requestIp.getClientIp(req) || req.ip;
+    const meta = { ip: clientIp, userAgent: req.headers['user-agent'] };
     return this.authService.changePassword(user.sub, dto, meta);
   }
 
@@ -64,7 +67,8 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
-    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const clientIp = requestIp.getClientIp(req) || req.ip;
+    const meta = { ip: clientIp, userAgent: req.headers['user-agent'] };
     return this.authService.resetPassword(dto, meta);
   }
 
@@ -78,7 +82,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser() user: JwtPayload, @Req() req: Request) {
-    const meta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const clientIp = requestIp.getClientIp(req) || req.ip;
+    const meta = { ip: clientIp, userAgent: req.headers['user-agent'] };
     return this.authService.logout(user.sub, meta);
   }
 

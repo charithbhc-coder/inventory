@@ -117,6 +117,7 @@ export class ItemsService implements OnModuleInit {
     departmentId?: string;
     isWorking?: string;
     needsRepair?: string;
+    assignedTo?: string;
   }) {
     const { page, limit, skip } = getPaginationOptions(query);
 
@@ -139,6 +140,7 @@ export class ItemsService implements OnModuleInit {
     if (query.departmentId) qb.andWhere('item.departmentId = :departmentId', { departmentId: query.departmentId });
     if (query.isWorking) qb.andWhere('item.isWorking = :isWorking', { isWorking: query.isWorking === 'true' });
     if (query.needsRepair) qb.andWhere('item.needsRepair = :needsRepair', { needsRepair: query.needsRepair === 'true' });
+    if (query.assignedTo === 'null') qb.andWhere('item.assignedToName IS NULL');
 
     if (query.search) {
       qb.andWhere(

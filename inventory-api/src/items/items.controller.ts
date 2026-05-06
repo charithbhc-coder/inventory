@@ -76,8 +76,9 @@ export class ItemsController {
     @Query('departmentId') departmentId?: string,
     @Query('isWorking') isWorking?: string,
     @Query('needsRepair') needsRepair?: string,
+    @Query('assignedTo') assignedTo?: string,
   ) {
-    return this.itemsService.findAll({ page, limit, search, status, categoryId, companyId, departmentId, isWorking, needsRepair });
+    return this.itemsService.findAll({ page, limit, search, status, categoryId, companyId, departmentId, isWorking, needsRepair, assignedTo });
   }
 
   @Get('warehouse/:companyId')
