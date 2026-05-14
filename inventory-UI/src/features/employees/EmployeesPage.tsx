@@ -49,6 +49,8 @@ export default function EmployeesPage() {
   const [isTransferRequestModalOpen, setIsTransferRequestModalOpen] = useState(false);
   const [isEditEmployeeModalOpen, setIsEditEmployeeModalOpen] = useState(false);
   const [isBulkQrModalOpen, setIsBulkQrModalOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [empPage, setEmpPage] = useState(1);
   const [assetPage, setAssetPage] = useState(1);
   const EMP_PER_PAGE = 20;
@@ -62,6 +64,13 @@ export default function EmployeesPage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Reset selection when employee changes
+  useEffect(() => {
+    setIsSelectionMode(false);
+    setSelectedItemIds(new Set());
+    setAssetPage(1);
+  }, [selectedEmployee?.name]);
 
   // Fetch active items (IN_USE) — separate query ensures we never miss employees due to pagination
   const { data: itemData, isLoading } = useQuery({
@@ -444,20 +453,56 @@ export default function EmployeesPage() {
                   {/* Active: print issuance, print qrs, + offboard */}
                   {selectedEmployee.isActive && (
                     <>
-                      <button
-                        className="hover-card"
-                        onClick={() => setIsBulkQrModalOpen(true)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                      >
-                        <Printer size={14} /> Print QRs
-                      </button>
-                      <button
-                      className="hover-card"
-                      onClick={() => handlePrintIssuance(selectedEmployee)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                    >
-                      <FileText size={14} /> Print Issuance
-                      </button>
+                      {isSelectionMode ? (
+                        <>
+                          <button
+                            className="hover-card"
+                            disabled={selectedItemIds.size === 0}
+                            onClick={() => setIsBulkQrModalOpen(true)}
+                            style={{ 
+                              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, 
+                              background: selectedItemIds.size === 0 ? 'var(--bg-dark)' : 'var(--accent-yellow)', 
+                              color: '#000', fontSize: 12, fontWeight: 800, cursor: selectedItemIds.size === 0 ? 'not-allowed' : 'pointer', 
+                              transition: 'all 0.2s', border: 'none', opacity: selectedItemIds.size === 0 ? 0.5 : 1 
+                            }}
+                          >
+                            <Printer size={14} /> Print Selected ({selectedItemIds.size})
+                          </button>
+                          <button
+                            onClick={() => { setIsSelectionMode(false); setSelectedItemIds(new Set()); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="hover-card"
+                            onClick={() => setIsBulkQrModalOpen(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                          >
+                            <Printer size={14} /> Print All QRs
+                          </button>
+                          <button
+                            className="hover-card"
+                            onClick={() => setIsSelectionMode(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-dark)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-main)', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                          >
+                            <ListTodo size={14} /> Select QRs
+                          </button>
+                        </>
+                      )}
+                      
+                      {!isSelectionMode && (
+                        <button
+                          className="hover-card"
+                          onClick={() => handlePrintIssuance(selectedEmployee)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                          <FileText size={14} /> Print Issuance
+                        </button>
+                      )}
                     </>
                   )}
                   {/* Both active & deactivated: print handover */}
@@ -509,6 +554,24 @@ export default function EmployeesPage() {
                     <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
+                          {isSelectionMode && (
+                            <th style={{ padding: '14px 20px', width: 40 }}>
+                              <input 
+                                type="checkbox" 
+                                style={{ cursor: 'pointer' }}
+                                checked={pagedAssets.every(item => selectedItemIds.has(item.id))}
+                                onChange={(e) => {
+                                  const newSelection = new Set(selectedItemIds);
+                                  if (e.target.checked) {
+                                    pagedAssets.forEach(item => newSelection.add(item.id));
+                                  } else {
+                                    pagedAssets.forEach(item => newSelection.delete(item.id));
+                                  }
+                                  setSelectedItemIds(newSelection);
+                                }}
+                              />
+                            </th>
+                          )}
                           <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Asset</th>
                           <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Category</th>
                           <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
@@ -517,7 +580,26 @@ export default function EmployeesPage() {
                       </thead>
                       <tbody>
                         {pagedAssets.map(item => (
-                          <tr key={item.id} style={{ borderBottom: '1px solid var(--border-dark)' }}>
+                          <tr key={item.id} style={{ 
+                            borderBottom: '1px solid var(--border-dark)',
+                            background: selectedItemIds.has(item.id) ? 'rgba(255, 224, 83, 0.05)' : 'transparent',
+                            transition: 'background 0.2s'
+                          }}>
+                            {isSelectionMode && (
+                              <td style={{ padding: '16px 20px' }}>
+                                <input 
+                                  type="checkbox" 
+                                  style={{ cursor: 'pointer' }}
+                                  checked={selectedItemIds.has(item.id)}
+                                  onChange={() => {
+                                    const newSelection = new Set(selectedItemIds);
+                                    if (newSelection.has(item.id)) newSelection.delete(item.id);
+                                    else newSelection.add(item.id);
+                                    setSelectedItemIds(newSelection);
+                                  }}
+                                />
+                              </td>
+                            )}
                             <td style={{ padding: '16px 20px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-yellow)' }}><Package size={16} /></div>
@@ -638,9 +720,19 @@ export default function EmployeesPage() {
       {selectedEmployee && isBulkQrModalOpen && (
         <BulkQrPrintModal
           isOpen={isBulkQrModalOpen}
-          onClose={() => setIsBulkQrModalOpen(false)}
-          items={selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
-          title={`${selectedEmployee.name}'s Assets`}
+          onClose={() => {
+            setIsBulkQrModalOpen(false);
+            if (isSelectionMode) {
+              setIsSelectionMode(false);
+              setSelectedItemIds(new Set());
+            }
+          }}
+          items={
+            isSelectionMode 
+              ? selectedEmployee.items.filter(i => selectedItemIds.has(i.id))
+              : selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())
+          }
+          title={isSelectionMode ? `Selected Assets for ${selectedEmployee.name}` : `${selectedEmployee.name}'s Assets`}
         />
       )}
     </div>
