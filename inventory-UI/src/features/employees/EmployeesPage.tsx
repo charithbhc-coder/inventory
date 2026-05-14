@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText } from 'lucide-react';
+import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText, Printer } from 'lucide-react';
 import { itemService, Item } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
@@ -16,6 +16,7 @@ import ItemTrackingModal from '@/features/items/ItemTrackingModal';
 import OffboardModal from './OffboardModal';
 import TransferRequestModal from './TransferRequestModal';
 import EditEmployeeModal from './EditEmployeeModal';
+import BulkQrPrintModal from '@/components/qr/BulkQrPrintModal';
 
 interface EmployeeGroup {
   name: string;
@@ -47,6 +48,7 @@ export default function EmployeesPage() {
   const [isOffboardModalOpen, setIsOffboardModalOpen] = useState(false);
   const [isTransferRequestModalOpen, setIsTransferRequestModalOpen] = useState(false);
   const [isEditEmployeeModalOpen, setIsEditEmployeeModalOpen] = useState(false);
+  const [isBulkQrModalOpen, setIsBulkQrModalOpen] = useState(false);
   const [empPage, setEmpPage] = useState(1);
   const [assetPage, setAssetPage] = useState(1);
   const EMP_PER_PAGE = 20;
@@ -439,15 +441,24 @@ export default function EmployeesPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {/* Active: print issuance + offboard */}
+                  {/* Active: print issuance, print qrs, + offboard */}
                   {selectedEmployee.isActive && (
-                    <button
+                    <>
+                      <button
+                        className="hover-card"
+                        onClick={() => setIsBulkQrModalOpen(true)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                      >
+                        <Printer size={14} /> Print QRs
+                      </button>
+                      <button
                       className="hover-card"
                       onClick={() => handlePrintIssuance(selectedEmployee)}
                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                     >
                       <FileText size={14} /> Print Issuance
-                    </button>
+                      </button>
+                    </>
                   )}
                   {/* Both active & deactivated: print handover */}
                   <button
@@ -621,6 +632,15 @@ export default function EmployeesPage() {
           isOpen={isEditEmployeeModalOpen}
           onClose={() => { setIsEditEmployeeModalOpen(false); setSelectedEmployee(null); }}
           employee={{ name: selectedEmployee.name, employeeId: selectedEmployee.employeeId }}
+        />
+      )}
+
+      {selectedEmployee && isBulkQrModalOpen && (
+        <BulkQrPrintModal
+          isOpen={isBulkQrModalOpen}
+          onClose={() => setIsBulkQrModalOpen(false)}
+          items={selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
+          title={`${selectedEmployee.name}'s Assets`}
         />
       )}
     </div>
