@@ -164,6 +164,10 @@ export class AssignItemDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isCorrection?: boolean;
 }
 
 export class RepairItemDto {
@@ -224,4 +228,18 @@ export class ReportLostDto {
   @IsString()
   @IsNotEmpty()
   notes: string;
+}
+
+export class UpdateEmployeeDto {
+  @IsString()
+  @IsNotEmpty()
+  oldName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  newName: string;
+
+  @IsString()
+  @IsOptional()
+  newEmployeeId?: string | null;
 }

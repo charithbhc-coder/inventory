@@ -18,7 +18,8 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
     departmentId: item.departmentId || '',
     assignedToName: item.assignedToName || '',
     assignedToEmployeeId: item.assignedToEmployeeId || '',
-    notes: ''
+    notes: '',
+    isCorrection: false
   });
 
   // Autocomplete state — ID field
@@ -309,6 +310,22 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
               />
             </div>
+
+            {/* Correction Checkbox - Only show if it's currently assigned to a person */}
+            {item.assignedToName && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '12px 16px', background: 'var(--color-surface-2)', borderRadius: 10, border: '1px solid var(--color-border)' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isCorrection}
+                  onChange={e => setFormData({ ...formData, isCorrection: e.target.checked })}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>This is a correction of a typo</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>Do not transfer the asset, just correct the current assignment record.</div>
+                </div>
+              </label>
+            )}
           </div>
 
           <div style={styles.footer}>
@@ -326,7 +343,7 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
               disabled={mutation.isPending}
               style={{ minWidth: 160 }}
             >
-              {mutation.isPending ? (item.assignedToName ? 'Transferring...' : 'Assigning...') : (item.assignedToName ? 'Confirm Transfer' : 'Confirm Assignment')}
+              {mutation.isPending ? (item.assignedToName && !formData.isCorrection ? 'Transferring...' : 'Assigning...') : (item.assignedToName && !formData.isCorrection ? 'Confirm Transfer' : 'Confirm Assignment')}
             </button>
           </div>
         </form>

@@ -15,6 +15,7 @@ import QrPrintModal from '@/components/qr/QrPrintModal';
 import ItemTrackingModal from '@/features/items/ItemTrackingModal';
 import OffboardModal from './OffboardModal';
 import TransferRequestModal from './TransferRequestModal';
+import EditEmployeeModal from './EditEmployeeModal';
 
 interface EmployeeGroup {
   name: string;
@@ -45,6 +46,7 @@ export default function EmployeesPage() {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [isOffboardModalOpen, setIsOffboardModalOpen] = useState(false);
   const [isTransferRequestModalOpen, setIsTransferRequestModalOpen] = useState(false);
+  const [isEditEmployeeModalOpen, setIsEditEmployeeModalOpen] = useState(false);
   const [empPage, setEmpPage] = useState(1);
   const [assetPage, setAssetPage] = useState(1);
   const EMP_PER_PAGE = 20;
@@ -417,7 +419,18 @@ export default function EmployeesPage() {
                     {selectedEmployee.name.trim().charAt(0)}
                   </div>
                   <div>
-                    <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 4px' }}>
+                      <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
+                      {hasPermission(AdminPermission.UPDATE_ITEMS) && (
+                        <button
+                          onClick={() => setIsEditEmployeeModalOpen(true)}
+                          className="hover-card"
+                          style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          EDIT
+                        </button>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: 12, fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> {selectedEmployee.employeeId || 'No ID'}</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Building2 size={14} /> {selectedEmployee.departmentName}</span>
@@ -600,6 +613,14 @@ export default function EmployeesPage() {
           employeeName={selectedEmployee.name}
           items={selectedEmployee.items.filter(i => i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
           onPrintHandover={() => handlePrintHandover(selectedEmployee)}
+        />
+      )}
+
+      {selectedEmployee && isEditEmployeeModalOpen && (
+        <EditEmployeeModal
+          isOpen={isEditEmployeeModalOpen}
+          onClose={() => { setIsEditEmployeeModalOpen(false); setSelectedEmployee(null); }}
+          employee={{ name: selectedEmployee.name, employeeId: selectedEmployee.employeeId }}
         />
       )}
     </div>

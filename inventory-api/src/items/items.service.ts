@@ -275,9 +275,33 @@ export class ItemsService implements OnModuleInit {
       const prevDeptId = item.departmentId;
 
       // Store previous assignment
-      if (item.assignedToName) {
+      if (item.assignedToName && !dto.isCorrection) {
         item.previousAssignedToName = item.assignedToName;
         item.previousAssignedToEmployeeId = item.assignedToEmployeeId;
+      }
+
+      // If this is just a correction, we don't treat it as a transfer
+      if (dto.isCorrection) {
+        if (dto.departmentId) item.departmentId = dto.departmentId;
+        if (dto.assignedToName !== undefined) item.assignedToName = dto.assignedToName;
+        if (dto.assignedToEmployeeId !== undefined) item.assignedToEmployeeId = dto.assignedToEmployeeId;
+
+        const saved = await manager.save(Item, item);
+
+        const event = manager.create(ItemEvent, {
+          itemId: saved.id,
+          eventType: ItemEventType.ITEM_EDITED,
+          fromStatus: prevStatus,
+          toStatus: saved.status,
+          performedByUserId: userId,
+          notes: dto.notes || `Assignment details corrected. Previously assigned to ${item.previousAssignedToName || 'unknown'}.`,
+        });
+        await manager.save(ItemEvent, event);
+
+        // Notify actor
+        this.notificationsService.handleItemUpdated({ itemId: saved.id, userId, companyId: saved.companyId, itemName: saved.name }).catch(() => { });
+
+        return saved;
       }
 
       // Update assignment
@@ -418,6 +442,41 @@ export class ItemsService implements OnModuleInit {
       await manager.save(ItemEvent, event);
 
       return saved;
+    });
+  }
+
+  // ========================================
+  // EMPLOYEES — global name correction
+  // ========================================
+  async updateEmployeeName(oldName: string, newName: string, newEmployeeId: string | null, userId: string): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      // Update currently assigned items
+      await manager.createQueryBuilder()
+        .update(Item)
+        .set({ assignedToName: newName, assignedToEmployeeId: newEmployeeId })
+        .where('LOWER(assignedToName) = LOWER(:oldName)', { oldName })
+        .execute();
+
+      // Update previous assignments
+      await manager.createQueryBuilder()
+        .update(Item)
+        .set({ previousAssignedToName: newName, previousAssignedToEmployeeId: newEmployeeId })
+        .where('LOWER(previousAssignedToName) = LOWER(:oldName)', { oldName })
+        .execute();
+
+      // Update events (fromPersonName)
+      await manager.createQueryBuilder()
+        .update(ItemEvent)
+        .set({ fromPersonName: newName })
+        .where('LOWER(fromPersonName) = LOWER(:oldName)', { oldName })
+        .execute();
+
+      // Update events (toPersonName)
+      await manager.createQueryBuilder()
+        .update(ItemEvent)
+        .set({ toPersonName: newName, toPersonEmployeeId: newEmployeeId })
+        .where('LOWER(toPersonName) = LOWER(:oldName)', { oldName })
+        .execute();
     });
   }
 

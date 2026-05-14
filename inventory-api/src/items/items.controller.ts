@@ -27,6 +27,7 @@ import {
   DisposeItemDto,
   ReturnFromRepairDto,
   ReportLostDto,
+  UpdateEmployeeDto,
 } from './dto/item.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -109,6 +110,13 @@ export class ItemsController {
   }
 
   // --- ACTIONS ---
+
+  @Patch('employee/update')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.UPDATE_ITEMS)
+  updateEmployee(@Body() dto: UpdateEmployeeDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.updateEmployeeName(dto.oldName, dto.newName, dto.newEmployeeId || null, user.sub);
+  }
 
   @Post(':id/assign')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)

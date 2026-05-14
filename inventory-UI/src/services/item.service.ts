@@ -61,6 +61,11 @@ export const itemService = {
     return data;
   },
 
+  updateEmployee: async (dto: { oldName: string; newName: string; newEmployeeId?: string | null }) => {
+    const { data } = await apiClient.patch(`/items/employee/update`, dto);
+    return data;
+  },
+
   assignItem: async (id: string, dto: any) => {
     const { data } = await apiClient.post(`/items/${id}/assign`, dto);
     return data;

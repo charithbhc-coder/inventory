@@ -1,5 +1,8 @@
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { extname } from 'path';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const multerS3 = require('multer-s3');
