@@ -48,13 +48,11 @@ export class CompaniesController {
 
   // Must be declared before @Get(':id') to avoid route collision
   @Get('branding')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   getBranding() {
     return this.companiesService.getBranding();
   }
 
   @Get('logo-proxy')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   async proxyLogo(@Query('url') url: string, @Res() res: Response) {
     try {
       if (!url) { res.status(400).send('Missing url parameter'); return; }
