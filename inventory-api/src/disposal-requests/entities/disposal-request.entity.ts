@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Item } from '../../items/entities/item.entity';
 import { User } from '../../users/entities/user.entity';
@@ -26,6 +27,10 @@ export interface DataSecurityChecklist {
   physicalDestructionDone: boolean;
 }
 
+@Index('UQ_disposal_requests_item_pending', ['itemId'], {
+  unique: true,
+  where: `"status" IN ('PENDING_L1', 'PENDING_L2')`,
+})
 @Entity('disposal_requests')
 export class DisposalRequest {
   @PrimaryGeneratedColumn('uuid')
