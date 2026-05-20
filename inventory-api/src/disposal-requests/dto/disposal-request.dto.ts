@@ -94,7 +94,7 @@ export class L2ApproveDto {
 export class DisposalRequestQueryDto {
   @IsEnum(DisposalRequestStatus)
   @IsOptional()
-  status?: string;
+  status?: DisposalRequestStatus;
 
   @IsUUID()
   @IsOptional()
