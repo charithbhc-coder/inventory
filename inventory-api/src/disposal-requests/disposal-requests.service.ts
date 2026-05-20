@@ -83,9 +83,14 @@ export class DisposalRequestsService {
     requestId: string,
     dto: L1ReviewDto,
     reviewerId: string,
+    callerCompanyId?: string,
   ): Promise<DisposalRequest> {
     const request = await this.requestRepo.findOne({ where: { id: requestId } });
     if (!request) throw new NotFoundException('Disposal request not found');
+
+    if (callerCompanyId && request.companyId !== callerCompanyId) {
+      throw new ForbiddenException('Access denied.');
+    }
 
     if (request.status !== DisposalRequestStatus.PENDING_L1) {
       throw new BadRequestException('This request is not awaiting L1 review.');
@@ -126,12 +131,17 @@ export class DisposalRequestsService {
     dto: L2ApproveDto,
     approverId: string,
     approverName: string,
+    callerCompanyId?: string,
   ): Promise<DisposalRequest> {
     return this.dataSource.transaction(async (manager) => {
       const request = await manager.findOne(DisposalRequest, {
         where: { id: requestId },
       });
       if (!request) throw new NotFoundException('Disposal request not found');
+
+      if (callerCompanyId && request.companyId !== callerCompanyId) {
+        throw new ForbiddenException('Access denied.');
+      }
 
       const validStatuses = [
         DisposalRequestStatus.PENDING_L1,
@@ -145,6 +155,11 @@ export class DisposalRequestsService {
       if (request.requestedByUserId === approverId) {
         throw new ForbiddenException(
           'You cannot approve your own disposal request.',
+        );
+      }
+      if (request.l1ReviewedByUserId && request.l1ReviewedByUserId === approverId) {
+        throw new ForbiddenException(
+          'You cannot give final approval on a request you reviewed at the IT Manager stage.',
         );
       }
 
@@ -225,9 +240,13 @@ export class DisposalRequestsService {
     });
   }
 
-  async cancel(requestId: string, userId: string): Promise<DisposalRequest> {
+  async cancel(requestId: string, userId: string, callerCompanyId?: string): Promise<DisposalRequest> {
     const request = await this.requestRepo.findOne({ where: { id: requestId } });
     if (!request) throw new NotFoundException('Disposal request not found');
+
+    if (callerCompanyId && request.companyId !== callerCompanyId) {
+      throw new ForbiddenException('Access denied.');
+    }
 
     const cancellableStatuses = [
       DisposalRequestStatus.PENDING_L1,
@@ -266,12 +285,17 @@ export class DisposalRequestsService {
     return query.getMany();
   }
 
-  async findOne(id: string): Promise<DisposalRequest> {
+  async findOne(id: string, callerCompanyId?: string): Promise<DisposalRequest> {
     const request = await this.requestRepo.findOne({
       where: { id },
       relations: ['item', 'requestedByUser', 'l1ReviewedByUser', 'l2ApprovedByUser'],
     });
     if (!request) throw new NotFoundException('Disposal request not found');
+
+    if (callerCompanyId && request.companyId !== callerCompanyId) {
+      throw new ForbiddenException('Access denied.');
+    }
+
     return request;
   }
 }

@@ -54,8 +54,8 @@ export class DisposalRequestsController {
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_DISPOSALS)
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.service.findOne(id, user.companyId);
   }
 
   @Patch(':id/l1-review')
@@ -66,7 +66,7 @@ export class DisposalRequestsController {
     @Body() dto: L1ReviewDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.service.l1Review(id, dto, user.sub);
+    return this.service.l1Review(id, dto, user.sub, user.companyId);
   }
 
   @Patch(':id/l2-approve')
@@ -77,13 +77,13 @@ export class DisposalRequestsController {
     @Body() dto: L2ApproveDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.service.l2Approve(id, dto, user.sub, user.email);
+    return this.service.l2Approve(id, dto, user.sub, user.email, user.companyId);
   }
 
   @Patch(':id/cancel')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
   cancel(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.service.cancel(id, user.sub);
+    return this.service.cancel(id, user.sub, user.companyId);
   }
 }
