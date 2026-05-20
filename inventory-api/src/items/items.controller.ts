@@ -154,8 +154,7 @@ export class ItemsController {
   }
 
   @Post(':id/dispose')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_DISPOSALS)
+  @Roles(UserRole.SUPER_ADMIN)
   dispose(@Param('id') id: string, @Body() dto: DisposeItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.dispose(id, dto, user.sub, `${user.email}`);
   }

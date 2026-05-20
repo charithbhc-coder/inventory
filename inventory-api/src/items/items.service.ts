@@ -631,7 +631,7 @@ export class ItemsService implements OnModuleInit {
         fromStatus: prevStatus,
         toStatus: ItemStatus.DISPOSED,
         performedByUserId: userId,
-        notes: `Disposed: ${dto.disposalReason} (Method: ${dto.disposalMethod})${repairNote}`,
+        notes: `[EMERGENCY BYPASS] Disposed: ${dto.disposalReason} (Method: ${dto.disposalMethod})${repairNote}`,
       });
       await manager.save(ItemEvent, event);
 
