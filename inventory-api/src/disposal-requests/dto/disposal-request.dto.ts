@@ -103,4 +103,8 @@ export class DisposalRequestQueryDto {
   @IsUUID()
   @IsOptional()
   companyId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  itemId?: string;
 }

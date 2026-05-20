@@ -266,6 +266,7 @@ export class DisposalRequestsService {
   async findAll(filters: {
     status?: DisposalRequestStatus;
     companyId?: string;
+    itemId?: string;
   }): Promise<DisposalRequest[]> {
     const query = this.requestRepo
       .createQueryBuilder('r')
@@ -280,6 +281,9 @@ export class DisposalRequestsService {
     }
     if (filters.companyId) {
       query.andWhere('r.companyId = :companyId', { companyId: filters.companyId });
+    }
+    if (filters.itemId) {
+      query.andWhere('r.itemId = :itemId', { itemId: filters.itemId });
     }
 
     return query.getMany();
@@ -297,5 +301,25 @@ export class DisposalRequestsService {
     }
 
     return request;
+  }
+
+  async checkItem(itemId: string, callerCompanyId?: string) {
+    const qb = this.requestRepo
+      .createQueryBuilder('r')
+      .where('r.itemId = :itemId', { itemId })
+      .andWhere('r.status IN (:...statuses)', {
+        statuses: [DisposalRequestStatus.PENDING_L1, DisposalRequestStatus.PENDING_L2],
+      });
+
+    if (callerCompanyId) {
+      qb.andWhere('r.companyId = :companyId', { companyId: callerCompanyId });
+    }
+
+    const request = await qb.getOne();
+    return {
+      hasOpen: !!request,
+      requestId: request?.id ?? null,
+      status: request?.status ?? null,
+    };
   }
 }

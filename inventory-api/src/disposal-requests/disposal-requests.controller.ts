@@ -2,12 +2,18 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseFilePipeBuilder } from '@nestjs/common';
+import { s3Storage } from '../storage/s3.storage';
 import { DisposalRequestsService } from './disposal-requests.service';
 import {
   CreateDisposalRequestDto,
@@ -48,7 +54,7 @@ export class DisposalRequestsController {
   ) {
     const companyId =
       user.role === UserRole.SUPER_ADMIN ? query.companyId : user.companyId;
-    return this.service.findAll({ status: query.status, companyId });
+    return this.service.findAll({ status: query.status, companyId, itemId: query.itemId });
   }
 
   @Get(':id')
@@ -85,5 +91,27 @@ export class DisposalRequestsController {
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
   cancel(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.service.cancel(id, user.sub, user.companyId);
+  }
+
+  @Get('check/:itemId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.REQUEST_DISPOSAL)
+  checkItem(@Param('itemId') itemId: string, @CurrentUser() user: JwtPayload) {
+    return this.service.checkItem(itemId, user.companyId);
+  }
+
+  @Post('upload-photo')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.REQUEST_DISPOSAL)
+  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('disposal-evidence') }))
+  uploadPhoto(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 })
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return { url: (file as any).location };
   }
 }
