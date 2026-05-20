@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  X, 
-  History, 
-  FileText, 
-  User, 
-  Building, 
-  ShieldCheck, 
-  CheckCircle2, 
-  Clock, 
+import {
+  X,
+  History,
+  FileText,
+  User,
+  Building,
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
   Download,
   Trash2,
   UserPlus,
@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Camera,
   AlertOctagon,
-  Hash
+  Hash,
+  ClipboardList
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { itemService, Item } from '@/services/item.service';
@@ -31,8 +32,10 @@ import ReportLostModal from './ReportLostModal';
 import ReturnFromRepairModal from './ReturnFromRepairModal';
 import RecoverItemModal from './RecoverItemModal';
 import ReturnToWarehouseModal from './ReturnToWarehouseModal';
+import RequestDisposalModal from '@/features/disposal-requests/RequestDisposalModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission, ItemStatus } from '@/types';
+import { disposalRequestService } from '@/services/disposal-request.service';
 import { getUploadUrl } from '@/lib/config';
 import QrPrintModal from '@/components/qr/QrPrintModal';
 
@@ -53,10 +56,17 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
   const item = timelineData?.item || initialItem;
   const events = timelineData?.events || [];
 
-  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'lost' | 'return' | 'recover' | 'return-warehouse' | null>(null);
+  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'request-disposal' | 'lost' | 'return' | 'recover' | 'return-warehouse' | null>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const hasPermission = useAuthStore(s => s.hasPermission);
+  const isSuperAdmin = useAuthStore(s => s.isSuperAdmin);
+
+  const { data: disposalCheck } = useQuery({
+    queryKey: ['disposal-check', initialItem.id],
+    queryFn: () => disposalRequestService.checkItem(initialItem.id),
+    enabled: isOpen && hasPermission(AdminPermission.REQUEST_DISPOSAL),
+  });
 
   if (!isOpen) return null;
 
@@ -250,11 +260,30 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 </div>
               )
             ))}
-            {item.status !== ItemStatus.DISPOSED && hasPermission(AdminPermission.MANAGE_DISPOSALS) && (
-              <button className="hub-btn danger" onClick={() => setActiveModal('dispose')} style={{ opacity: 0.8 }}>
+            {item.status !== ItemStatus.DISPOSED && isSuperAdmin() && (
+              <button className="hub-btn danger" onClick={() => setActiveModal('dispose')} style={{ opacity: 0.8 }} title="Emergency direct disposal (SUPER_ADMIN only)">
                 <Trash2 size={16} />
-                <span>Dispose</span>
+                <span>Emergency Dispose</span>
               </button>
+            )}
+            {item.status !== ItemStatus.DISPOSED && !isSuperAdmin() && hasPermission(AdminPermission.REQUEST_DISPOSAL) && (
+              disposalCheck?.hasOpen ? (
+                <div style={{
+                  flex: 1, padding: '10px 14px',
+                  background: 'rgba(245,158,11,0.08)',
+                  border: '1.5px solid rgba(245,158,11,0.3)',
+                  borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8,
+                  fontSize: 11, fontWeight: 700, color: '#f59e0b',
+                }}>
+                  <ClipboardList size={14} style={{ flexShrink: 0 }} />
+                  Disposal request pending approval
+                </div>
+              ) : (
+                <button className="hub-btn danger" onClick={() => setActiveModal('request-disposal')} style={{ opacity: 0.9 }}>
+                  <ClipboardList size={16} />
+                  <span>Request Disposal</span>
+                </button>
+              )
             )}
           </div>
 
@@ -448,6 +477,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         <AssignModal item={item} isOpen={activeModal === 'assign'} onClose={() => setActiveModal(null)} />
         <RepairModal item={item} isOpen={activeModal === 'repair'} onClose={() => setActiveModal(null)} />
         <DisposeModal item={item} isOpen={activeModal === 'dispose'} onClose={() => setActiveModal(null)} />
+        <RequestDisposalModal item={item} isOpen={activeModal === 'request-disposal'} onClose={() => setActiveModal(null)} />
         <ReportLostModal item={item} isOpen={activeModal === 'lost'} onClose={() => setActiveModal(null)} />
         <ReturnFromRepairModal item={item} isOpen={activeModal === 'return'} onClose={() => setActiveModal(null)} />
         <RecoverItemModal item={item} isOpen={activeModal === 'recover'} onClose={() => setActiveModal(null)} />
