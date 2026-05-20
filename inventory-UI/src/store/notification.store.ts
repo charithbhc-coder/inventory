@@ -85,6 +85,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           queryClient.invalidateQueries({ queryKey: ['analytics'] });
         }
 
+        // Sync Disposal Requests
+        if (type.startsWith('DISPOSAL_')) {
+          queryClient.invalidateQueries({ queryKey: ['disposal-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['disposal-check'] });
+        }
+
         return {
           notifications: [newNotif, ...state.notifications],
           unreadCount: state.unreadCount + 1
