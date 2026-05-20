@@ -127,6 +127,46 @@ export class NotificationsService {
     );
   }
 
+  /** Broadcast to SUPER_ADMINs globally + admins with ANY of the given permissions, scoped to a company. Recipients are deduplicated. */
+  async broadcastToCompanyUsersWithAnyPermission(
+    companyId: string,
+    permissions: AdminPermission[],
+    payload: Omit<CreateNotificationPayload, 'recipientUserId'>,
+  ) {
+    const superAdmins = await this.userRepo.find({
+      where: { role: UserRole.SUPER_ADMIN, isActive: true },
+      select: ['id'],
+    });
+
+    // Build OR query: user has at least one of the permissions
+    const qb = this.userRepo
+      .createQueryBuilder('user')
+      .where('user.isActive = :isActive', { isActive: true })
+      .andWhere('user.role != :superAdmin', { superAdmin: UserRole.SUPER_ADMIN })
+      .andWhere('user.companyId = :companyId', { companyId });
+
+    // Use raw SQL: any of the permissions overlaps with user.permissions array
+    const paramObj: Record<string, string> = {};
+    permissions.forEach((p, i) => { paramObj[`perm${i}`] = p; });
+    const orConditions = permissions.map((_, i) => `:perm${i} = ANY(user.permissions)`).join(' OR ');
+    qb.andWhere(`(${orConditions})`, paramObj);
+
+    const privilegedUsers = await qb.select(['user.id']).getMany();
+
+    const allRecipients = [
+      ...new Set([
+        ...superAdmins.map((u) => u.id),
+        ...privilegedUsers.map((u) => u.id),
+      ]),
+    ];
+
+    await Promise.all(
+      allRecipients.map((recipientId) =>
+        this.create({ ...payload, recipientUserId: recipientId }),
+      ),
+    );
+  }
+
   /** @deprecated Use broadcastToPrivilegedUsers with specific permission */
   async broadcastToSuperAdmins(payload: Omit<CreateNotificationPayload, 'recipientUserId'>) {
     return this.broadcastToPrivilegedUsers(AdminPermission.VIEW_AUDIT_LOGS, payload);
@@ -530,14 +570,9 @@ export class NotificationsService {
       actionUrl: `/disposal-requests/${payload.requestId}`,
     };
 
-    await this.broadcastToCompanyUsersWithPermission(
+    await this.broadcastToCompanyUsersWithAnyPermission(
       payload.companyId,
-      AdminPermission.APPROVE_DISPOSAL_L1,
-      notifPayload,
-    );
-    await this.broadcastToCompanyUsersWithPermission(
-      payload.companyId,
-      AdminPermission.APPROVE_DISPOSAL_L2,
+      [AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2],
       notifPayload,
     );
   }
