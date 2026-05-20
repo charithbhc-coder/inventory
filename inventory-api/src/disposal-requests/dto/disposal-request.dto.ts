@@ -51,7 +51,9 @@ export class L1ReviewDto {
   @IsEnum(DisposalReviewDecision)
   decision: DisposalReviewDecision;
 
+  @ValidateIf((o) => o.decision === DisposalReviewDecision.REJECTED)
   @IsString()
+  @IsNotEmpty()
   @IsOptional()
   notes?: string;
 }
@@ -80,7 +82,9 @@ export class L2ApproveDto {
   @IsEnum(DisposalFinalDecision)
   decision: DisposalFinalDecision;
 
+  @ValidateIf((o) => o.decision === DisposalFinalDecision.REJECTED)
   @IsString()
+  @IsNotEmpty()
   @IsOptional()
   notes?: string;
 
