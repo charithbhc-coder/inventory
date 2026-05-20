@@ -57,6 +57,13 @@ export class DisposalRequestsController {
     return this.service.findAll({ status: query.status, companyId, itemId: query.itemId });
   }
 
+  @Get('check/:itemId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.REQUEST_DISPOSAL)
+  checkItem(@Param('itemId') itemId: string, @CurrentUser() user: JwtPayload) {
+    return this.service.checkItem(itemId, user.companyId);
+  }
+
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.MANAGE_DISPOSALS)
@@ -91,13 +98,6 @@ export class DisposalRequestsController {
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
   cancel(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.service.cancel(id, user.sub, user.companyId);
-  }
-
-  @Get('check/:itemId')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.REQUEST_DISPOSAL)
-  checkItem(@Param('itemId') itemId: string, @CurrentUser() user: JwtPayload) {
-    return this.service.checkItem(itemId, user.companyId);
   }
 
   @Post('upload-photo')
