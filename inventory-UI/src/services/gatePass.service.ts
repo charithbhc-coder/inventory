@@ -24,7 +24,7 @@ export interface GatePass {
   reason?: string;
   authorizedBy?: string;
   status: GatePassStatus;
-  createdByUserId: string;
+  createdByUserId: string | null;
   createdByUser: GatePassUser;
   approvedByUserId?: string | null;
   approvedByUser?: GatePassUser | null;

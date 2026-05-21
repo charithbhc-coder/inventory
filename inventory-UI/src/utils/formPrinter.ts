@@ -412,7 +412,7 @@ export interface CompanyInfo {
   mainCompanyLogoUrl?: string;
 }
 
-export async function printGatePassForm(company: CompanyInfo, items: PrintableItem[], info: GatePassInfo) {
+export async function printGatePassForm(company: CompanyInfo, items: PrintableItem[], info: GatePassInfo): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const filename = `GatePass_${safeFilename(company.name)}_${new Date().getTime()}.pdf`;
