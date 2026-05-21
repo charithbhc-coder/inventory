@@ -48,6 +48,9 @@ export class GatePassesService {
     }
 
     const companyId = items[0].companyId;
+    if (items.some((item) => item.companyId !== companyId)) {
+      throw new BadRequestException('All items must belong to the same company.');
+    }
 
     return this.dataSource.transaction(async (manager) => {
       const maxRef = await manager
@@ -271,7 +274,10 @@ export class GatePassesService {
         );
       }
       await manager.save(ItemEvent, events);
-      return gatePass;
+      return (await manager.findOne(GatePass, {
+        where: { id: gatePass.id },
+        relations: ['items', 'createdByUser', 'approvedByUser'],
+      }))!;
     });
   }
 
