@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Search, MapPin, FileText, User, Package, CheckSquare, Square } from 'lucide-react';
+import { X, Search, FileText, User, Package, CheckSquare, Square, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import gatePassService, { GatePass, CreateGatePassPayload } from '@/services/gatePass.service';
 import { itemService } from '@/services/item.service';
+import { companyService } from '@/services/company.service';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +27,13 @@ export default function CreateGatePassModal({
   const [authorizedBy, setAuthorizedBy] = useState('');
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [itemSearch, setItemSearch] = useState('');
+
+  const { data: companiesRaw = [] } = useQuery({
+    queryKey: ['companies', 'dropdown'],
+    queryFn: () => companyService.getCompanies({ limit: 100 }),
+    select: (d: any) => Array.isArray(d) ? d : (d?.data || []),
+    enabled: isOpen,
+  });
 
   const { data: warehouseItems = [], isLoading: loadingItems } = useQuery({
     queryKey: ['items', { status: 'WAREHOUSE' }],
@@ -100,13 +108,17 @@ export default function CreateGatePassModal({
               Destination *
             </label>
             <div style={{ position: 'relative' }}>
-              <MapPin size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                style={{ width: '100%', padding: '11px 12px 11px 36px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, color: 'var(--text-main)', outline: 'none', boxSizing: 'border-box' }}
-                placeholder="e.g. Branch Office, Colombo"
+              <Building2 size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 1 }} />
+              <select
+                style={{ width: '100%', padding: '11px 12px 11px 36px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, color: destination ? 'var(--text-main)' : 'var(--text-muted)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-              />
+              >
+                <option value="">Select destination company...</option>
+                {companiesRaw.map((c: any) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 
