@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Search, MapPin, FileText, User, Package, CheckSquare, Square } from 'lucide-react';
 import toast from 'react-hot-toast';
-import gatePassService from '@/services/gatePass.service';
+import gatePassService, { GatePass, CreateGatePassPayload } from '@/services/gatePass.service';
 import { itemService } from '@/services/item.service';
 import { printGatePassForm } from '@/utils/formPrinter';
 
@@ -41,26 +41,6 @@ export default function CreateGatePassModal({
       i.barcode.toLowerCase().includes(itemSearch.toLowerCase())
     ), [warehouseItems, itemSearch]);
 
-  const mutation = useMutation({
-    mutationFn: (payload: any) => gatePassService.create(payload),
-    onSuccess: async (gatePass) => {
-      const itemsToPrint = gatePass.items.map((i) => ({
-        name: i.name,
-        barcode: i.barcode,
-      }));
-      await printGatePassForm(
-        { name: companyName, logoUrl: companyLogoUrl, mainCompanyLogoUrl },
-        itemsToPrint,
-        { referenceNo: gatePass.referenceNo, destination: gatePass.destination, reason: gatePass.reason, authorizedBy: gatePass.authorizedBy },
-      );
-      toast.success(`Gate Pass ${gatePass.referenceNo} submitted for approval`);
-      queryClient.invalidateQueries({ queryKey: ['gate-passes'] });
-      handleClose();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Failed to create gate pass'),
-  });
-
   const handleClose = () => {
     setDestination('');
     setReason('');
@@ -69,6 +49,30 @@ export default function CreateGatePassModal({
     setItemSearch('');
     onClose();
   };
+
+  const mutation = useMutation<GatePass, Error, CreateGatePassPayload>({
+    mutationFn: (payload) => gatePassService.create(payload),
+    onSuccess: async (gatePass) => {
+      try {
+        const itemsToPrint = gatePass.items.map((i) => ({
+          name: i.name,
+          barcode: i.barcode,
+        }));
+        await printGatePassForm(
+          { name: companyName, logoUrl: companyLogoUrl, mainCompanyLogoUrl },
+          itemsToPrint,
+          { referenceNo: gatePass.referenceNo, destination: gatePass.destination, reason: gatePass.reason, authorizedBy: gatePass.authorizedBy },
+        );
+      } catch {
+        // print failure is non-fatal; the gate pass was still created
+      }
+      toast.success(`Gate Pass ${gatePass.referenceNo} submitted for approval`);
+      queryClient.invalidateQueries({ queryKey: ['gate-passes'] });
+      handleClose();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || 'Failed to create gate pass'),
+  });
 
   const toggleItem = (id: string) => {
     setSelectedItemIds((prev) =>
