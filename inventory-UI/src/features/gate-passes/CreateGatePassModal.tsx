@@ -4,7 +4,6 @@ import { X, Search, MapPin, FileText, User, Package, CheckSquare, Square } from 
 import toast from 'react-hot-toast';
 import gatePassService, { GatePass, CreateGatePassPayload } from '@/services/gatePass.service';
 import { itemService } from '@/services/item.service';
-import { printGatePassForm } from '@/utils/formPrinter';
 
 interface Props {
   isOpen: boolean;
@@ -52,20 +51,7 @@ export default function CreateGatePassModal({
 
   const mutation = useMutation<GatePass, Error, CreateGatePassPayload>({
     mutationFn: (payload) => gatePassService.create(payload),
-    onSuccess: async (gatePass) => {
-      try {
-        const itemsToPrint = gatePass.items.map((i) => ({
-          name: i.name,
-          barcode: i.barcode,
-        }));
-        await printGatePassForm(
-          { name: companyName, logoUrl: companyLogoUrl, mainCompanyLogoUrl },
-          itemsToPrint,
-          { referenceNo: gatePass.referenceNo, destination: gatePass.destination, reason: gatePass.reason, authorizedBy: gatePass.authorizedBy },
-        );
-      } catch {
-        // print failure is non-fatal; the gate pass was still created
-      }
+    onSuccess: (gatePass) => {
       toast.success(`Gate Pass ${gatePass.referenceNo} submitted for approval`);
       queryClient.invalidateQueries({ queryKey: ['gate-passes'] });
       handleClose();

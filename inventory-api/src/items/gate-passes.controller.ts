@@ -52,7 +52,7 @@ export class GatePassesController {
   findPending(@CurrentUser() user: JwtPayload) {
     const companyId =
       user.role === UserRole.SUPER_ADMIN ? undefined : user.companyId;
-    return this.service.findAll({ status: undefined, companyId });
+    return this.service.findAll({ status: GatePassStatus.PENDING_APPROVAL, companyId });
   }
 
   @Get('my-requests')
