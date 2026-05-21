@@ -95,6 +95,13 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    category: 'Gate Pass Workflow',
+    permissions: [
+      { id: AdminPermission.CREATE_GATE_PASS, label: 'Create Requests', type: 'special' },
+      { id: AdminPermission.APPROVE_GATE_PASS, label: 'Approve / Return', type: 'special' },
+    ],
+  },
+  {
     category: 'Analysis & Logistics',
     permissions: [
       { id: AdminPermission.VIEW_REPORTS, label: 'Reports', type: 'special' },

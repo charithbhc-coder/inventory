@@ -14,7 +14,8 @@ import {
   Settings,
   X,
   UserCheck,
-  Trash2
+  Trash2,
+  ClipboardCheck
 } from 'lucide-react';
 
 import { useQuery } from '@tanstack/react-query';
@@ -36,6 +37,7 @@ const MENU_ITEMS: MenuItem[] = [
   { path: '/departments', label: 'DEPARTMENTS', icon: Network, permission: AdminPermission.VIEW_DEPARTMENTS },
   { path: '/categories', label: 'CATEGORIES', icon: Tag, permission: AdminPermission.VIEW_CATEGORIES },
   { path: '/items', label: 'ITEMS', icon: PackageSearch, permission: AdminPermission.VIEW_ITEMS },
+  { path: '/gate-passes', label: 'GATE PASSES', icon: ClipboardCheck, anyPermission: [AdminPermission.CREATE_GATE_PASS, AdminPermission.APPROVE_GATE_PASS] },
   { path: '/disposals', label: 'DISPOSALS', icon: Trash2, anyPermission: [AdminPermission.MANAGE_DISPOSALS, AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2, AdminPermission.REQUEST_DISPOSAL] },
   { path: '/employees', label: 'EMPLOYEES', icon: UserCheck, permission: AdminPermission.VIEW_EMPLOYEES },
   { path: '/users', label: 'USERS', icon: Users, permission: AdminPermission.VIEW_USERS },

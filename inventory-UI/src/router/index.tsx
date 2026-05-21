@@ -22,6 +22,7 @@ const AuditLogsPage    = lazy(() => import('@/features/audit-logs/AuditLogsPage'
 import LicensesPage     from '@/features/licenses/LicensesPage';
 const EmployeesPage    = lazy(() => import('@/features/employees/EmployeesPage'));
 const DisposalRequestsPage = lazy(() => import('@/features/disposal-requests/DisposalRequestsPage'));
+const GatePassesPage = lazy(() => import('@/features/gate-passes/GatePassesPage'));
 
 
 const router = createBrowserRouter([
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
           { path: '/licenses',    element: <LicensesPage /> },
           { path: '/employees',   element: <EmployeesPage /> },
           { path: '/disposals',   element: <DisposalRequestsPage /> },
+          { path: '/gate-passes', element: <GatePassesPage /> },
           { path: '/reports',     element: <ReportsPage /> },
 
           { path: '/logs',        element: <AuditLogsPage /> },
