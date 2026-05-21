@@ -400,6 +400,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
 }
 
 export interface GatePassInfo {
+  referenceNo: string;
   destination: string;
   reason?: string;
   authorizedBy?: string;
@@ -444,7 +445,7 @@ export async function printGatePassForm(company: CompanyInfo, items: PrintableIt
 
   <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
     <div>
-      <p class="meta"><span class="highlight">Pass No:</span> GP-${Math.floor(1000 + Math.random() * 9000)}</p>
+      <p class="meta"><span class="highlight">Pass No:</span> ${info.referenceNo}</p>
       <p class="meta"><span class="highlight">Date:</span> ${date}</p>
       <p class="meta"><span class="highlight">Time:</span> ${time}</p>
     </div>

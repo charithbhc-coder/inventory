@@ -960,7 +960,7 @@ export default function ItemsPage() {
                     await printGatePassForm(
                       { name: company?.name || 'Company', logoUrl: (company as any)?.logoUrl, mainCompanyLogoUrl },
                       itemsToPrint,
-                      { destination: gatePassRecord.destination, reason: gatePassRecord.reason, authorizedBy: gatePassRecord.authorizedBy }
+                      { referenceNo: gatePassRecord.referenceNo, destination: gatePassRecord.destination, reason: gatePassRecord.reason, authorizedBy: gatePassRecord.authorizedBy }
                     );
 
                     toast.success(`Gate Pass ${gatePassRecord.referenceNo} issued! Items marked IN_TRANSIT.`, { id: 'gatepass' });
