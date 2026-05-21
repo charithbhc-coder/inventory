@@ -38,6 +38,10 @@ export enum AdminPermission {
   APPROVE_DISPOSAL_L1 = 'APPROVE_DISPOSAL_L1',
   APPROVE_DISPOSAL_L2 = 'APPROVE_DISPOSAL_L2',
 
+  // Gate Pass workflow
+  CREATE_GATE_PASS = 'CREATE_GATE_PASS',
+  APPROVE_GATE_PASS = 'APPROVE_GATE_PASS',
+
   // Warehouse
   VIEW_WAREHOUSE = 'VIEW_WAREHOUSE',
 
@@ -87,6 +91,7 @@ export enum ItemStatus {
 }
 
 export enum GatePassStatus {
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
   ACTIVE = 'ACTIVE',
   RETURNED = 'RETURNED',
   CANCELLED = 'CANCELLED',

@@ -18,7 +18,10 @@ export class GatePass {
   id: string;
 
   @Column({ unique: true })
-  referenceNo: string; // e.g. "GP-4821"
+  referenceNo: string;
+
+  @Column()
+  companyId: string;
 
   @Column()
   destination: string;
@@ -32,19 +35,32 @@ export class GatePass {
   @Column({
     type: 'enum',
     enum: GatePassStatus,
-    default: GatePassStatus.ACTIVE,
+    default: GatePassStatus.PENDING_APPROVAL,
   })
   status: GatePassStatus;
+
+  @Column({ type: 'uuid', nullable: true })
+  approvedByUserId: string | null;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'approvedByUserId' })
+  approvedByUser: User | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  approvedAt: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  rejectionNotes: string | null;
 
   @OneToMany(() => Item, (item) => item.gatePass)
   items: Item[];
 
   @Column({ type: 'uuid', nullable: true })
-  createdByUserId: string;
+  createdByUserId: string | null;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'createdByUserId' })
-  createdByUser: User;
+  createdByUser: User | null;
 
   @CreateDateColumn()
   createdAt: Date;
