@@ -34,6 +34,9 @@ export enum AdminPermission {
   ASSIGN_ITEMS = 'ASSIGN_ITEMS',
   MANAGE_REPAIRS = 'MANAGE_REPAIRS',
   MANAGE_DISPOSALS = 'MANAGE_DISPOSALS',
+  REQUEST_DISPOSAL = 'REQUEST_DISPOSAL',
+  APPROVE_DISPOSAL_L1 = 'APPROVE_DISPOSAL_L1',
+  APPROVE_DISPOSAL_L2 = 'APPROVE_DISPOSAL_L2',
   VIEW_WAREHOUSE = 'VIEW_WAREHOUSE',
   // Categories
   VIEW_CATEGORIES = 'VIEW_CATEGORIES',
@@ -89,6 +92,7 @@ export enum DisposalMethod {
   DONATED = 'DONATED',
   SOLD = 'SOLD',
   RECYCLED = 'RECYCLED',
+  RETURNED_TO_VENDOR = 'RETURNED_TO_VENDOR',
 }
 
 // ─────────────────────────────────────────────
@@ -258,4 +262,79 @@ export enum NotificationType {
   TRANSFER_REQUEST_APPROVED = 'TRANSFER_REQUEST_APPROVED',
   TRANSFER_REQUEST_REJECTED = 'TRANSFER_REQUEST_REJECTED',
   BULK_OFFBOARDED = 'BULK_OFFBOARDED',
+}
+
+export enum DisposalCondition {
+  BEYOND_REPAIR = 'BEYOND_REPAIR',
+  OBSOLETE = 'OBSOLETE',
+  UNUSED = 'UNUSED',
+  PHYSICALLY_DAMAGED = 'PHYSICALLY_DAMAGED',
+}
+
+export enum DisposalRequestStatus {
+  PENDING_L1 = 'PENDING_L1',
+  PENDING_L2 = 'PENDING_L2',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum DisposalReviewDecision {
+  RECOMMENDED = 'RECOMMENDED',
+  REJECTED = 'REJECTED',
+}
+
+export enum DisposalFinalDecision {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface DataSecurityChecklist {
+  businessDataBacked: boolean;
+  companyDataErased: boolean;
+  storageFormatted: boolean;
+  userAccountsRemoved: boolean;
+  removedFromDomain: boolean;
+  physicalDestructionDone: boolean;
+}
+
+export interface DisposalRequestUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface DisposalRequest {
+  id: string;
+  itemId: string;
+  item: { id: string; name: string; barcode: string; category: { name: string } };
+  companyId: string;
+
+  requestedByUserId: string;
+  requestedByUser: DisposalRequestUser;
+  requestedAt: string;
+  disposalReason: string;
+  disposalCondition: DisposalCondition;
+  technicalEvaluation: string;
+  proposedMethod: DisposalMethod;
+  evidencePhotoUrls: string[] | null;
+  notes: string | null;
+
+  l1ReviewedByUserId: string | null;
+  l1ReviewedByUser: Pick<DisposalRequestUser, 'firstName' | 'lastName'> | null;
+  l1ReviewedAt: string | null;
+  l1Decision: DisposalReviewDecision | null;
+  l1Notes: string | null;
+
+  l2ApprovedByUserId: string | null;
+  l2ApprovedByUser: Pick<DisposalRequestUser, 'firstName' | 'lastName'> | null;
+  l2ApprovedAt: string | null;
+  l2Decision: DisposalFinalDecision | null;
+  l2Notes: string | null;
+  l1Bypassed: boolean;
+  dataSecurityChecklist: DataSecurityChecklist | null;
+
+  status: DisposalRequestStatus;
+  updatedAt: string;
 }

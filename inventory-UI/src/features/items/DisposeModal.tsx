@@ -60,7 +60,7 @@ export default function DisposeModal({ item, isOpen, onClose }: DisposeModalProp
             
             <div style={styles.alert}>
               <AlertOctagon size={16} />
-              <span>Asset will be marked as <strong>"DISPOSED"</strong> and archived. This action is recorded in audit logs.</span>
+              <span>Emergency direct disposal (SUPER_ADMIN only). Asset will be marked as <strong>"DISPOSED"</strong> immediately. This action is recorded in the audit trail as an emergency bypass.</span>
             </div>
 
             <div>

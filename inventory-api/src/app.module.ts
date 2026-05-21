@@ -28,6 +28,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SearchModule } from './search/search.module';
 import { LicensesModule } from './licenses/licenses.module';
 import { BootstrapModule } from './bootstrap/bootstrap.module';
+import { DisposalRequestsModule } from './disposal-requests/disposal-requests.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { BootstrapModule } from './bootstrap/bootstrap.module';
     CompaniesModule,
     DepartmentsModule,
     ItemsModule,
+    DisposalRequestsModule,
     AuditLogsModule,
     LabelsModule,
     AnalyticsModule,

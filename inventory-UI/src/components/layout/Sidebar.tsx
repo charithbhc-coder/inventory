@@ -2,18 +2,19 @@ import { NavLink } from 'react-router-dom';
 import logo from '@/assets/logo-sidebar.png';
 // Version is injected from package.json at build time by Vite
 const APP_VERSION = __APP_VERSION__;
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Network, 
-  Users, 
+import {
+  LayoutDashboard,
+  Building2,
+  Network,
+  Users,
   PackageSearch,
   Tag,
   BarChart3,
   ListTodo,
   Settings,
   X,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 
 import { useQuery } from '@tanstack/react-query';
@@ -21,12 +22,21 @@ import { settingsService } from '@/services/settings.service';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission } from '@/types';
 
-const MENU_ITEMS = [
+interface MenuItem {
+  path: string;
+  label: string;
+  icon: any;
+  permission?: AdminPermission;
+  anyPermission?: AdminPermission[];
+}
+
+const MENU_ITEMS: MenuItem[] = [
   { path: '/dashboard', label: 'DASHBOARD', icon: LayoutDashboard }, // Dashboard usually visible to all
   { path: '/companies', label: 'COMPANIES', icon: Building2, permission: AdminPermission.VIEW_COMPANIES },
   { path: '/departments', label: 'DEPARTMENTS', icon: Network, permission: AdminPermission.VIEW_DEPARTMENTS },
   { path: '/categories', label: 'CATEGORIES', icon: Tag, permission: AdminPermission.VIEW_CATEGORIES },
   { path: '/items', label: 'ITEMS', icon: PackageSearch, permission: AdminPermission.VIEW_ITEMS },
+  { path: '/disposals', label: 'DISPOSALS', icon: Trash2, anyPermission: [AdminPermission.MANAGE_DISPOSALS, AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2] },
   { path: '/employees', label: 'EMPLOYEES', icon: UserCheck, permission: AdminPermission.VIEW_EMPLOYEES },
   { path: '/users', label: 'USERS', icon: Users, permission: AdminPermission.VIEW_USERS },
   { path: '/reports', label: 'REPORTS', icon: BarChart3, permission: AdminPermission.VIEW_REPORTS },
@@ -77,7 +87,10 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
       </div>
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, padding: isCollapsed ? '0 12px' : '0 16px', marginTop: 12 }}>
-        {MENU_ITEMS.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
+        {MENU_ITEMS.filter(item => {
+          if (item.anyPermission) return item.anyPermission.some(p => hasPermission(p));
+          return !item.permission || hasPermission(item.permission);
+        }).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

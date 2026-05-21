@@ -93,6 +93,80 @@ export class NotificationsService {
     );
   }
 
+  /** Broadcast to SUPER_ADMINs globally + admins with the permission scoped to a specific company */
+  async broadcastToCompanyUsersWithPermission(
+    companyId: string,
+    permission: AdminPermission,
+    payload: Omit<CreateNotificationPayload, 'recipientUserId'>,
+  ) {
+    const superAdmins = await this.userRepo.find({
+      where: { role: UserRole.SUPER_ADMIN, isActive: true },
+      select: ['id'],
+    });
+
+    const privilegedUsers = await this.userRepo
+      .createQueryBuilder('user')
+      .where('user.isActive = :isActive', { isActive: true })
+      .andWhere('user.role != :superAdmin', { superAdmin: UserRole.SUPER_ADMIN })
+      .andWhere('user.companyId = :companyId', { companyId })
+      .andWhere(':permission = ANY(user.permissions)', { permission })
+      .select(['user.id'])
+      .getMany();
+
+    const allRecipients = [
+      ...new Set([
+        ...superAdmins.map((u) => u.id),
+        ...privilegedUsers.map((u) => u.id),
+      ]),
+    ];
+
+    await Promise.all(
+      allRecipients.map((recipientId) =>
+        this.create({ ...payload, recipientUserId: recipientId }),
+      ),
+    );
+  }
+
+  /** Broadcast to SUPER_ADMINs globally + admins with ANY of the given permissions, scoped to a company. Recipients are deduplicated. */
+  async broadcastToCompanyUsersWithAnyPermission(
+    companyId: string,
+    permissions: AdminPermission[],
+    payload: Omit<CreateNotificationPayload, 'recipientUserId'>,
+  ) {
+    const superAdmins = await this.userRepo.find({
+      where: { role: UserRole.SUPER_ADMIN, isActive: true },
+      select: ['id'],
+    });
+
+    // Build OR query: user has at least one of the permissions
+    const qb = this.userRepo
+      .createQueryBuilder('user')
+      .where('user.isActive = :isActive', { isActive: true })
+      .andWhere('user.role != :superAdmin', { superAdmin: UserRole.SUPER_ADMIN })
+      .andWhere('user.companyId = :companyId', { companyId });
+
+    // Use raw SQL: any of the permissions overlaps with user.permissions array
+    const paramObj: Record<string, string> = {};
+    permissions.forEach((p, i) => { paramObj[`perm${i}`] = p; });
+    const orConditions = permissions.map((_, i) => `:perm${i} = ANY(user.permissions)`).join(' OR ');
+    qb.andWhere(`(${orConditions})`, paramObj);
+
+    const privilegedUsers = await qb.select(['user.id']).getMany();
+
+    const allRecipients = [
+      ...new Set([
+        ...superAdmins.map((u) => u.id),
+        ...privilegedUsers.map((u) => u.id),
+      ]),
+    ];
+
+    await Promise.all(
+      allRecipients.map((recipientId) =>
+        this.create({ ...payload, recipientUserId: recipientId }),
+      ),
+    );
+  }
+
   /** @deprecated Use broadcastToPrivilegedUsers with specific permission */
   async broadcastToSuperAdmins(payload: Omit<CreateNotificationPayload, 'recipientUserId'>) {
     return this.broadcastToPrivilegedUsers(AdminPermission.VIEW_AUDIT_LOGS, payload);
@@ -474,5 +548,144 @@ export class NotificationsService {
   handleAuditLogCreated(payload: any) {
     // This is the heart of the real-time refresh
     this.gateway.broadcastAuditLog(payload);
+  }
+
+  @OnEvent('disposal.requested')
+  async handleDisposalRequested(payload: {
+    requestId: string;
+    itemId: string;
+    itemName: string;
+    barcode: string;
+    companyId: string;
+    requestedByUserId: string;
+  }) {
+    const notifPayload = {
+      companyId: payload.companyId,
+      type: NotificationType.DISPOSAL_REQUESTED,
+      priority: NotificationPriority.HIGH,
+      title: 'Disposal Request Submitted',
+      message: `${payload.itemName} (${payload.barcode}) has been submitted for disposal approval.`,
+      entityType: 'DisposalRequest',
+      entityId: payload.requestId,
+      actionUrl: `/disposal-requests/${payload.requestId}`,
+    };
+
+    await this.broadcastToCompanyUsersWithAnyPermission(
+      payload.companyId,
+      [AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2],
+      notifPayload,
+    );
+  }
+
+  @OnEvent('disposal.l1_recommended')
+  async handleDisposalL1Recommended(payload: {
+    requestId: string;
+    companyId: string;
+    requestedByUserId: string;
+  }) {
+    await this.broadcastToCompanyUsersWithPermission(
+      payload.companyId,
+      AdminPermission.APPROVE_DISPOSAL_L2,
+      {
+        companyId: payload.companyId,
+        type: NotificationType.DISPOSAL_APPROVED,
+        priority: NotificationPriority.HIGH,
+        title: 'Disposal Awaiting Final Approval',
+        message: `A disposal request has been recommended by IT Manager and is awaiting your final approval.`,
+        entityType: 'DisposalRequest',
+        entityId: payload.requestId,
+        actionUrl: `/disposal-requests/${payload.requestId}`,
+      },
+    );
+  }
+
+  @OnEvent('disposal.l1_rejected')
+  async handleDisposalL1Rejected(payload: {
+    requestId: string;
+    companyId: string;
+    requestedByUserId: string;
+  }) {
+    await this.create({
+      recipientUserId: payload.requestedByUserId,
+      companyId: payload.companyId,
+      type: NotificationType.DISPOSAL_REQUESTED,
+      priority: NotificationPriority.MEDIUM,
+      title: 'Disposal Request Rejected',
+      message: `Your disposal request has been rejected at the IT Manager review stage.`,
+      entityType: 'DisposalRequest',
+      entityId: payload.requestId,
+      actionUrl: `/disposal-requests/${payload.requestId}`,
+    });
+  }
+
+  @OnEvent('disposal.l2_approved')
+  async handleDisposalL2Approved(payload: {
+    requestId: string;
+    itemId: string;
+    itemName: string;
+    barcode: string;
+    companyId: string;
+    requestedByUserId: string;
+  }) {
+    await this.create({
+      recipientUserId: payload.requestedByUserId,
+      companyId: payload.companyId,
+      type: NotificationType.DISPOSAL_APPROVED,
+      priority: NotificationPriority.HIGH,
+      title: 'Disposal Request Approved',
+      message: `Your disposal request for ${payload.itemName} (${payload.barcode}) has been approved.`,
+      entityType: 'DisposalRequest',
+      entityId: payload.requestId,
+      actionUrl: `/disposal-requests/${payload.requestId}`,
+    });
+
+    await this.broadcastToCompanyUsersWithPermission(
+      payload.companyId,
+      AdminPermission.MANAGE_DISPOSALS,
+      {
+        companyId: payload.companyId,
+        type: NotificationType.ITEM_DISPOSED,
+        priority: NotificationPriority.HIGH,
+        title: 'Asset Disposal Approved',
+        message: `${payload.itemName} (${payload.barcode}) has been approved for disposal via protocol.`,
+        entityType: 'Item',
+        entityId: payload.itemId,
+        actionUrl: `/disposal-requests/${payload.requestId}`,
+      },
+    );
+  }
+
+  @OnEvent('disposal.l2_rejected')
+  async handleDisposalL2Rejected(payload: {
+    requestId: string;
+    companyId: string;
+    requestedByUserId: string;
+    l1ReviewedByUserId: string | null;
+  }) {
+    await this.create({
+      recipientUserId: payload.requestedByUserId,
+      companyId: payload.companyId,
+      type: NotificationType.DISPOSAL_REQUESTED,
+      priority: NotificationPriority.MEDIUM,
+      title: 'Disposal Request Rejected',
+      message: `Your disposal request has been rejected at the final approval stage.`,
+      entityType: 'DisposalRequest',
+      entityId: payload.requestId,
+      actionUrl: `/disposal-requests/${payload.requestId}`,
+    });
+
+    if (payload.l1ReviewedByUserId) {
+      await this.create({
+        recipientUserId: payload.l1ReviewedByUserId,
+        companyId: payload.companyId,
+        type: NotificationType.DISPOSAL_REQUESTED,
+        priority: NotificationPriority.LOW,
+        title: 'Disposal Request Rejected at Final Stage',
+        message: `A disposal request you recommended has been rejected at the final approval stage.`,
+        entityType: 'DisposalRequest',
+        entityId: payload.requestId,
+        actionUrl: `/disposal-requests/${payload.requestId}`,
+      });
+    }
   }
 }
