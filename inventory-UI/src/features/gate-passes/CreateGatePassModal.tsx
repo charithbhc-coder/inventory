@@ -16,9 +16,9 @@ interface Props {
 export default function CreateGatePassModal({
   isOpen,
   onClose,
-  companyName = 'Company',
-  companyLogoUrl,
-  mainCompanyLogoUrl,
+  companyName: _companyName = 'Company',
+  companyLogoUrl: _companyLogoUrl,
+  mainCompanyLogoUrl: _mainCompanyLogoUrl,
 }: Props) {
   const queryClient = useQueryClient();
   const [destination, setDestination] = useState('');
