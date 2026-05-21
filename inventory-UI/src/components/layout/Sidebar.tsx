@@ -101,7 +101,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
             onClick={onCloseMobile}
             style={isCollapsed ? { justifyContent: 'center', padding: '10px 0' } : {}}
           >
-            <item.icon size={isCollapsed ? 32 : 20} style={{ flexShrink: 0 }} />
+            <item.icon size={isCollapsed ? 22 : 20} style={{ flexShrink: 0 }} />
             {!isCollapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</span>}
           </NavLink>
         ))}
@@ -117,7 +117,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }: an
             onClick={onCloseMobile}
             style={isCollapsed ? { justifyContent: 'center', padding: '10px 0' } : {}}
           >
-            <item.icon size={isCollapsed ? 32 : 20} style={{ flexShrink: 0 }} />
+            <item.icon size={isCollapsed ? 22 : 20} style={{ flexShrink: 0 }} />
             {!isCollapsed && <span style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</span>}
           </NavLink>
         ))}

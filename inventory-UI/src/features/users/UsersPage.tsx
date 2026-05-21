@@ -189,6 +189,8 @@ export default function UsersPage() {
         
         if (val === 'SUPER_ADMIN') { color = '#f87171'; bg = 'rgba(248, 113, 113, 0.1)'; }
         else if (val === 'COMPANY ADMIN') { color = '#60a5fa'; bg = 'rgba(96, 165, 250, 0.1)'; }
+        else if (val === 'HEAD OF IT') { color = '#f97316'; bg = 'rgba(249, 115, 22, 0.1)'; }
+        else if (val === 'HEAD OF FINANCE') { color = '#10b981'; bg = 'rgba(16, 185, 129, 0.1)'; }
         
         return (
            <span style={{ 
