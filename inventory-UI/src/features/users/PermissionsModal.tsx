@@ -87,6 +87,14 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    category: 'Disposal Workflow',
+    permissions: [
+      { id: AdminPermission.REQUEST_DISPOSAL, label: 'Request Disposal', type: 'special' },
+      { id: AdminPermission.APPROVE_DISPOSAL_L1, label: 'L1 Review (IT Manager)', type: 'special' },
+      { id: AdminPermission.APPROVE_DISPOSAL_L2, label: 'L2 Approval (Director Finance)', type: 'special' },
+    ],
+  },
+  {
     category: 'Analysis & Logistics',
     permissions: [
       { id: AdminPermission.VIEW_REPORTS, label: 'Reports', type: 'special' },
