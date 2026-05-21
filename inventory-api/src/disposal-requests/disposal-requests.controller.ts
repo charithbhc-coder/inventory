@@ -57,6 +57,13 @@ export class DisposalRequestsController {
     return this.service.findAll({ status: query.status, companyId, itemId: query.itemId });
   }
 
+  @Get('my-requests')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.REQUEST_DISPOSAL)
+  findMyRequests(@CurrentUser() user: JwtPayload) {
+    return this.service.findMyRequests(user.sub, user.companyId);
+  }
+
   @Get('check/:itemId')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.REQUEST_DISPOSAL)

@@ -58,6 +58,11 @@ export const disposalRequestService = {
     return data;
   },
 
+  getMyRequests: async (): Promise<DisposalRequest[]> => {
+    const { data } = await apiClient.get('/disposal-requests/my-requests');
+    return data;
+  },
+
   checkItem: async (itemId: string): Promise<ItemDisposalCheck> => {
     const { data } = await apiClient.get(`/disposal-requests/check/${itemId}`);
     return data;
