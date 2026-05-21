@@ -157,9 +157,16 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    localStorage.setItem('theme', next);
-    document.documentElement.setAttribute('data-theme', next);
+    const apply = () => {
+      setTheme(next);
+      localStorage.setItem('theme', next);
+      document.documentElement.setAttribute('data-theme', next);
+    };
+    if (document.startViewTransition) {
+      document.startViewTransition(apply);
+    } else {
+      apply();
+    }
   };
 
   const getNotifUI = (n: any) => {
