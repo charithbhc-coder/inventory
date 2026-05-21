@@ -54,6 +54,13 @@ function StatusBadge({ status }: { status: DisposalRequestStatus }) {
 export default function DisposalRequestsPage() {
   const { hasPermission } = useAuthStore();
 
+  const canManage =
+    hasPermission(AdminPermission.MANAGE_DISPOSALS) ||
+    hasPermission(AdminPermission.APPROVE_DISPOSAL_L1) ||
+    hasPermission(AdminPermission.APPROVE_DISPOSAL_L2);
+  const isRequesterOnly =
+    !canManage && hasPermission(AdminPermission.REQUEST_DISPOSAL);
+
   const [statusFilter, setStatusFilter] = useState<DisposalRequestStatus | ''>('');
   const [_companyFilter, _setCompanyFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -61,15 +68,16 @@ export default function DisposalRequestsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { data: requests = [], isLoading } = useQuery({
-    queryKey: ['disposal-requests', { status: statusFilter, companyId: _companyFilter }],
-    queryFn: () => disposalRequestService.getAll({
-      status: statusFilter || undefined,
-      companyId: _companyFilter || undefined,
-    }),
-    enabled:
-      hasPermission(AdminPermission.MANAGE_DISPOSALS) ||
-      hasPermission(AdminPermission.APPROVE_DISPOSAL_L1) ||
-      hasPermission(AdminPermission.APPROVE_DISPOSAL_L2),
+    queryKey: isRequesterOnly
+      ? ['disposal-requests', 'mine']
+      : ['disposal-requests', { status: statusFilter, companyId: _companyFilter }],
+    queryFn: isRequesterOnly
+      ? () => disposalRequestService.getMyRequests()
+      : () => disposalRequestService.getAll({
+          status: statusFilter || undefined,
+          companyId: _companyFilter || undefined,
+        }),
+    enabled: canManage || isRequesterOnly,
   });
 
   const filtered = search
@@ -137,9 +145,13 @@ export default function DisposalRequestsPage() {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>Disposal Requests</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>
+            {isRequesterOnly ? 'My Disposal Requests' : 'Disposal Requests'}
+          </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 600 }}>
-            Review and approve asset disposal requests
+            {isRequesterOnly
+              ? 'Track the status of disposal requests you have submitted'
+              : 'Review and approve asset disposal requests'}
           </p>
         </div>
       </div>
@@ -150,25 +162,27 @@ export default function DisposalRequestsPage() {
           <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
           <input
             style={{ width: '100%', padding: '10px 12px 10px 36px', background: 'var(--bg-card)', border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, color: 'var(--color-text-primary)', outline: 'none' }}
-            placeholder="Search asset, barcode, requester..."
+            placeholder={isRequesterOnly ? 'Search asset or barcode...' : 'Search asset, barcode, requester...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Filter size={15} style={{ color: 'var(--color-text-muted)' }} />
-          <select
-            style={{ padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, color: 'var(--color-text-primary)', outline: 'none' }}
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as DisposalRequestStatus | '')}
-          >
-            <option value="">All Statuses</option>
-            {Object.entries(STATUS_STYLES).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </select>
-        </div>
+        {!isRequesterOnly && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Filter size={15} style={{ color: 'var(--color-text-muted)' }} />
+            <select
+              style={{ padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border-dark)', borderRadius: 10, fontSize: 13, color: 'var(--color-text-primary)', outline: 'none' }}
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as DisposalRequestStatus | '')}
+            >
+              <option value="">All Statuses</option>
+              {Object.entries(STATUS_STYLES).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Table */}
