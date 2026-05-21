@@ -34,14 +34,15 @@ export class SearchService {
     const searchTerm = `%${query}%`;
     const results: GlobalSearchResult[] = [];
 
-    // 1. Search Items (Name, Barcode, SerialNumber)
+    // 1. Search Items (Name, Barcode, SerialNumber, AssignedToName)
     const items = await this.itemsRepo.find({
       where: [
         { name: ILike(searchTerm) },
         { barcode: ILike(searchTerm) },
         { serialNumber: ILike(searchTerm) },
+        { assignedToName: ILike(searchTerm) },
       ],
-      take: 5,
+      take: 15,
       relations: ['category'],
     });
     items.forEach((i) => results.push({
@@ -59,7 +60,7 @@ export class SearchService {
       .orWhere('user.lastName ILIKE :search', { search: searchTerm })
       .orWhere('user.email ILIKE :search', { search: searchTerm })
       .orWhere('CONCAT(user.firstName, \' \', user.lastName) ILIKE :search', { search: searchTerm })
-      .take(5)
+      .take(10)
       .getMany();
     users.forEach((u) => results.push({
       id: u.id,

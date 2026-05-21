@@ -17,7 +17,7 @@ import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as requestIp from 'request-ip';
-import { s3Storage } from '../storage/s3.storage';
+import { memoryStorage, uploadCompressedToS3 } from '../storage/s3.storage';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -104,7 +104,7 @@ export class AuthController {
 
   @Post('me/avatar')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('avatars') }))
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage, limits: { fileSize: 1024 * 1024 * 5 } }))
   async uploadAvatar(
     @CurrentUser() user: JwtPayload,
     @UploadedFile(
@@ -114,7 +114,8 @@ export class AuthController {
     )
     file: Express.Multer.File,
   ) {
-    return this.authService.updateAvatar(user.sub, (file as any).location);
+    const url = await uploadCompressedToS3(file.buffer, file.originalname, 'avatars', 400);
+    return this.authService.updateAvatar(user.sub, url);
   }
 
   @Delete('me/avatar')

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText, Printer, ListTodo } from 'lucide-react';
-import { itemService, Item } from '@/services/item.service';
+import { itemService, Item, EmployeeGroup } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
 import { useAuthStore } from '@/store/auth.store';
@@ -18,16 +18,6 @@ import TransferRequestModal from './TransferRequestModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import BulkQrPrintModal from '@/components/qr/BulkQrPrintModal';
 
-interface EmployeeGroup {
-  name: string;
-  employeeId: string;
-  departmentId: string;
-  departmentName: string;
-  companyId: string;
-  companyName: string;
-  items: Item[];
-  isActive: boolean;
-}
 
 export default function EmployeesPage() {
   const [search, setSearch] = useState('');
@@ -72,24 +62,11 @@ export default function EmployeesPage() {
     setAssetPage(1);
   }, [selectedEmployee?.name]);
 
-  // Fetch active items (IN_USE) — separate query ensures we never miss employees due to pagination
-  const { data: itemData, isLoading } = useQuery({
-    queryKey: ['items', 'employees-active', companyFilter, deptFilter],
-    queryFn: () => itemService.getItems({
+  const { data: employeeData, isLoading } = useQuery({
+    queryKey: ['items', 'employee-groups', companyFilter, deptFilter],
+    queryFn: () => itemService.getEmployeeGroups({
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
-      status: 'IN_USE',
-      limit: 5000,
-    }),
-  });
-
-  // Fetch all items for deactivated detection (previousAssignedToName on WAREHOUSE items)
-  const { data: allItemData } = useQuery({
-    queryKey: ['items', 'employees-deact', companyFilter, deptFilter],
-    queryFn: () => itemService.getItems({
-      companyId: companyFilter || undefined,
-      departmentId: deptFilter || undefined,
-      limit: 5000,
     }),
   });
 
@@ -104,8 +81,6 @@ export default function EmployeesPage() {
     enabled: !!companyFilter
   });
 
-  const items = useMemo(() => Array.isArray(itemData) ? itemData : (itemData as any)?.data || [], [itemData]);
-  const allItems = useMemo(() => Array.isArray(allItemData) ? allItemData : (allItemData as any)?.data || [], [allItemData]);
   const companies = useMemo(() => Array.isArray(companyData) ? companyData : (companyData as any)?.data || [], [companyData]);
   const departments = useMemo(() => Array.isArray(deptData) ? deptData : (deptData as any)?.data || [], [deptData]);
 
@@ -124,84 +99,8 @@ export default function EmployeesPage() {
     return ktmg?.logoUrl || undefined;
   }, [brandingData]);
 
-  // Group items by employee
-  const { activeEmployees, deactivatedEmployees } = useMemo(() => {
-    const activeMap = new Map<string, EmployeeGroup>();
-    const deactMap = new Map<string, EmployeeGroup>();
-
-    // Build active map from IN_USE items
-    items.forEach((item: Item) => {
-      if (item.assignedToName) {
-        const key = item.assignedToName.toLowerCase().trim();
-        if (!activeMap.has(key)) {
-          activeMap.set(key, {
-            name: item.assignedToName.trim(),
-            employeeId: item.assignedToEmployeeId || '',
-            departmentId: item.departmentId || '',
-            departmentName: item.department?.name || 'Unknown Dept',
-            companyId: item.companyId || '',
-            companyName: item.company?.name || 'Unknown Company',
-            items: [],
-            isActive: true
-          });
-        }
-        activeMap.get(key)!.items.push(item);
-      }
-    });
-
-    // Build deactivated map and append past items to active employees via previousAssignedToName
-    allItems.forEach((item: Item) => {
-      const pastName = (item as any).previousAssignedToName;
-      if (pastName) {
-        const key = pastName.toLowerCase().trim();
-        
-        if (activeMap.has(key)) {
-          // Employee is active, append to their history
-          const emp = activeMap.get(key)!;
-          if (!emp.items.some(i => i.id === item.id)) {
-            emp.items.push(item);
-          }
-        } else {
-          // Employee is deactivated
-          if (!deactMap.has(key)) {
-            deactMap.set(key, {
-              name: pastName.trim(),
-              employeeId: (item as any).previousAssignedToEmployeeId || '',
-              departmentId: item.departmentId || '',
-              departmentName: item.department?.name || '-',
-              companyId: item.companyId || '',
-              companyName: item.company?.name || '-',
-              items: [],
-              isActive: false
-            });
-          }
-          const emp = deactMap.get(key)!;
-          if (!emp.items.some(i => i.id === item.id)) {
-            emp.items.push(item);
-          }
-        }
-      }
-    });
-
-    // Sort items so currently assigned are at the top, history at the bottom
-    for (const emp of activeMap.values()) {
-       emp.items.sort((a, b) => {
-         const aActive = a.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase() ? -1 : 1;
-         const bActive = b.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase() ? -1 : 1;
-         return aActive - bActive;
-       });
-    }
-
-    // Safety: remove from deactMap anyone who also appears in activeMap
-    for (const key of activeMap.keys()) deactMap.delete(key);
-
-    const sortAlpha = (a: EmployeeGroup, b: EmployeeGroup) => a.name.localeCompare(b.name);
-
-    return {
-      activeEmployees: Array.from(activeMap.values()).sort(sortAlpha),
-      deactivatedEmployees: Array.from(deactMap.values()).sort(sortAlpha)
-    };
-  }, [items, allItems]);
+  const activeEmployees: EmployeeGroup[] = employeeData?.activeEmployees || [];
+  const deactivatedEmployees: EmployeeGroup[] = employeeData?.deactivatedEmployees || [];
 
   const activeCount = useMemo(() => activeEmployees.length, [activeEmployees]);
   const deactivatedCount = useMemo(() => deactivatedEmployees.length, [deactivatedEmployees]);

@@ -157,6 +157,74 @@ export class ItemsService implements OnModuleInit {
     return paginate(items, total, page, limit);
   }
 
+  async getEmployeeGroups(query: { companyId?: string; departmentId?: string }) {
+    const qb = this.itemsRepository.createQueryBuilder('item')
+      .leftJoinAndSelect('item.category', 'category')
+      .leftJoinAndSelect('item.company', 'company')
+      .leftJoinAndSelect('item.department', 'department')
+      .where('(item.assignedToName IS NOT NULL OR item.previousAssignedToName IS NOT NULL)');
+
+    if (query.companyId) qb.andWhere('item.companyId = :companyId', { companyId: query.companyId });
+    if (query.departmentId) qb.andWhere('item.departmentId = :departmentId', { departmentId: query.departmentId });
+
+    const items = await qb.getMany();
+
+    const activeMap = new Map<string, any>();
+    const deactMap = new Map<string, any>();
+
+    items.filter(i => i.status === ItemStatus.IN_USE).forEach(item => {
+      if (!item.assignedToName) return;
+      const key = item.assignedToName.toLowerCase().trim();
+      if (!activeMap.has(key)) {
+        activeMap.set(key, {
+          name: item.assignedToName.trim(),
+          employeeId: item.assignedToEmployeeId || '',
+          departmentId: item.departmentId || '',
+          departmentName: item.department?.name || 'Unknown Dept',
+          companyId: item.companyId || '',
+          companyName: item.company?.name || 'Unknown Company',
+          items: [],
+          isActive: true,
+        });
+      }
+      activeMap.get(key).items.push(item);
+    });
+
+    items.forEach(item => {
+      const pastName = item.previousAssignedToName;
+      if (!pastName) return;
+      const key = pastName.toLowerCase().trim();
+      if (activeMap.has(key)) {
+        const emp = activeMap.get(key);
+        if (!emp.items.some((i: Item) => i.id === item.id)) emp.items.push(item);
+      } else {
+        if (!deactMap.has(key)) {
+          deactMap.set(key, {
+            name: pastName.trim(),
+            employeeId: item.previousAssignedToEmployeeId || '',
+            departmentId: item.departmentId || '',
+            departmentName: item.department?.name || '-',
+            companyId: item.companyId || '',
+            companyName: item.company?.name || '-',
+            items: [],
+            isActive: false,
+          });
+        }
+        const emp = deactMap.get(key);
+        if (!emp.items.some((i: Item) => i.id === item.id)) emp.items.push(item);
+      }
+    });
+
+    for (const key of activeMap.keys()) deactMap.delete(key);
+
+    const sortAlpha = (a: any, b: any) => a.name.localeCompare(b.name);
+
+    return {
+      activeEmployees: Array.from(activeMap.values()).sort(sortAlpha),
+      deactivatedEmployees: Array.from(deactMap.values()).sort(sortAlpha),
+    };
+  }
+
   async findOne(id: string): Promise<Item> {
     const item = await this.itemsRepository.findOne({
       where: { id },

@@ -33,9 +33,25 @@ export interface Item {
   childItems?: { id: string; name: string; barcode: string; category?: { name: string } }[];
 }
 
+export interface EmployeeGroup {
+  name: string;
+  employeeId: string;
+  departmentId: string;
+  departmentName: string;
+  companyId: string;
+  companyName: string;
+  items: Item[];
+  isActive: boolean;
+}
+
 export const itemService = {
   getItems: async (params: any) => {
     const { data } = await apiClient.get('/items', { params });
+    return data;
+  },
+
+  getEmployeeGroups: async (params: { companyId?: string; departmentId?: string }): Promise<{ activeEmployees: EmployeeGroup[]; deactivatedEmployees: EmployeeGroup[] }> => {
+    const { data } = await apiClient.get('/items/employees', { params });
     return data;
   },
 

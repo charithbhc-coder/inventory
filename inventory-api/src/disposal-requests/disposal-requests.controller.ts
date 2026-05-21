@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseFilePipeBuilder } from '@nestjs/common';
-import { s3Storage } from '../storage/s3.storage';
+import { memoryStorage, uploadCompressedToS3 } from '../storage/s3.storage';
 import { DisposalRequestsService } from './disposal-requests.service';
 import {
   CreateDisposalRequestDto,
@@ -110,8 +110,8 @@ export class DisposalRequestsController {
   @Post('upload-photo')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
-  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('disposal-evidence') }))
-  uploadPhoto(
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage, limits: { fileSize: 1024 * 1024 * 10 } }))
+  async uploadPhoto(
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addMaxSizeValidator({ maxSize: 1024 * 1024 * 10 })
@@ -119,6 +119,7 @@ export class DisposalRequestsController {
     )
     file: Express.Multer.File,
   ) {
-    return { url: (file as any).location };
+    const url = await uploadCompressedToS3(file.buffer, file.originalname, 'disposal-evidence');
+    return { url };
   }
 }

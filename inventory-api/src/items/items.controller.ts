@@ -17,7 +17,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ItemsService } from './items.service';
-import { s3Storage } from '../storage/s3.storage';
+import { s3Storage, memoryStorage, uploadCompressedToS3 } from '../storage/s3.storage';
 import {
   CreateItemDto,
   UpdateItemDto,
@@ -80,6 +80,18 @@ export class ItemsController {
     @Query('assignedTo') assignedTo?: string,
   ) {
     return this.itemsService.findAll({ page, limit, search, status, categoryId, companyId, departmentId, isWorking, needsRepair, assignedTo });
+  }
+
+  @Get('employees')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.VIEW_EMPLOYEES)
+  getEmployeeGroups(
+    @Query('companyId') companyId?: string,
+    @Query('departmentId') departmentId?: string,
+    @CurrentUser() user?: JwtPayload,
+  ) {
+    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? companyId : user?.companyId;
+    return this.itemsService.getEmployeeGroups({ companyId: callerCompanyId, departmentId });
   }
 
   @Get('warehouse/:companyId')
@@ -209,8 +221,8 @@ export class ItemsController {
   @Post(':id/image')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
-  @UseInterceptors(FileInterceptor('file', { storage: s3Storage('items') }))
-  uploadImage(
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage, limits: { fileSize: 1024 * 1024 * 10 } }))
+  async uploadImage(
     @Param('id') id: string,
     @UploadedFile(
       new ParseFilePipeBuilder()
@@ -219,7 +231,8 @@ export class ItemsController {
     )
     file: Express.Multer.File,
   ) {
-    return this.itemsService.updateImage(id, (file as any).location);
+    const url = await uploadCompressedToS3(file.buffer, file.originalname, 'items');
+    return this.itemsService.updateImage(id, url);
   }
 
   @Get(':id/qr-code')
