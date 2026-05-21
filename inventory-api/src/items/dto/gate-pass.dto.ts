@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, IsUUID, IsEnum } from 'class-validator';
+import { GatePassStatus } from '../../common/enums';
 
 export class CreateGatePassDto {
   @IsArray()
@@ -28,4 +29,16 @@ export class ReturnGatePassDto {
   @IsString()
   @IsOptional()
   notes?: string;
+}
+
+export class RejectGatePassDto {
+  @IsString()
+  @IsNotEmpty()
+  rejectionNotes: string;
+}
+
+export class GatePassQueryDto {
+  @IsEnum(GatePassStatus)
+  @IsOptional()
+  status?: GatePassStatus;
 }
