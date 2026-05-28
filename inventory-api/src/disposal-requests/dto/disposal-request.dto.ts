@@ -88,7 +88,7 @@ export class L2ApproveDto {
   @IsOptional()
   notes?: string;
 
-  @ValidateIf((o) => o.decision === DisposalFinalDecision.APPROVED)
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => DataSecurityChecklistDto)
