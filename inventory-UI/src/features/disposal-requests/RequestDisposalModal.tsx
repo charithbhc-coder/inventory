@@ -10,6 +10,7 @@ interface Props {
   item: Item;
   isOpen: boolean;
   onClose: () => void;
+  onSubmitted?: () => void;
 }
 
 const CONDITION_LABELS: Record<DisposalCondition, string> = {
@@ -27,7 +28,7 @@ const METHOD_LABELS: Record<DisposalMethod, string> = {
   RETURNED_TO_VENDOR: 'Returned to Vendor',
 };
 
-export default function RequestDisposalModal({ item, isOpen, onClose }: Props) {
+export default function RequestDisposalModal({ item, isOpen, onClose, onSubmitted }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     disposalReason: '',
@@ -65,6 +66,7 @@ export default function RequestDisposalModal({ item, isOpen, onClose }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['disposal-requests'] });
       queryClient.refetchQueries({ queryKey: ['disposal-check', item.id] });
+      onSubmitted?.();
       toast.success('Disposal request submitted for review');
       handleClose();
     },

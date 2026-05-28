@@ -59,6 +59,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
   const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'request-disposal' | 'lost' | 'return' | 'recover' | 'return-warehouse' | null>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [disposalJustSubmitted, setDisposalJustSubmitted] = useState(false);
   const hasPermission = useAuthStore(s => s.hasPermission);
   const isSuperAdmin = useAuthStore(s => s.isSuperAdmin);
 
@@ -68,6 +69,8 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
     enabled: isOpen && hasPermission(AdminPermission.REQUEST_DISPOSAL),
     staleTime: 0,
   });
+
+  const disposalHasOpen = disposalCheck?.hasOpen || disposalJustSubmitted;
 
   if (!isOpen) return null;
 
@@ -268,7 +271,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </button>
             )}
             {item.status !== ItemStatus.DISPOSED && !isSuperAdmin() && hasPermission(AdminPermission.REQUEST_DISPOSAL) && (
-              disposalCheck?.hasOpen ? (
+              disposalHasOpen ? (
                 <div style={{
                   flex: 1, padding: '10px 14px',
                   background: 'rgba(245,158,11,0.08)',
@@ -478,7 +481,12 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         <AssignModal item={item} isOpen={activeModal === 'assign'} onClose={() => setActiveModal(null)} />
         <RepairModal item={item} isOpen={activeModal === 'repair'} onClose={() => setActiveModal(null)} />
         <DisposeModal item={item} isOpen={activeModal === 'dispose'} onClose={() => setActiveModal(null)} />
-        <RequestDisposalModal item={item} isOpen={activeModal === 'request-disposal'} onClose={() => setActiveModal(null)} />
+        <RequestDisposalModal
+          item={item}
+          isOpen={activeModal === 'request-disposal'}
+          onClose={() => setActiveModal(null)}
+          onSubmitted={() => setDisposalJustSubmitted(true)}
+        />
         <ReportLostModal item={item} isOpen={activeModal === 'lost'} onClose={() => setActiveModal(null)} />
         <ReturnFromRepairModal item={item} isOpen={activeModal === 'return'} onClose={() => setActiveModal(null)} />
         <RecoverItemModal item={item} isOpen={activeModal === 'recover'} onClose={() => setActiveModal(null)} />
