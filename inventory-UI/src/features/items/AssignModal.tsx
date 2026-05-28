@@ -39,27 +39,20 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
     enabled: isOpen
   });
 
-  // Load all currently/previously assigned employees (IN_USE items with an assignedToEmployeeId)
-  const { data: assignedItemsData } = useQuery({
-    queryKey: ['employee-lookup', item.companyId],
-    queryFn: () => itemService.getItems({ status: 'IN_USE', companyId: item.companyId, limit: 500 }),
+  // Load all employees via the dedicated employee groups endpoint (same as Employees page)
+  const { data: employeeGroupsData } = useQuery({
+    queryKey: ['employee-groups-lookup', item.companyId],
+    queryFn: () => itemService.getEmployeeGroups({ companyId: item.companyId }),
     enabled: isOpen,
   });
 
-  // Deduplicated employee list from assigned items
+  // All active employees for this company
   const knownEmployees = useMemo(() => {
-    const raw = Array.isArray(assignedItemsData) ? assignedItemsData : (assignedItemsData as any)?.data || [];
-    const map = new Map<string, { name: string; employeeId: string }>();
-    (raw as Item[]).forEach(i => {
-      if (i.assignedToEmployeeId && i.assignedToName) {
-        map.set(i.assignedToEmployeeId.toLowerCase(), {
-          name: i.assignedToName,
-          employeeId: i.assignedToEmployeeId,
-        });
-      }
-    });
-    return Array.from(map.values());
-  }, [assignedItemsData]);
+    const active = employeeGroupsData?.activeEmployees || [];
+    return active
+      .filter(e => e.employeeId && e.name)
+      .map(e => ({ name: e.name, employeeId: e.employeeId }));
+  }, [employeeGroupsData]);
 
   const departmentsList = Array.isArray(departmentsRes) ? departmentsRes : (departmentsRes as any)?.data || [];
 
