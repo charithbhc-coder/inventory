@@ -102,6 +102,7 @@ export default function ItemsPage() {
 
   const effectiveStatusFilter = useMemo(() => {
     if (viewTab === 'ARCHIVED') return 'LOST,DISPOSED';
+    if (viewTab === 'ACTIVE' && !statusFilter) return 'WAREHOUSE,IN_USE,IN_REPAIR,SENT_TO_REPAIR,IN_TRANSIT';
     return statusFilter;
   }, [viewTab, statusFilter]);
 
