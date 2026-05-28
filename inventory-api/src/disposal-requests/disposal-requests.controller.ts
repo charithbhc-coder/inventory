@@ -97,7 +97,7 @@ export class DisposalRequestsController {
     @Body() dto: L2ApproveDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.service.l2Approve(id, dto, user.sub, user.email, user.companyId);
+    return this.service.l2Approve(id, dto, user.sub, user.email, user.companyId, user.role === UserRole.SUPER_ADMIN);
   }
 
   @Patch(':id/cancel')

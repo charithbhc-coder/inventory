@@ -132,6 +132,7 @@ export class DisposalRequestsService {
     approverId: string,
     approverName: string,
     callerCompanyId?: string,
+    isSuperAdmin = false,
   ): Promise<DisposalRequest> {
     return this.dataSource.transaction(async (manager) => {
       const request = await manager.findOne(DisposalRequest, {
@@ -157,7 +158,7 @@ export class DisposalRequestsService {
           'You cannot approve your own disposal request.',
         );
       }
-      if (request.l1ReviewedByUserId && request.l1ReviewedByUserId === approverId) {
+      if (!isSuperAdmin && request.l1ReviewedByUserId && request.l1ReviewedByUserId === approverId) {
         throw new ForbiddenException(
           'You cannot give final approval on a request you reviewed at the IT Manager stage.',
         );
