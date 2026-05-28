@@ -77,9 +77,13 @@ export class DisposalRequestsController {
 
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_DISPOSALS, AdminPermission.REQUEST_DISPOSAL)
+  @Permissions(AdminPermission.MANAGE_DISPOSALS, AdminPermission.REQUEST_DISPOSAL, AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2)
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.service.findOne(id, user.companyId, user.sub);
+    // L2 approvers and super admins are group-level — don't scope to their company
+    const isGroupLevel =
+      user.role === UserRole.SUPER_ADMIN ||
+      user.permissions?.includes(AdminPermission.APPROVE_DISPOSAL_L2);
+    return this.service.findOne(id, isGroupLevel ? undefined : user.companyId, user.sub);
   }
 
   @Patch(':id/l1-review')
@@ -90,7 +94,8 @@ export class DisposalRequestsController {
     @Body() dto: L1ReviewDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.service.l1Review(id, dto, user.sub, user.companyId);
+    const isGroupLevel = user.role === UserRole.SUPER_ADMIN || user.permissions?.includes(AdminPermission.APPROVE_DISPOSAL_L2);
+    return this.service.l1Review(id, dto, user.sub, isGroupLevel ? undefined : user.companyId);
   }
 
   @Patch(':id/l2-approve')
@@ -101,7 +106,9 @@ export class DisposalRequestsController {
     @Body() dto: L2ApproveDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.service.l2Approve(id, dto, user.sub, user.email, user.companyId, user.role === UserRole.SUPER_ADMIN);
+    const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
+    const isGroupLevel = isSuperAdmin || user.permissions?.includes(AdminPermission.APPROVE_DISPOSAL_L2);
+    return this.service.l2Approve(id, dto, user.sub, user.email, isGroupLevel ? undefined : user.companyId, isSuperAdmin);
   }
 
   @Patch(':id/cancel')
