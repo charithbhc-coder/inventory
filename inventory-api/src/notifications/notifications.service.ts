@@ -608,7 +608,7 @@ export class NotificationsService {
     await this.create({
       recipientUserId: payload.requestedByUserId,
       companyId: payload.companyId,
-      type: NotificationType.DISPOSAL_REQUESTED,
+      type: NotificationType.DISPOSAL_REJECTED,
       priority: NotificationPriority.MEDIUM,
       title: 'Disposal Request Rejected',
       message: `Your disposal request has been rejected at the IT Manager review stage.`,
@@ -665,7 +665,7 @@ export class NotificationsService {
     await this.create({
       recipientUserId: payload.requestedByUserId,
       companyId: payload.companyId,
-      type: NotificationType.DISPOSAL_REQUESTED,
+      type: NotificationType.DISPOSAL_REJECTED,
       priority: NotificationPriority.MEDIUM,
       title: 'Disposal Request Rejected',
       message: `Your disposal request has been rejected at the final approval stage.`,
@@ -678,7 +678,7 @@ export class NotificationsService {
       await this.create({
         recipientUserId: payload.l1ReviewedByUserId,
         companyId: payload.companyId,
-        type: NotificationType.DISPOSAL_REQUESTED,
+        type: NotificationType.DISPOSAL_REJECTED,
         priority: NotificationPriority.LOW,
         title: 'Disposal Request Rejected at Final Stage',
         message: `A disposal request you recommended has been rejected at the final approval stage.`,
@@ -687,5 +687,27 @@ export class NotificationsService {
         actionUrl: `/disposal-requests/${payload.requestId}`,
       });
     }
+  }
+
+  @OnEvent('disposal.cancelled')
+  async handleDisposalCancelled(payload: {
+    requestId: string;
+    companyId: string;
+    requestedByUserId: string;
+  }) {
+    await this.broadcastToCompanyUsersWithAnyPermission(
+      payload.companyId,
+      [AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2],
+      {
+        companyId: payload.companyId,
+        type: NotificationType.DISPOSAL_CANCELLED,
+        priority: NotificationPriority.LOW,
+        title: 'Disposal Request Cancelled',
+        message: `A disposal request has been withdrawn by the requester.`,
+        entityType: 'DisposalRequest',
+        entityId: payload.requestId,
+        actionUrl: `/disposal-requests/${payload.requestId}`,
+      },
+    );
   }
 }

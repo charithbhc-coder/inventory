@@ -170,14 +170,6 @@ export class DisposalRequestsService {
         request.status === DisposalRequestStatus.PENDING_L1;
 
       if (dto.decision === DisposalFinalDecision.APPROVED) {
-        const checklist = dto.dataSecurityChecklist!;
-        const allChecked = Object.values(checklist).every((v) => v === true);
-        if (!allChecked) {
-          throw new BadRequestException(
-            'All data security checklist items must be confirmed before approving disposal.',
-          );
-        }
-
         const prevStatus = item.status;
         item.status = ItemStatus.DISPOSED;
         item.disposalReason = request.disposalReason;
@@ -260,7 +252,16 @@ export class DisposalRequestsService {
     }
 
     request.status = DisposalRequestStatus.CANCELLED;
-    return this.requestRepo.save(request);
+    const saved = await this.requestRepo.save(request);
+
+    this.eventEmitter.emit('disposal.cancelled', {
+      requestId: saved.id,
+      itemId: saved.itemId,
+      companyId: saved.companyId,
+      requestedByUserId: userId,
+    });
+
+    return saved;
   }
 
   async findAll(filters: {
