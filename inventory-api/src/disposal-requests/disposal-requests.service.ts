@@ -153,11 +153,7 @@ export class DisposalRequestsService {
           'This request is not awaiting final approval.',
         );
       }
-      if (request.requestedByUserId === approverId) {
-        throw new ForbiddenException(
-          'You cannot approve your own disposal request.',
-        );
-      }
+      // Note: L2 approvers (Director Finance) CAN approve their own requests — they have final authority.
       if (!isSuperAdmin && request.l1ReviewedByUserId && request.l1ReviewedByUserId === approverId) {
         throw new ForbiddenException(
           'You cannot give final approval on a request you reviewed at the IT Manager stage.',

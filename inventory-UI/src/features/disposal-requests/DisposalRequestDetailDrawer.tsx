@@ -250,12 +250,11 @@ export default function DisposalRequestDetailDrawer({ requestId, isOpen, onClose
     notRequester;
 
   // L2 Final Approval: Director Finance (APPROVE_DISPOSAL_L2) or Super Admin.
-  // Super Admin sees L2 only after L1 is done (PENDING_L2); Director Finance can act on PENDING_L1 too (bypass).
+  // L2 approvers can approve regardless of whether they submitted the request.
   const canL2Approve =
     !canL1Review &&
     (isSuperAdmin() || hasPermission(AdminPermission.APPROVE_DISPOSAL_L2)) &&
-    (request?.status === DisposalRequestStatus.PENDING_L1 || request?.status === DisposalRequestStatus.PENDING_L2) &&
-    notRequester;
+    (request?.status === DisposalRequestStatus.PENDING_L1 || request?.status === DisposalRequestStatus.PENDING_L2);
 
   const canCancel =
     hasPermission(AdminPermission.REQUEST_DISPOSAL) &&
