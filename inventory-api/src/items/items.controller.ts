@@ -125,28 +125,28 @@ export class ItemsController {
 
   @Patch('employee/update')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.UPDATE_ITEMS)
+  @Permissions(AdminPermission.UPDATE_ITEMS, AdminPermission.UPDATE_USERS)
   updateEmployee(@Body() dto: UpdateEmployeeDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.updateEmployeeName(dto.oldName, dto.newName, dto.newEmployeeId || null, user.sub);
   }
 
   @Post(':id/assign')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @Permissions(AdminPermission.ASSIGN_ITEMS, AdminPermission.CREATE_USERS)
   assign(@Param('id') id: string, @Body() dto: AssignItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.assign(id, dto, user.sub);
   }
 
   @Post('assign-bulk')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @Permissions(AdminPermission.ASSIGN_ITEMS, AdminPermission.CREATE_USERS)
   assignBulk(@Body() dto: AssignBulkDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.assignBulk(dto, user.sub);
   }
 
   @Post(':id/unassign')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @Permissions(AdminPermission.ASSIGN_ITEMS, AdminPermission.DELETE_USERS)
   unassign(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.itemsService.unassign(id, user.sub);
   }
@@ -179,7 +179,7 @@ export class ItemsController {
 
   @Post(':id/move-to-warehouse')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.ASSIGN_ITEMS)
+  @Permissions(AdminPermission.ASSIGN_ITEMS, AdminPermission.DELETE_USERS)
   moveToWarehouse(@Param('id') id: string, @Body() body: { notes?: string, companyId?: string }, @CurrentUser() user: JwtPayload) {
     return this.itemsService.moveToWarehouse(id, user.sub, body?.notes, body?.companyId);
   }

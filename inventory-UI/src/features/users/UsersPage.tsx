@@ -191,7 +191,8 @@ export default function UsersPage() {
         else if (val === 'COMPANY ADMIN') { color = '#60a5fa'; bg = 'rgba(96, 165, 250, 0.1)'; }
         else if (val === 'HEAD OF IT') { color = '#f97316'; bg = 'rgba(249, 115, 22, 0.1)'; }
         else if (val === 'HEAD OF FINANCE') { color = '#10b981'; bg = 'rgba(16, 185, 129, 0.1)'; }
-        
+        else if (val === 'GROUP DIRECTOR FINANCE') { color = '#f97316'; bg = 'rgba(249, 115, 22, 0.1)'; }
+
         return (
            <span style={{ 
              padding: '4px 12px', borderRadius: 50, fontSize: 10, fontWeight: 800, 

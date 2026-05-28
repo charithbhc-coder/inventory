@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, ClipboardCheck, MapPin, User, Calendar, Package, AlertTriangle, Printer, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import gatePassService, { GatePass } from '@/services/gatePass.service';
+import { companyService } from '@/services/company.service';
 import { GatePassStatus, AdminPermission } from '@/types';
 import { useAuthStore } from '@/store/auth.store';
 import { printGatePassForm } from '@/utils/formPrinter';
@@ -32,6 +33,25 @@ export default function GatePassDetailDrawer({ passId, isOpen, onClose }: Props)
     queryFn: () => gatePassService.getOne(passId),
     enabled: isOpen && !!passId,
   });
+
+  const { data: brandingData } = useQuery({
+    queryKey: ['companies-branding'],
+    queryFn: () => companyService.getBranding(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const mainCompanyLogoUrl = useMemo(() => {
+    const ktmg = (brandingData || []).find((c: any) =>
+      c.code?.toUpperCase() === 'KTMG' ||
+      c.name?.toLowerCase().includes('kids and teens')
+    );
+    return ktmg?.logoUrl;
+  }, [brandingData]);
+
+  const companyLogoUrl = useMemo(() => {
+    if (!gatePass?.companyId || !brandingData) return undefined;
+    return brandingData.find((c: any) => c.id === gatePass.companyId)?.logoUrl;
+  }, [brandingData, gatePass?.companyId]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['gate-passes'] });
@@ -67,8 +87,13 @@ export default function GatePassDetailDrawer({ passId, isOpen, onClose }: Props)
     if (!gatePass) return;
     try {
       const itemsToPrint = gatePass.items.map((i) => ({ name: i.name, barcode: i.barcode }));
+      const companyName = brandingData?.find((c: any) => c.id === gatePass.companyId)?.name || 'Company';
       await printGatePassForm(
-        { name: 'Company' },
+        {
+          name: companyName,
+          logoUrl: companyLogoUrl,
+          mainCompanyLogoUrl: mainCompanyLogoUrl || companyLogoUrl,
+        },
         itemsToPrint,
         { referenceNo: gatePass.referenceNo, destination: gatePass.destination, reason: gatePass.reason, authorizedBy: gatePass.authorizedBy },
       );

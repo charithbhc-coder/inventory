@@ -114,6 +114,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      queryClient.invalidateQueries({ queryKey: ['gate-passes'] });
+      queryClient.invalidateQueries({ queryKey: ['gate-pass'] });
+      queryClient.invalidateQueries({ queryKey: ['disposal-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['disposal-check'] });
     });
 
     set({ socket });

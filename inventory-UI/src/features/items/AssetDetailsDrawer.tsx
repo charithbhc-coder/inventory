@@ -66,6 +66,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
     queryKey: ['disposal-check', initialItem.id],
     queryFn: () => disposalRequestService.checkItem(initialItem.id),
     enabled: isOpen && hasPermission(AdminPermission.REQUEST_DISPOSAL),
+    staleTime: 0,
   });
 
   if (!isOpen) return null;
@@ -178,7 +179,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
               </div>
             )}
 
-            {item.status !== ItemStatus.DISPOSED && hasPermission(AdminPermission.ASSIGN_ITEMS) && (
+            {item.status !== ItemStatus.DISPOSED && (hasPermission(AdminPermission.ASSIGN_ITEMS) || hasPermission(AdminPermission.CREATE_USERS) || hasPermission(AdminPermission.DELETE_USERS)) && (
               <div style={{ position: 'relative', flex: 1, display: 'flex', gap: 8 }} title={
                 (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR)
                   ? 'Cannot assign — item is currently in repair'

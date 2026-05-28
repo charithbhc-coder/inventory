@@ -331,7 +331,7 @@ export default function EmployeesPage() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 4px' }}>
                       <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-main)' }}>{selectedEmployee.name}</h2>
-                      {hasPermission(AdminPermission.UPDATE_ITEMS) && (
+                      {(hasPermission(AdminPermission.UPDATE_ITEMS) || hasPermission(AdminPermission.UPDATE_USERS)) && (
                         <button
                           onClick={() => setIsEditEmployeeModalOpen(true)}
                           className="hover-card"
@@ -413,7 +413,7 @@ export default function EmployeesPage() {
                     <FileText size={14} /> Print Handover
                   </button>
                   {/* Active: bulk offboard */}
-                  {hasPermission(AdminPermission.MANAGE_EMPLOYEES) && selectedEmployee.isActive && (
+                  {(hasPermission(AdminPermission.MANAGE_EMPLOYEES) || hasPermission(AdminPermission.DELETE_USERS)) && selectedEmployee.isActive && (
                     <button
                       onClick={() => setIsOffboardModalOpen(true)}
                       style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(225, 29, 72, 0.3)', background: 'rgba(225, 29, 72, 0.05)', color: '#e11d48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
