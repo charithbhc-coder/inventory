@@ -52,8 +52,12 @@ export class DisposalRequestsController {
     @Query() query: DisposalRequestQueryDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    const companyId =
-      user.role === UserRole.SUPER_ADMIN ? query.companyId : user.companyId;
+    // Super Admin and L2 approvers (Director Finance) are group-level — they see all companies.
+    // L1 reviewers and MANAGE_DISPOSALS users are company-scoped.
+    const isGroupLevel =
+      user.role === UserRole.SUPER_ADMIN ||
+      user.permissions?.includes(AdminPermission.APPROVE_DISPOSAL_L2);
+    const companyId = isGroupLevel ? query.companyId : user.companyId;
     return this.service.findAll({ status: query.status, companyId, itemId: query.itemId });
   }
 
