@@ -280,7 +280,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                   fontSize: 11, fontWeight: 700, color: '#f59e0b',
                 }}>
                   <ClipboardList size={14} style={{ flexShrink: 0 }} />
-                  Disposal request pending approval
+                  Pending Approval
                 </div>
               ) : (
                 <button className="hub-btn danger" onClick={() => setActiveModal('request-disposal')} style={{ opacity: 0.9 }}>

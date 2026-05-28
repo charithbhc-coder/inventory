@@ -203,7 +203,7 @@ function L2ApprovalPanel({ request, onDone }: { request: DisposalRequest; onDone
 // ── Main Drawer ──────────────────────────────────────────────────
 export default function DisposalRequestDetailDrawer({ requestId, isOpen, onClose }: Props) {
   const queryClient = useQueryClient();
-  const { user, hasPermission } = useAuthStore();
+  const { user, hasPermission, isSuperAdmin } = useAuthStore();
 
   const { data: request, isLoading } = useQuery({
     queryKey: ['disposal-request', requestId],
@@ -233,20 +233,29 @@ export default function DisposalRequestDetailDrawer({ requestId, isOpen, onClose
 
   if (!isOpen) return null;
 
-  // L2 approvers (Director Finance) skip L1 — they go straight to final approval
-  // and the backend marks l1Bypassed=true when they act on PENDING_L1 requests.
-  const canL2Approve =
-    hasPermission(AdminPermission.APPROVE_DISPOSAL_L2) &&
-    (request?.status === DisposalRequestStatus.PENDING_L1 || request?.status === DisposalRequestStatus.PENDING_L2) &&
-    request?.requestedByUserId !== user?.id;
+  const notRequester = request?.requestedByUserId !== user?.id;
 
-  // Only show L1 panel to users who do NOT have L2 authority —
-  // if they can do the final approval they don't need to do the preliminary review.
+  // L2-only non-super-admins (Director Finance) bypass L1 and go straight to final approval.
+  const isL2BypassUser =
+    !isSuperAdmin() &&
+    hasPermission(AdminPermission.APPROVE_DISPOSAL_L2) &&
+    !hasPermission(AdminPermission.APPROVE_DISPOSAL_L1);
+
+  // L1 Review: IT Manager (APPROVE_DISPOSAL_L1) or Super Admin when status is PENDING_L1.
+  // L2-bypass users skip this panel entirely.
   const canL1Review =
-    hasPermission(AdminPermission.APPROVE_DISPOSAL_L1) &&
-    !hasPermission(AdminPermission.APPROVE_DISPOSAL_L2) &&
+    !isL2BypassUser &&
+    (isSuperAdmin() || hasPermission(AdminPermission.APPROVE_DISPOSAL_L1)) &&
     request?.status === DisposalRequestStatus.PENDING_L1 &&
-    request.requestedByUserId !== user?.id;
+    notRequester;
+
+  // L2 Final Approval: Director Finance (APPROVE_DISPOSAL_L2) or Super Admin.
+  // Super Admin sees L2 only after L1 is done (PENDING_L2); Director Finance can act on PENDING_L1 too (bypass).
+  const canL2Approve =
+    !canL1Review &&
+    (isSuperAdmin() || hasPermission(AdminPermission.APPROVE_DISPOSAL_L2)) &&
+    (request?.status === DisposalRequestStatus.PENDING_L1 || request?.status === DisposalRequestStatus.PENDING_L2) &&
+    notRequester;
 
   const canCancel =
     hasPermission(AdminPermission.REQUEST_DISPOSAL) &&
