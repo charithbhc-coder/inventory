@@ -271,15 +271,20 @@ export default function DisposalRequestDetailDrawer({ requestId, isOpen, onClose
 
   if (!isOpen) return null;
 
-  const canL1Review =
-    hasPermission(AdminPermission.APPROVE_DISPOSAL_L1) &&
-    request?.status === DisposalRequestStatus.PENDING_L1 &&
-    request.requestedByUserId !== user?.id;
-
+  // L2 approvers (Director Finance) skip L1 — they go straight to final approval
+  // and the backend marks l1Bypassed=true when they act on PENDING_L1 requests.
   const canL2Approve =
     hasPermission(AdminPermission.APPROVE_DISPOSAL_L2) &&
     (request?.status === DisposalRequestStatus.PENDING_L1 || request?.status === DisposalRequestStatus.PENDING_L2) &&
     request?.requestedByUserId !== user?.id;
+
+  // Only show L1 panel to users who do NOT have L2 authority —
+  // if they can do the final approval they don't need to do the preliminary review.
+  const canL1Review =
+    hasPermission(AdminPermission.APPROVE_DISPOSAL_L1) &&
+    !hasPermission(AdminPermission.APPROVE_DISPOSAL_L2) &&
+    request?.status === DisposalRequestStatus.PENDING_L1 &&
+    request.requestedByUserId !== user?.id;
 
   const canCancel =
     hasPermission(AdminPermission.REQUEST_DISPOSAL) &&
