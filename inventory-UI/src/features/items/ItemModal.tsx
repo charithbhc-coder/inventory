@@ -57,6 +57,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setItemFile(null);
       setLastCreatedItem(null);
       setCategoryChanged(false);
+      setCompanyChanged(false);
     }
   }, [item, isOpen]);
 
@@ -64,6 +65,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
   const [previewBarcode, setPreviewBarcode] = useState<string>('');
   const [categoryChanged, setCategoryChanged] = useState(false);
+  const [companyChanged, setCompanyChanged] = useState(false);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
@@ -177,8 +179,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       warrantyExpiresAt: formData.warrantyExpiresAt || undefined,
     };
 
-    // companyId is immutable after creation
-    if (isEdit) {
+    // Only send companyId on edit if it actually changed
+    if (isEdit && formData.companyId === item?.companyId) {
       delete (payload as any).companyId;
     }
 
@@ -373,7 +375,12 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       id="item-company"
                       style={styles.input}
                       value={formData.companyId}
-                      onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                      onChange={e => {
+                        const newCompanyId = e.target.value;
+                        if (isEdit && newCompanyId !== item?.companyId) setCompanyChanged(true);
+                        else if (isEdit && newCompanyId === item?.companyId) setCompanyChanged(false);
+                        setFormData({ ...formData, companyId: newCompanyId, departmentId: '' });
+                      }}
                     >
                       <option value="">Select Subsidiary</option>
                       {companiesList.map((c: any) => (
@@ -381,6 +388,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       ))}
                     </select>
                   </div>
+                  {companyChanged && (
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#e67e22', fontWeight: 600 }}>
+                      ⚠ Changing company will generate a new Asset QR ID. Reprint the QR label after saving.
+                    </p>
+                  )}
                 </div>
 
                 <div>

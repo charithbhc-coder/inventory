@@ -261,10 +261,14 @@ export class ItemsService implements OnModuleInit {
 
       const prevStatus = item.status;
 
-      // If category is being changed, regenerate the QR ID under the new category code.
-      if (dto.categoryId && dto.categoryId !== item.categoryId) {
-        const newCategory = await manager.findOne(ItemCategory, { where: { id: dto.categoryId } });
-        const company = await manager.findOne(Company, { where: { id: item.companyId } });
+      // Regenerate barcode if company or category changed.
+      const newCompanyId = dto.companyId && dto.companyId !== item.companyId ? dto.companyId : null;
+      const newCategoryId = dto.categoryId && dto.categoryId !== item.categoryId ? dto.categoryId : null;
+      if (newCompanyId || newCategoryId) {
+        const resolvedCompanyId = newCompanyId || item.companyId;
+        const resolvedCategoryId = newCategoryId || item.categoryId;
+        const newCategory = await manager.findOne(ItemCategory, { where: { id: resolvedCategoryId } });
+        const company = await manager.findOne(Company, { where: { id: resolvedCompanyId } });
         if (newCategory && company) {
           let newBarcode: string;
           let attempts = 0;
@@ -277,13 +281,14 @@ export class ItemsService implements OnModuleInit {
               ON CONFLICT (company_id, category_id)
               DO UPDATE SET last_seq = item_barcode_counters.last_seq + 1
               RETURNING last_seq
-            `, [item.companyId, dto.categoryId]);
+            `, [resolvedCompanyId, resolvedCategoryId]);
             newBarcode = generateBarcodeString(company.code, newCategory.code, parseInt(last_seq, 10));
             const exists = await manager.findOne(Item, { where: { barcode: newBarcode } });
             if (!exists) break;
             attempts++;
           } while (attempts < 10);
           item.barcode = newBarcode;
+          if (newCompanyId) item.companyId = newCompanyId;
         }
       }
 

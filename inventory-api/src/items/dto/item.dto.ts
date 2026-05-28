@@ -130,6 +130,10 @@ export class UpdateItemDto {
   @IsOptional()
   parentItemId?: string | null;
 
+  @IsUUID()
+  @IsOptional()
+  companyId?: string;
+
   @IsString()
   @IsOptional()
   assignedToName?: string;
