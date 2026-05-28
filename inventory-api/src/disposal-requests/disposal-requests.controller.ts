@@ -61,7 +61,7 @@ export class DisposalRequestsController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
   findMyRequests(@CurrentUser() user: JwtPayload) {
-    return this.service.findMyRequests(user.sub, user.companyId);
+    return this.service.findMyRequests(user.sub);
   }
 
   @Get('check/:itemId')

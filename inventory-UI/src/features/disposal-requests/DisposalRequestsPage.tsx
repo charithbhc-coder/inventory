@@ -78,6 +78,7 @@ export default function DisposalRequestsPage() {
           companyId: _companyFilter || undefined,
         }),
     enabled: canManage || isRequesterOnly,
+    placeholderData: (prev) => prev,
   });
 
   const filtered = search

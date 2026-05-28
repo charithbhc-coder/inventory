@@ -304,21 +304,16 @@ export class DisposalRequestsService {
     return request;
   }
 
-  async findMyRequests(userId: string, companyId?: string): Promise<DisposalRequest[]> {
-    const query = this.requestRepo
+  async findMyRequests(userId: string): Promise<DisposalRequest[]> {
+    return this.requestRepo
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.item', 'item')
       .leftJoinAndSelect('r.requestedByUser', 'requester')
       .leftJoinAndSelect('r.l1ReviewedByUser', 'l1Reviewer')
       .leftJoinAndSelect('r.l2ApprovedByUser', 'l2Approver')
       .where('r.requestedByUserId = :userId', { userId })
-      .orderBy('r.requestedAt', 'DESC');
-
-    if (companyId) {
-      query.andWhere('r.companyId = :companyId', { companyId });
-    }
-
-    return query.getMany();
+      .orderBy('r.requestedAt', 'DESC')
+      .getMany();
   }
 
   async checkItem(itemId: string, callerCompanyId?: string) {

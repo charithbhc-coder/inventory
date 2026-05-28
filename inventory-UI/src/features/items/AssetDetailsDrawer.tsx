@@ -68,8 +68,10 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
     queryFn: () => disposalRequestService.checkItem(initialItem.id),
     enabled: isOpen && hasPermission(AdminPermission.REQUEST_DISPOSAL),
     staleTime: 0,
+    placeholderData: (prev) => prev, // keep previous data while refetching — prevents button flicker
   });
 
+  // True if there's a live open disposal request, or if we just submitted one this session
   const disposalHasOpen = disposalCheck?.hasOpen || disposalJustSubmitted;
 
   if (!isOpen) return null;
