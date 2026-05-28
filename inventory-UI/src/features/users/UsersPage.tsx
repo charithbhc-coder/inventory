@@ -46,17 +46,17 @@ export default function UsersPage() {
   const users: User[] = useMemo(() => {
     const rawUsers: User[] = Array.isArray(data) ? data : (data as any)?.data || [];
     
-    // Custom Sort Logic:
-    // 1. Position SUPER_ADMIN at the very top
-    // 2. Sort all others by createdAt (Newest first)
+    const rolePriority = (role: string): number => {
+      if (role === 'SUPER_ADMIN') return 0;
+      if (role === 'GROUP DIRECTOR FINANCE') return 1;
+      return 2;
+    };
+
     return [...rawUsers].sort((a, b) => {
-      const aIsSuper = a.role === 'SUPER_ADMIN';
-      const bIsSuper = b.role === 'SUPER_ADMIN';
-
-      if (aIsSuper && !bIsSuper) return -1;
-      if (!aIsSuper && bIsSuper) return 1;
-
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      const pa = rolePriority(a.role);
+      const pb = rolePriority(b.role);
+      if (pa !== pb) return pa - pb;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
   }, [data]);
 
