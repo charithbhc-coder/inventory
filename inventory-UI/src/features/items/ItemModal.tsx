@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, PackageSearch, Package, ShieldCheck, Info, Cpu, Globe, Calendar, BadgeDollarSign, Edit, Building, UploadCloud, Plus, CheckCircle2, Printer } from 'lucide-react';
@@ -67,6 +67,12 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [categoryChanged, setCategoryChanged] = useState(false);
   const [companyChanged, setCompanyChanged] = useState(false);
 
+  // Name autocomplete
+  const [nameQuery, setNameQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nameWrapRef = useRef<HTMLDivElement>(null);
+
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   // File states
@@ -89,6 +95,13 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     enabled: isEdit && !!formData.companyId
   });
 
+  const { data: nameSuggestionsRaw } = useQuery({
+    queryKey: ['items', 'name-suggest', nameQuery],
+    queryFn: () => itemService.getItems({ search: nameQuery, limit: 30 }),
+    enabled: !isEdit && nameQuery.length >= 2,
+    staleTime: 30_000,
+  });
+
   const companiesList = useMemo(() => Array.isArray(companies) ? companies : (companies as any)?.data || [], [companies]);
   const categoriesList = useMemo(() => {
     const raw = Array.isArray(categories) ? categories : (categories as any)?.data || [];
@@ -100,6 +113,32 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   }, [categories, formData.categoryId]);
   const departmentsList = useMemo(() => Array.isArray(departments) ? departments : (departments as any)?.data || [], [departments]);
   const itemsList = useMemo(() => Array.isArray(companyItems) ? companyItems : (companyItems as any)?.data || (companyItems as any)?.items || [], [companyItems]);
+
+  const nameSuggestions = useMemo(() => {
+    const raw = Array.isArray(nameSuggestionsRaw) ? nameSuggestionsRaw : (nameSuggestionsRaw as any)?.data || [];
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const item of raw) {
+      const name: string = item.name || '';
+      const lower = name.toLowerCase();
+      if (!seen.has(lower) && lower.includes(nameQuery.toLowerCase())) {
+        seen.add(lower);
+        results.push(name);
+      }
+    }
+    return results.slice(0, 8);
+  }, [nameSuggestionsRaw, nameQuery]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (nameWrapRef.current && !nameWrapRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const { data: barcodeRes } = useQuery({
     queryKey: ['barcode-preview', formData.companyId, formData.categoryId],
@@ -297,15 +336,50 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div>
                   <label htmlFor="item-name" style={styles.label}>ASSET NAME <span style={{ color: 'var(--accent-red)' }}>*</span></label>
-                  <div style={styles.inputWrap}>
-                    <Package style={styles.inputIcon} size={16} />
-                    <input
-                      id="item-name"
-                      style={styles.input}
-                      placeholder="e.g. Dell Latitude 5540"
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    />
+                  <div style={{ position: 'relative' }} ref={nameWrapRef}>
+                    <div style={styles.inputWrap}>
+                      <Package style={styles.inputIcon} size={16} />
+                      <input
+                        id="item-name"
+                        style={styles.input}
+                        placeholder="e.g. Dell Latitude 5540"
+                        value={formData.name}
+                        autoComplete="off"
+                        onChange={e => {
+                          const val = e.target.value;
+                          setFormData({ ...formData, name: val });
+                          if (!isEdit) {
+                            if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+                            nameDebounceRef.current = setTimeout(() => {
+                              setNameQuery(val.trim());
+                              setShowSuggestions(val.trim().length >= 2);
+                            }, 220);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (!isEdit && nameQuery.length >= 2 && nameSuggestions.length > 0) setShowSuggestions(true);
+                        }}
+                      />
+                    </div>
+                    {!isEdit && showSuggestions && nameSuggestions.length > 0 && (
+                      <ul style={styles.suggestions}>
+                        {nameSuggestions.map((name) => (
+                          <li
+                            key={name}
+                            style={styles.suggestionItem}
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setFormData({ ...formData, name });
+                              setShowSuggestions(false);
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-sidebar-active, rgba(245,197,24,0.12))')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
 
@@ -670,5 +744,27 @@ const styles = {
     fontSize: 13, fontWeight: 600,
     cursor: 'pointer', transition: 'all 0.2s',
     whiteSpace: 'nowrap' as const
-  }
+  },
+  suggestions: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 4px)',
+    left: 0, right: 0,
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-dark)',
+    borderRadius: 10,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+    zIndex: 200,
+    margin: 0, padding: '4px 0',
+    listStyle: 'none',
+    maxHeight: 240,
+    overflowY: 'auto' as const,
+  },
+  suggestionItem: {
+    padding: '10px 16px',
+    fontSize: 13, fontWeight: 600,
+    color: 'var(--text-main)',
+    cursor: 'pointer',
+    background: 'transparent',
+    transition: 'background 0.12s',
+  },
 };
