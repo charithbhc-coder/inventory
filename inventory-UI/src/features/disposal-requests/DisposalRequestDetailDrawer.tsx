@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  X, ClipboardList, CheckCircle2, Clock, XCircle, AlertTriangle,
+  X, ClipboardList, CheckCircle2, Clock, XCircle,
   User, ShieldCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -11,6 +11,7 @@ import {
   DisposalRequest, DisposalRequestStatus, DisposalReviewDecision,
   DisposalFinalDecision, AdminPermission, DataSecurityChecklist,
 } from '@/types';
+// DataSecurityChecklist kept for the read-only display of existing checklist data in approved requests
 import { useAuthStore } from '@/store/auth.store';
 import { getUploadUrl } from '@/lib/config';
 
@@ -131,22 +132,10 @@ const CHECKLIST_LABELS: Record<keyof DataSecurityChecklist, string> = {
 function L2ApprovalPanel({ request, onDone }: { request: DisposalRequest; onDone: () => void }) {
   const [decision, setDecision] = useState<DisposalFinalDecision | ''>('');
   const [notes, setNotes] = useState('');
-  const [checklist, setChecklist] = useState<DataSecurityChecklist>({
-    businessDataBacked: false,
-    companyDataErased: false,
-    storageFormatted: false,
-    userAccountsRemoved: false,
-    removedFromDomain: false,
-    physicalDestructionDone: false,
-  });
-
-  const allChecked = Object.values(checklist).every(Boolean);
-
   const mutation = useMutation({
     mutationFn: () => disposalRequestService.l2Approve(request.id, {
       decision: decision as DisposalFinalDecision,
       notes: notes || undefined,
-      dataSecurityChecklist: decision === DisposalFinalDecision.APPROVED ? checklist : undefined,
     }),
     onSuccess: () => { toast.success(decision === DisposalFinalDecision.APPROVED ? 'Disposal approved — asset marked as disposed' : 'Request rejected'); onDone(); },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to submit decision'),
@@ -157,9 +146,6 @@ function L2ApprovalPanel({ request, onDone }: { request: DisposalRequest; onDone
     if (!decision) { toast.error('Select a decision'); return; }
     if (decision === DisposalFinalDecision.REJECTED && !notes.trim()) {
       toast.error('Notes are required when rejecting'); return;
-    }
-    if (decision === DisposalFinalDecision.APPROVED && !allChecked) {
-      toast.error('All data security checklist items must be confirmed before approving'); return;
     }
     mutation.mutate();
   };
@@ -194,30 +180,6 @@ function L2ApprovalPanel({ request, onDone }: { request: DisposalRequest; onDone
             </button>
           ))}
         </div>
-
-        {decision === DisposalFinalDecision.APPROVED && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={labelStyle}>DATA SECURITY CHECKLIST <span style={{ color: '#ef4444' }}>*</span></label>
-            {(Object.keys(CHECKLIST_LABELS) as (keyof DataSecurityChecklist)[]).map(key => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '8px 10px', borderRadius: 8, background: checklist[key] ? 'rgba(16,185,129,0.06)' : 'var(--color-surface-2)', border: `1px solid ${checklist[key] ? 'rgba(16,185,129,0.3)' : 'var(--color-border)'}`, transition: 'all 0.15s' }}>
-                <input
-                  type="checkbox"
-                  checked={checklist[key]}
-                  onChange={e => setChecklist(c => ({ ...c, [key]: e.target.checked }))}
-                  style={{ width: 16, height: 16, accentColor: '#10b981', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 12, fontWeight: 700, color: checklist[key] ? '#10b981' : 'var(--color-text-secondary)' }}>
-                  {CHECKLIST_LABELS[key]}
-                </span>
-              </label>
-            ))}
-            {!allChecked && (
-              <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <AlertTriangle size={12} /> All items must be checked before approving
-              </div>
-            )}
-          </div>
-        )}
 
         <div>
           <label style={labelStyle}>
