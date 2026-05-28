@@ -47,7 +47,7 @@ export class DisposalRequestsController {
 
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_DISPOSALS)
+  @Permissions(AdminPermission.MANAGE_DISPOSALS, AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2)
   findAll(
     @Query() query: DisposalRequestQueryDto,
     @CurrentUser() user: JwtPayload,
@@ -67,8 +67,8 @@ export class DisposalRequestsController {
   @Get('check/:itemId')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.REQUEST_DISPOSAL)
-  checkItem(@Param('itemId') itemId: string, @CurrentUser() user: JwtPayload) {
-    return this.service.checkItem(itemId, user.companyId);
+  checkItem(@Param('itemId') itemId: string) {
+    return this.service.checkItem(itemId);
   }
 
   @Get(':id')

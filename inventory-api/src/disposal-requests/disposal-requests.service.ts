@@ -321,19 +321,13 @@ export class DisposalRequestsService {
       .getMany();
   }
 
-  async checkItem(itemId: string, callerCompanyId?: string) {
-    const qb = this.requestRepo
-      .createQueryBuilder('r')
-      .where('r.itemId = :itemId', { itemId })
-      .andWhere('r.status IN (:...statuses)', {
-        statuses: [DisposalRequestStatus.PENDING_L1, DisposalRequestStatus.PENDING_L2],
-      });
-
-    if (callerCompanyId) {
-      qb.andWhere('r.companyId = :companyId', { companyId: callerCompanyId });
-    }
-
-    const request = await qb.getOne();
+  async checkItem(itemId: string) {
+    const request = await this.requestRepo.findOne({
+      where: [
+        { itemId, status: DisposalRequestStatus.PENDING_L1 },
+        { itemId, status: DisposalRequestStatus.PENDING_L2 },
+      ],
+    });
     return {
       hasOpen: !!request,
       requestId: request?.id ?? null,
