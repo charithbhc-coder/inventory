@@ -290,15 +290,19 @@ export class DisposalRequestsService {
     return query.getMany();
   }
 
-  async findOne(id: string, callerCompanyId?: string): Promise<DisposalRequest> {
+  async findOne(id: string, callerCompanyId?: string, callerId?: string): Promise<DisposalRequest> {
     const request = await this.requestRepo.findOne({
       where: { id },
       relations: ['item', 'requestedByUser', 'l1ReviewedByUser', 'l2ApprovedByUser'],
     });
     if (!request) throw new NotFoundException('Disposal request not found');
 
+    // Company-scoped managers must belong to the same company
     if (callerCompanyId && request.companyId !== callerCompanyId) {
-      throw new ForbiddenException('Access denied.');
+      // Still allow if the caller is the original requester (they can view their own)
+      if (!callerId || request.requestedByUserId !== callerId) {
+        throw new ForbiddenException('Access denied.');
+      }
     }
 
     return request;

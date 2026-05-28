@@ -73,9 +73,9 @@ export class DisposalRequestsController {
 
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.MANAGE_DISPOSALS)
+  @Permissions(AdminPermission.MANAGE_DISPOSALS, AdminPermission.REQUEST_DISPOSAL)
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.service.findOne(id, user.companyId);
+    return this.service.findOne(id, user.companyId, user.sub);
   }
 
   @Patch(':id/l1-review')
