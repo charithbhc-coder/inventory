@@ -130,9 +130,10 @@ export default function EmployeesPage() {
       );
     }
     const s = status === 'IN_USE' ? { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981' } : { bg: 'rgba(71, 85, 105, 0.12)', color: '#475569' };
+    const label = status === 'WAREHOUSE' ? 'In Stock' : status.replace(/_/g, ' ');
     return (
       <div style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', minWidth: 80, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, background: s.bg, color: s.color, textTransform: 'uppercase' }}>
-        {status.replace(/_/g, ' ')}
+        {label}
       </div>
     );
   };

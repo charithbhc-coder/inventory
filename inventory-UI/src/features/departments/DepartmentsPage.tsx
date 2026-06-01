@@ -23,7 +23,7 @@ const LIMIT = 15;
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
   IN_USE:         { bg: 'rgba(16,185,129,0.12)',   color: '#10b981', label: 'In Use' },
-  WAREHOUSE:      { bg: 'rgba(59,130,246,0.12)',   color: '#3b82f6', label: 'Warehouse' },
+  WAREHOUSE:      { bg: 'rgba(59,130,246,0.12)',   color: '#3b82f6', label: 'In Stock' },
   IN_REPAIR:      { bg: 'rgba(245,158,11,0.12)',   color: '#f59e0b', label: 'In Repair' },
   SENT_TO_REPAIR: { bg: 'rgba(245,158,11,0.12)',   color: '#f59e0b', label: 'In Repair' },
   DISPOSED:       { bg: 'rgba(107,114,128,0.15)',  color: '#6b7280', label: 'Disposed' },

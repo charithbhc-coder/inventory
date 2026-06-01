@@ -30,7 +30,7 @@ export default function RecoverItemModal({ item, isOpen, onClose }: RecoverItemM
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['item-timeline', item.id] });
-      toast.success('Asset recovered and moved to warehouse');
+      toast.success('Asset recovered and moved to stock');
       onClose();
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to recover asset')

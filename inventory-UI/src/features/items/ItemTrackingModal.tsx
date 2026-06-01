@@ -57,6 +57,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     'IN_TRANSIT':     { bg: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' },
   };
   const s = styles[status] || styles['WAREHOUSE'];
+  const label = status === 'WAREHOUSE' ? 'In Stock' : (status ? status.replace(/_/g, ' ') : 'UNKNOWN');
   return (
     <div style={{
       padding: '6px 14px', borderRadius: 50, fontSize: 11, fontWeight: 800,
@@ -64,7 +65,7 @@ const StatusBadge = ({ status }: { status: string }) => {
       textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 6
     }}>
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
-      {status ? status.replace(/_/g, ' ') : 'UNKNOWN'}
+      {label}
     </div>
   );
 };
@@ -136,7 +137,7 @@ export default function ItemTrackingModal({ item, isOpen, onClose }: ItemTrackin
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: 10, border: '1px solid rgba(59, 130, 246, 0.2)', width: 'fit-content' }}>
                 <User size={14} color="#3b82f6" />
                 <span style={{ fontSize: 12, color: 'var(--text-main)', fontWeight: 700, textAlign: 'left' }}>
-                  {item.assignedToName ? `Holder: ${item.assignedToName}` : 'In Storage / Warehouse'}
+                  {item.assignedToName ? `Holder: ${item.assignedToName}` : 'In Stock'}
                 </span>
               </div>
             </div>

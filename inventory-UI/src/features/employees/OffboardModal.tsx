@@ -89,7 +89,7 @@ export default function OffboardModal({ isOpen, onClose, employeeName, items, on
             </div>
             <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, color: 'var(--text-main)' }}>Confirm Bulk Offboard</h3>
             <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              You are about to unassign <strong>{items.length} assets</strong> from <strong>{employeeName}</strong> and return them to the Warehouse. This action will be recorded in the audit log.
+              You are about to unassign <strong>{items.length} assets</strong> from <strong>{employeeName}</strong> and return them to stock. This action will be recorded in the audit log.
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
                <button onClick={handleClose} style={{ flex: 1, padding: '12px 20px', borderRadius: 12, background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: 'var(--text-main)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
@@ -107,7 +107,7 @@ export default function OffboardModal({ isOpen, onClose, employeeName, items, on
           <div style={{ padding: 40, textAlign: 'center' }}>
             <Loader2 size={48} className="spin" color="var(--accent-yellow)" style={{ margin: '0 auto 20px' }} />
             <h3 style={{ margin: '0 0 12px', fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Processing Offboarding</h3>
-            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--text-muted)' }}>Returning assets to warehouse...</p>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--text-muted)' }}>Returning assets to stock...</p>
             <div style={{ width: '100%', height: 6, background: 'var(--bg-dark)', borderRadius: 10, overflow: 'hidden' }}>
                <div style={{ height: '100%', background: 'var(--accent-yellow)', width: `${progress}%`, transition: 'width 0.3s ease' }} />
             </div>

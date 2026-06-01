@@ -233,7 +233,8 @@ export class ReportsService {
   // ─── EXCEL EXPORTS ────────────────────────────────────────────────
 
   async exportDetailedAssetExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
-    const data = await this.getGlobalAssetRegisterData(filters);
+    const raw = await this.getGlobalAssetRegisterData(filters);
+    const data = raw.map((r: any) => ({ ...r, status: this.labelStatus(r.status) }));
     return this.excelGenerator.generateBuffer(data, [
       { header: 'Barcode', key: 'barcode', width: 25 },
       { header: 'Item Name', key: 'itemName', width: 30 },
@@ -258,7 +259,7 @@ export class ReportsService {
       { header: 'In Use', key: 'inUse', width: 15 },
       { header: 'In Repair', key: 'inRepair', width: 15 },
       { header: 'Lost', key: 'lost', width: 15 },
-      { header: 'In Warehouse', key: 'warehouse', width: 15 },
+      { header: 'In Stock', key: 'warehouse', width: 15 },
       { header: 'Total Value (LKR)', key: 'totalValue', width: 20 },
     ], 'Inventory Summary', userContext);
   }
@@ -270,7 +271,7 @@ export class ReportsService {
       { header: 'Category Code', key: 'categoryCode', width: 20 },
       { header: 'Total Items', key: 'totalAssets', width: 15 },
       { header: 'In Use', key: 'inUse', width: 15 },
-      { header: 'In Warehouse', key: 'warehouse', width: 15 },
+      { header: 'In Stock', key: 'warehouse', width: 15 },
       { header: 'In Repair', key: 'inRepair', width: 15 },
       { header: 'Lost', key: 'lost', width: 15 },
       { header: 'Total Value (LKR)', key: 'totalValue', width: 20 },
@@ -278,7 +279,8 @@ export class ReportsService {
   }
 
   async exportDepartmentExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
-    const data = await this.getDepartmentReportData(filters);
+    const raw = await this.getDepartmentReportData(filters);
+    const data = raw.map((r: any) => ({ ...r, status: this.labelStatus(r.status) }));
     return this.excelGenerator.generateBuffer(data, [
       { header: 'Department', key: 'departmentName', width: 25 },
       { header: 'Company', key: 'companyName', width: 25 },
@@ -334,6 +336,12 @@ export class ReportsService {
 
   // ─── PDF EXPORTS ──────────────────────────────────────────────────
 
+  // Show the WAREHOUSE status as "In Stock" in exported reports; others unchanged.
+  private labelStatus(status?: string): string {
+    if (!status) return status ?? '';
+    return status === 'WAREHOUSE' ? 'In Stock' : status;
+  }
+
   private buildTableHtml(headers: string[], rows: string[][]): string {
     const ths = headers.map(h => `<th>${h}</th>`).join('');
     const trs = rows.map(r => `<tr>${r.map(c => `<td>${c ?? '—'}</td>`).join('')}</tr>`).join('');
@@ -344,7 +352,7 @@ export class ReportsService {
     const data = await this.getGlobalAssetRegisterData(filters);
     const tableHtml = this.buildTableHtml(
       ['Barcode', 'Name', 'Company', 'Department', 'Category', 'Status', 'Assigned To', 'Price'],
-      data.map((r: any) => [r.barcode, r.itemName, r.companyName, r.departmentName, r.categoryName, r.status, r.assignedTo, r.purchasePrice ? `Rs. ${r.purchasePrice.toLocaleString()}` : '—']),
+      data.map((r: any) => [r.barcode, r.itemName, r.companyName, r.departmentName, r.categoryName, this.labelStatus(r.status), r.assignedTo, r.purchasePrice ? `Rs. ${r.purchasePrice.toLocaleString()}` : '—']),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Master Asset Register', tableHtml, userContext));
   }
@@ -352,7 +360,7 @@ export class ReportsService {
   async exportSummaryPdf(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
     const data = await this.getInventorySummaryData(filters);
     const tableHtml = this.buildTableHtml(
-      ['Company', 'Category', 'Total', 'In Use', 'In Repair', 'Lost', 'Warehouse', 'Total Value'],
+      ['Company', 'Category', 'Total', 'In Use', 'In Repair', 'Lost', 'In Stock', 'Total Value'],
       data.map((r: any) => [r.companyName, r.categoryName, r.totalAssets, r.inUse, r.inRepair, r.lost, r.warehouse, r.totalValue ? `Rs. ${r.totalValue.toLocaleString()}` : '—']),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Executive Inventory Summary', tableHtml, userContext));
@@ -361,7 +369,7 @@ export class ReportsService {
   async exportCategoryPdf(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
     const data = await this.getCategoryReportData(filters);
     const tableHtml = this.buildTableHtml(
-      ['Category', 'Code', 'Total Items', 'In Use', 'Warehouse', 'In Repair', 'Lost', 'Total Value'],
+      ['Category', 'Code', 'Total Items', 'In Use', 'In Stock', 'In Repair', 'Lost', 'Total Value'],
       data.map((r: any) => [
         r.categoryName, 
         r.categoryCode, 
@@ -380,7 +388,7 @@ export class ReportsService {
     const data = await this.getDepartmentReportData(filters);
     const tableHtml = this.buildTableHtml(
       ['Department', 'Company', 'Barcode', 'Name', 'Category', 'Status', 'Assigned To', 'Price'],
-      data.map((r: any) => [r.departmentName, r.companyName, r.barcode, r.itemName, r.categoryName, r.status, r.assignedTo, r.purchasePrice ? `Rs. ${r.purchasePrice.toLocaleString()}` : '—']),
+      data.map((r: any) => [r.departmentName, r.companyName, r.barcode, r.itemName, r.categoryName, this.labelStatus(r.status), r.assignedTo, r.purchasePrice ? `Rs. ${r.purchasePrice.toLocaleString()}` : '—']),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Department Asset Report', tableHtml, userContext));
   }

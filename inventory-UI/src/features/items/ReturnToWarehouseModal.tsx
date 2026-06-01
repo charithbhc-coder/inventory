@@ -18,7 +18,7 @@ export default function ReturnToWarehouseModal({ item, isOpen, onClose }: Return
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['item-timeline', item.id] });
-      toast.success('Asset returned to warehouse');
+      toast.success('Asset returned to stock');
       onClose();
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to return asset')
@@ -33,7 +33,7 @@ export default function ReturnToWarehouseModal({ item, isOpen, onClose }: Return
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={styles.iconBox}><Building size={20} /></div>
             <div>
-              <h3 style={styles.title}>Return to Warehouse</h3>
+              <h3 style={styles.title}>Return to Stock</h3>
               <p style={styles.subtitle}>{item.barcode} — {item.name}</p>
             </div>
           </div>
@@ -44,14 +44,14 @@ export default function ReturnToWarehouseModal({ item, isOpen, onClose }: Return
           <div style={styles.alert}>
             <AlertCircle size={20} />
             <p style={{ margin: 0 }}>
-              Are you sure you want to return this asset to the warehouse? 
+              Are you sure you want to return this asset to stock?
               <strong> This will clear the current assignment.</strong>
             </p>
           </div>
           
           <div style={{ marginTop: 20, textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 600 }}>
-              Asset will be marked as <span style={{ color: 'var(--color-accent)' }}>WAREHOUSE</span> status.
+              Asset will be marked as <span style={{ color: 'var(--color-accent)' }}>IN STOCK</span> status.
             </p>
           </div>
         </div>

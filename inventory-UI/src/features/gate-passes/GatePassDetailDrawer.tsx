@@ -234,7 +234,7 @@ export default function GatePassDetailDrawer({ passId, isOpen, onClose }: Props)
                       <div style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{item.barcode}</div>
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 50, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', textTransform: 'uppercase' as const }}>
-                      {item.status}
+                      {item.status === 'WAREHOUSE' ? 'In Stock' : item.status}
                     </span>
                   </div>
                 ))}

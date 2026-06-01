@@ -885,13 +885,15 @@ function StatusBadge({ status }: { status: string }) {
     'IN_TRANSIT':     { bg: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' },
   };
   const s = styles[status] || styles['WAREHOUSE'];
+  // WAREHOUSE is shown to users as "In Stock"; underlying value unchanged.
+  const label = status === 'WAREHOUSE' ? 'In Stock' : status.replace(/_/g, ' ');
   return (
     <div style={{
       padding: '4px 12px', borderRadius: 50, fontSize: 10, fontWeight: 800,
       background: s.bg, color: s.color, border: `1px solid ${s.color}22`,
       textTransform: 'uppercase'
     }}>
-      {status.replace(/_/g, ' ')}
+      {label}
     </div>
   );
 }

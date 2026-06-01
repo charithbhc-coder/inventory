@@ -138,7 +138,7 @@ export default function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {[
             { label: 'In Use', count: inUse, color: '#10b981', bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.18)' },
-            { label: 'In Warehouse', count: warehouse, color: '#3b82f6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.18)' },
+            { label: 'In Stock', count: warehouse, color: '#3b82f6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.18)' },
             { label: 'In Repair', count: inRepair, color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.18)' },
             { label: 'Disposed', count: disposed, color: '#ef4444', bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.18)' },
           ].map(stat => {
@@ -177,7 +177,7 @@ export default function DashboardPage() {
                 data={[
                   { name: 'Active', value: inUse },
                   { name: 'In Repair', value: inRepair },
-                  { name: 'Warehouse', value: warehouse },
+                  { name: 'In Stock', value: warehouse },
                   { name: 'Disposed', value: disposed },
                   { name: 'Missing/Lost', value: lost },
                 ]}
@@ -208,7 +208,7 @@ export default function DashboardPage() {
         </div>
         <div style={styles.donutLegend}>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#10b981'}}/> Active</span> <strong style={{ color: '#10b981'}}>{inUse.toLocaleString()}</strong></div>
-          <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#3b82f6'}}/> Warehouse</span> <strong style={{ color: '#3b82f6'}}>{warehouse.toLocaleString()}</strong></div>
+          <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#3b82f6'}}/> In Stock</span> <strong style={{ color: '#3b82f6'}}>{warehouse.toLocaleString()}</strong></div>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#f59e0b'}}/> In Repair</span> <strong style={{ color: '#f59e0b'}}>{inRepair.toLocaleString()}</strong></div>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#ef4444'}}/> Disposed</span> <strong style={{ color: '#ef4444'}}>{disposed.toLocaleString()}</strong></div>
           <div style={styles.legendRow}><span style={styles.legendDotWrap}><span style={{...styles.dot, background: '#991b1b'}}/> Missing/Lost</span> <strong style={{ color: '#991b1b'}}>{lost.toLocaleString()}</strong></div>
@@ -462,7 +462,7 @@ export default function DashboardPage() {
                 <span style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.inUse}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-dark)' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>In Warehouse</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>In Stock</span>
                 <span style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700 }}>{selectedCompany.warehouse}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-dark)' }}>

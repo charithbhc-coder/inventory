@@ -45,6 +45,8 @@ const StatusBadge = ({ status }: { status: string }) => {
     'IN_TRANSIT':     { bg: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' },
   };
   const s = styles[status] || styles['WAREHOUSE'];
+  // WAREHOUSE is shown to users as "In Stock" (unassigned/available); value unchanged.
+  const label = status === 'WAREHOUSE' ? 'In Stock' : (status ? status.replace(/_/g, ' ') : 'UNKNOWN');
   return (
     <div style={{
       padding: '4px 12px', borderRadius: 50, fontSize: 10, fontWeight: 800,
@@ -53,7 +55,7 @@ const StatusBadge = ({ status }: { status: string }) => {
       letterSpacing: '0.02em'
     }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: s.color }} />
-      {status ? status.replace(/_/g, ' ') : 'UNKNOWN'}
+      {label}
     </div>
   );
 };
@@ -445,7 +447,7 @@ export default function ItemsPage() {
                 >
                   <option value="">All Active Statuses</option>
                   <option value="UNASSIGNED">Unassigned Assets</option>
-                  <option value="WAREHOUSE">Warehouse</option>
+                  <option value="WAREHOUSE">In Stock</option>
                   <option value="IN_USE">In Use</option>
                   <option value="IN_REPAIR">In Repair</option>
                   <option value="SENT_TO_REPAIR">Sent to Repair</option>
@@ -630,7 +632,7 @@ export default function ItemsPage() {
                     </div>
                     <div>
                       <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Assigned To</div>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>{item.assignedToName || 'Warehouse'}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>{item.assignedToName || 'In Stock'}</div>
                     </div>
                   </div>
 

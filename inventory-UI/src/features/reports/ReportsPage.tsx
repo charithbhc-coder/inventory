@@ -281,7 +281,7 @@ function ReportBuilderTab({ canExport }: { canExport: boolean }) {
                     ))
                   ) : (
                     ['IN_USE', 'WAREHOUSE', 'IN_REPAIR', 'SENT_TO_REPAIR', 'LOST', 'DISPOSED'].map(s => (
-                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                      <option key={s} value={s}>{s === 'WAREHOUSE' ? 'In Stock' : s.replace(/_/g, ' ')}</option>
                     ))
                   )}
                 </select>
