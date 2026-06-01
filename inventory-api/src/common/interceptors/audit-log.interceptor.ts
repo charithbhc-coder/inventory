@@ -5,11 +5,13 @@ import {
   CallHandler,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { DataSource } from 'typeorm';
 import * as requestIp from 'request-ip';
 import { AuditLog } from '../../audit-logs/entities/audit-log.entity';
+import { SKIP_AUDIT_KEY } from '../decorators/skip-audit.decorator';
 
 const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -18,11 +20,21 @@ export class AuditLogInterceptor implements NestInterceptor {
   constructor(
     private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
+    private reflector: Reflector,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const { method, url, user, ip, headers } = request;
+
+    // Routes marked @SkipAudit() are intentionally not logged.
+    const skipAudit = this.reflector.getAllAndOverride<boolean>(SKIP_AUDIT_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (skipAudit) {
+      return next.handle();
+    }
 
     const isReportDownload = method === 'GET' && url.includes('/reports/') && (url.endsWith('/excel') || url.endsWith('/pdf'));
 

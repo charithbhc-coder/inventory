@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   Activity,
   Tags,
-  Key
+  Key,
+  Trash2
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { itemService, Item } from '@/services/item.service';
@@ -27,6 +28,7 @@ import { categoryService } from '@/services/category.service';
 import ItemModal from './ItemModal';
 import AssetDetailsDrawer from './AssetDetailsDrawer';
 import ItemTrackingModal from './ItemTrackingModal';
+import PermanentDeleteModal from './PermanentDeleteModal';
 
 import QrPrintModal from '@/components/qr/QrPrintModal';
 import { useAuthStore } from '@/store/auth.store';
@@ -76,8 +78,15 @@ export default function ItemsPage() {
   const [rowSelection, setRowSelection] = useState({});
   const [isSelectionMode] = useState(false);
   const [qrPrintItem, setQrPrintItem] = useState<Item | null>(null);
+  const [deleteItem, setDeleteItem] = useState<Item | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [page, setPage] = useState(1);
   const hasPermission = useAuthStore((s: any) => s.hasPermission);
+  // Explicit permissions-array check (NOT hasPermission, which auto-passes for
+  // SUPER_ADMIN). The permanent-delete flag is granted via DB to specific
+  // IT-support accounts only, so it stays hidden from super admins/other admins.
+  const currentUser = useAuthStore((s: any) => s.user);
+  const canPermanentDelete = !!currentUser?.permissions?.includes(AdminPermission.PERMANENT_DELETE_ITEMS);
   const LIMIT = 15;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -310,10 +319,30 @@ export default function ItemsPage() {
           >
             <Activity size={16} />
           </button>
+
+          {canPermanentDelete && (
+            <button
+              title="Permanently delete asset"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteItem(info.row.original);
+                setIsDeleteOpen(true);
+              }}
+              style={{
+                background: 'rgba(225, 29, 72, 0.08)', border: '1px solid rgba(225, 29, 72, 0.15)',
+                borderRadius: 8, padding: '7px', cursor: 'pointer', color: '#e11d48',
+                display: 'flex', alignItems: 'center', transition: 'all 0.2s', height: 32, width: 32, justifyContent: 'center'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(225, 29, 72, 0.15)'; e.currentTarget.style.borderColor = 'rgba(225, 29, 72, 0.3)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(225, 29, 72, 0.08)'; e.currentTarget.style.borderColor = 'rgba(225, 29, 72, 0.15)'; }}
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
       ),
     }),
-  ], [isSelectionMode, setDrawerItem, setIsDrawerOpen, setSelectedItem, setIsModalOpen, setTrackingItem, setIsTrackingModalOpen]);
+  ], [isSelectionMode, canPermanentDelete, setDrawerItem, setIsDrawerOpen, setSelectedItem, setIsModalOpen, setTrackingItem, setIsTrackingModalOpen]);
 
   const table = useReactTable({
     data: items,
@@ -729,6 +758,15 @@ export default function ItemsPage() {
           itemId={qrPrintItem.id}
           itemName={qrPrintItem.name}
           assetCode={qrPrintItem.barcode}
+        />
+      )}
+
+      {/* Permanent Delete Modal (only rendered for permitted IT-support accounts) */}
+      {canPermanentDelete && deleteItem && (
+        <PermanentDeleteModal
+          item={deleteItem}
+          isOpen={isDeleteOpen}
+          onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
         />
       )}
 

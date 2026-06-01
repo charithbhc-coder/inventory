@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { Item } from './entities/item.entity';
 import { ItemEvent } from './entities/item-event.entity';
+import { DeletedItemLog } from './entities/deleted-item-log.entity';
 import { ItemCategory } from './entities/item-category.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ItemStatus, ItemCondition, ItemEventType } from '../common/enums';
@@ -38,6 +39,22 @@ export class ItemsService implements OnModuleInit {
         category_id UUID NOT NULL,
         last_seq INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (company_id, category_id)
+      )
+    `);
+
+    // Private recovery log for permanently-deleted assets (not surfaced in UI).
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS deleted_item_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        "itemId" UUID NOT NULL,
+        barcode VARCHAR(255),
+        name VARCHAR(255),
+        status VARCHAR(50),
+        "companyId" UUID,
+        snapshot JSONB,
+        "deletedByUserId" UUID NOT NULL,
+        "deletedByEmail" VARCHAR(255),
+        "deletedAt" TIMESTAMP NOT NULL DEFAULT now()
       )
     `);
   }
@@ -570,6 +587,49 @@ export class ItemsService implements OnModuleInit {
       await manager.save(ItemEvent, event);
 
       return saved;
+    });
+  }
+
+  // PERMANENT (hard) delete of a mistakenly-added asset. Restricted to holders
+  // of PERMANENT_DELETE_ITEMS (granted via DB only) and NOT written to audit
+  // logs. Writes a private snapshot to deleted_item_logs for recovery.
+  async permanentDelete(
+    itemId: string,
+    user: { sub: string; email?: string },
+  ): Promise<{ success: boolean; barcode: string | null }> {
+    return this.dataSource.transaction(async (manager) => {
+      const item = await manager.findOne(Item, { where: { id: itemId } });
+      if (!item) throw new NotFoundException('Item not found');
+
+      // Only mistakenly-added operational assets — never erase records that
+      // went through the disposal or lost workflows.
+      if (item.status === ItemStatus.DISPOSED || item.status === ItemStatus.LOST) {
+        throw new BadRequestException(
+          `Cannot permanently delete "${item.name}" — it is ${item.status}. This tool is for removing mistakenly-added assets only.`,
+        );
+      }
+
+      // 1. Private recovery snapshot (not surfaced in any UI).
+      const log = manager.create(DeletedItemLog, {
+        itemId: item.id,
+        barcode: item.barcode,
+        name: item.name,
+        status: item.status,
+        companyId: item.companyId,
+        snapshot: item as unknown as Record<string, any>,
+        deletedByUserId: user.sub,
+        deletedByEmail: user.email ?? null,
+      });
+      await manager.save(DeletedItemLog, log);
+
+      // 2. Clear dependents that FK to the item, then delete it.
+      await manager.query(`DELETE FROM transfer_requests WHERE "itemId" = $1`, [item.id]);
+      await manager.query(`DELETE FROM disposal_requests WHERE "itemId" = $1`, [item.id]);
+      await manager.delete(ItemEvent, { itemId: item.id });
+      await manager.query(`UPDATE items SET "parentItemId" = NULL WHERE "parentItemId" = $1`, [item.id]);
+      await manager.delete(Item, { id: item.id });
+
+      return { success: true, barcode: item.barcode };
     });
   }
 

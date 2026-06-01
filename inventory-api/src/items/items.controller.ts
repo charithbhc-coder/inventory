@@ -35,9 +35,11 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
+import { SkipAudit } from '../common/decorators/skip-audit.decorator';
 import { ItemStatus, UserRole, AdminPermission } from '../common/enums';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../common/interfaces';
+import { ForbiddenException } from '@nestjs/common';
 
 
 
@@ -176,6 +178,19 @@ export class ItemsController {
   @Roles(UserRole.SUPER_ADMIN)
   changeStatus(@Param('id') id: string, @Body() dto: ChangeStatusDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.changeStatus(id, dto, user.sub);
+  }
+
+  // Permanent delete of mistakenly-added assets. Gated by an EXPLICIT
+  // permission check (no SUPER_ADMIN bypass) so it is usable only by accounts
+  // granted PERMANENT_DELETE_ITEMS via the database. Not written to audit logs.
+  @Delete(':id/permanent')
+  @SkipAudit()
+  permanentDelete(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    const perms: string[] = (user as any).permissions || [];
+    if (!perms.includes(AdminPermission.PERMANENT_DELETE_ITEMS)) {
+      throw new ForbiddenException('You do not have permission to permanently delete assets.');
+    }
+    return this.itemsService.permanentDelete(id, { sub: user.sub, email: user.email });
   }
 
   @Post(':id/lost')

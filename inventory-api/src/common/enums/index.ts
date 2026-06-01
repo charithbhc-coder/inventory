@@ -28,6 +28,9 @@ export enum AdminPermission {
   UPDATE_ITEMS = 'UPDATE_ITEMS',
   DELETE_ITEMS = 'DELETE_ITEMS',
   ASSIGN_ITEMS = 'ASSIGN_ITEMS',
+  // Hard delete of mistakenly-added assets. Granted ONLY via DB (not in the
+  // Permissions UI), time-boxed to the initial asset-entry cleanup.
+  PERMANENT_DELETE_ITEMS = 'PERMANENT_DELETE_ITEMS',
 
   // Item Status
   MANAGE_REPAIRS = 'MANAGE_REPAIRS',

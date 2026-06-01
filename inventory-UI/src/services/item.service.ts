@@ -127,6 +127,11 @@ export const itemService = {
     return data;
   },
 
+  permanentDelete: async (id: string) => {
+    const { data } = await apiClient.delete(`/items/${id}/permanent`);
+    return data;
+  },
+
   uploadWarranty: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);

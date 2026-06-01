@@ -7,6 +7,7 @@ import { ItemCategoriesController } from './item-categories.controller';
 import { Item } from './entities/item.entity';
 import { ItemCategory } from './entities/item-category.entity';
 import { ItemEvent } from './entities/item-event.entity';
+import { DeletedItemLog } from './entities/deleted-item-log.entity';
 import { TransferRequest } from './entities/transfer-request.entity';
 import { Company } from '../companies/entities/company.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -21,7 +22,7 @@ import { GatePassesService } from './gate-passes.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Item, ItemCategory, ItemEvent, Company, TransferRequest, User, GatePass]),
+    TypeOrmModule.forFeature([Item, ItemCategory, ItemEvent, Company, TransferRequest, User, GatePass, DeletedItemLog]),
     NotificationsModule,
     UsersModule,
   ],
