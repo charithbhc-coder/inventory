@@ -522,7 +522,7 @@ export class ItemsService implements OnModuleInit {
   // it does not touch assignment. DISPOSED/LOST are blocked (use their flows).
   async changeStatus(
     itemId: string,
-    dto: { status: ItemStatus; notes: string },
+    dto: { status: ItemStatus },
     userId: string,
   ): Promise<Item> {
     return this.dataSource.transaction(async (manager) => {
@@ -565,7 +565,7 @@ export class ItemsService implements OnModuleInit {
         fromStatus: prevStatus,
         toStatus: saved.status,
         performedByUserId: userId,
-        notes: `Status manually changed: ${prevStatus} → ${saved.status}. Reason: ${dto.notes}`,
+        notes: `Status manually changed: ${prevStatus} → ${saved.status}`,
       });
       await manager.save(ItemEvent, event);
 

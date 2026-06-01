@@ -122,8 +122,8 @@ export const itemService = {
     return data;
   },
 
-  changeStatus: async (id: string, status: string, notes: string) => {
-    const { data } = await apiClient.post(`/items/${id}/change-status`, { status, notes });
+  changeStatus: async (id: string, status: string) => {
+    const { data } = await apiClient.post(`/items/${id}/change-status`, { status });
     return data;
   },
 

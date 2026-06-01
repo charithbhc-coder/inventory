@@ -250,10 +250,6 @@ export class ChangeStatusDto {
     message: 'Status must be one of: WAREHOUSE, IN_USE, IN_REPAIR, SENT_TO_REPAIR, IN_TRANSIT',
   })
   status: ItemStatus;
-
-  @IsString()
-  @IsNotEmpty()
-  notes: string;
 }
 
 export class UpdateEmployeeDto {
