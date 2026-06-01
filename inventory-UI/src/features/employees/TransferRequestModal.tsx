@@ -2,25 +2,18 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Send, ArrowRight, UserCheck, X } from 'lucide-react';
 import { Item } from '@/services/item.service';
+import api from '@/services/api.client';
 import toast from 'react-hot-toast';
 
-// Simple API call for the transfer request
+// Uses the shared API client so the request hits the configured API base URL
+// (VITE_API_BASE_URL, incl. the /inventory-api/v1 prefix) and carries the JWT.
 const createTransferRequest = async (itemId: string, payload: any) => {
-  const token = localStorage.getItem('inventory_auth_token');
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  const response = await fetch(`${apiUrl}/transfer-requests/${itemId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to submit transfer request');
+  try {
+    const { data } = await api.post(`/transfer-requests/${itemId}`, payload);
+    return data;
+  } catch (err: any) {
+    throw new Error(err?.response?.data?.message || 'Failed to submit transfer request');
   }
-  return response.json();
 };
 
 interface Props {
