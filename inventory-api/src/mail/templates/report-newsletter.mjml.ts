@@ -1,4 +1,5 @@
 import { EmailTheme } from './email.theme';
+import { formatInSystemTz } from '../../common/utils/date.util';
 
 export function reportNewsletterTemplate(
   subject: string,
@@ -8,7 +9,7 @@ export function reportNewsletterTemplate(
   systemOrg = 'System',
 ): string {
   const year = new Date().getFullYear();
-  const timestamp = new Date().toLocaleString('en-US', {
+  const timestamp = formatInSystemTz(new Date(), {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });

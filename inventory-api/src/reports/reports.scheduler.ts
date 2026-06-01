@@ -5,6 +5,7 @@ import { Repository, LessThanOrEqual } from 'typeorm';
 import { ScheduledReport, FileFormat, ReportFrequency } from './entities/scheduled-report.entity';
 import { ReportsService } from './reports.service';
 import { MailService } from '../mail/mail.service';
+import { systemDateStamp } from '../common/utils/date.util';
 
 @Injectable()
 export class ReportsScheduler {
@@ -95,6 +96,6 @@ export class ReportsScheduler {
   }
 
   private dateStamp(): string {
-    return new Date().toISOString().split('T')[0];
+    return systemDateStamp();
   }
 }

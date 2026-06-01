@@ -10,6 +10,12 @@ import { CreateScheduledReportDto, UpdateScheduledReportDto } from './dto/create
 import { SendReportEmailDto } from './dto/send-email.dto';
 import { MailService } from '../mail/mail.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  formatInSystemTz,
+  getSystemTimezone,
+  tzOffsetMinutes,
+  zonedWallTimeToUtc,
+} from '../common/utils/date.util';
 
 @Injectable()
 export class ReportsService {
@@ -286,7 +292,8 @@ export class ReportsService {
   }
 
   async exportActivityExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
-    const data = await this.getActivityLogData(filters);
+    const raw = await this.getActivityLogData(filters);
+    const data = raw.map((r: any) => ({ ...r, occurredAt: formatInSystemTz(r.occurredAt) }));
     return this.excelGenerator.generateBuffer(data, [
       { header: 'Date/Time', key: 'occurredAt', width: 25 },
       { header: 'Event', key: 'eventType', width: 30 },
@@ -299,7 +306,8 @@ export class ReportsService {
   }
 
   async exportRepairExcel(filters: ReportFilterDto, userContext?: string): Promise<Buffer> {
-    const data = await this.getRepairHistoryData(filters);
+    const raw = await this.getRepairHistoryData(filters);
+    const data = raw.map((r: any) => ({ ...r, occurredAt: formatInSystemTz(r.occurredAt) }));
     return this.excelGenerator.generateBuffer(data, [
       { header: 'Date/Time', key: 'occurredAt', width: 25 },
       { header: 'Event', key: 'eventType', width: 25 },
@@ -381,7 +389,7 @@ export class ReportsService {
     const data = await this.getActivityLogData(filters);
     const tableHtml = this.buildTableHtml(
       ['Date/Time', 'Event', 'Item', 'Barcode', 'Company', 'Performed By', 'Notes'],
-      data.map((r: any) => [new Date(r.occurredAt).toLocaleString(), r.eventType, r.itemName, r.barcode, r.companyName, r.performedBy, r.notes]),
+      data.map((r: any) => [formatInSystemTz(r.occurredAt), r.eventType, r.itemName, r.barcode, r.companyName, r.performedBy, r.notes]),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('System Activity Log', tableHtml, userContext));
   }
@@ -390,7 +398,7 @@ export class ReportsService {
     const data = await this.getRepairHistoryData(filters);
     const tableHtml = this.buildTableHtml(
       ['Date/Time', 'Event', 'Item', 'Barcode', 'Company', 'Performed By', 'Notes'],
-      data.map((r: any) => [new Date(r.occurredAt).toLocaleString(), r.eventType, r.itemName, r.barcode, r.companyName, r.performedBy, r.repairNotes]),
+      data.map((r: any) => [formatInSystemTz(r.occurredAt), r.eventType, r.itemName, r.barcode, r.companyName, r.performedBy, r.repairNotes]),
     );
     return this.pdfGenerator.generatePdfFromHtml(this.pdfGenerator.buildReportHtmlWrapper('Repair History Report', tableHtml, userContext));
   }
@@ -498,7 +506,10 @@ export class ReportsService {
     this.eventEmitter.emit('report.deleted', { scheduleId: id, reportType: schedule.reportType });
   }
 
-  // Compute the next run timestamp given frequency, time, and day settings
+  // Compute the next run timestamp given frequency, time, and day settings.
+  // The schedule's timeOfDay/day settings are interpreted in the system
+  // timezone (SYSTEM_TIMEZONE, default Asia/Colombo); the returned Date is the
+  // corresponding absolute UTC instant stored in nextRunAt.
   computeNextRun(
     frequency: ReportFrequency,
     timeOfDay: string,
@@ -506,32 +517,42 @@ export class ReportsService {
     dayOfMonth?: number | null,
     specificDate?: string | null,
   ): Date | null {
+    const tz = getSystemTimezone();
+    const [hour, minute] = timeOfDay.split(':').map(Number);
+
     if (frequency === ReportFrequency.ONCE && specificDate) {
       const [year, month, day] = specificDate.split('-').map(Number);
-      const [hour, minute] = timeOfDay.split(':').map(Number);
-      return new Date(year, month - 1, day, hour, minute, 0, 0);
+      return zonedWallTimeToUtc(year, month, day, hour, minute, tz);
     }
 
-    const [hour, minute] = timeOfDay.split(':').map(Number);
     const now = new Date();
-    const next = new Date();
-    next.setSeconds(0, 0);
-    next.setHours(hour, minute, 0, 0);
+    const off = tzOffsetMinutes(now, tz);
+    // Pseudo-local clock: shifting by the tz offset lets UTC getters/setters
+    // operate directly on the timezone's wall-clock components.
+    const nowL = new Date(now.getTime() + off * 60000);
+    const nextL = new Date(nowL.getTime());
+    nextL.setUTCSeconds(0, 0);
+    nextL.setUTCHours(hour, minute, 0, 0);
 
     if (frequency === ReportFrequency.DAILY) {
-      if (next <= now) next.setDate(next.getDate() + 1);
+      if (nextL <= nowL) nextL.setUTCDate(nextL.getUTCDate() + 1);
     } else if (frequency === ReportFrequency.WEEKLY) {
       const target = dayOfWeek ?? 1; // default Monday
-      const diff = (target - now.getDay() + 7) % 7 || 7;
-      next.setDate(now.getDate() + diff);
+      const diff = (target - nowL.getUTCDay() + 7) % 7 || 7;
+      nextL.setUTCDate(nowL.getUTCDate() + diff);
     } else if (frequency === ReportFrequency.MONTHLY) {
       const target = dayOfMonth ?? 1;
-      next.setDate(target);
-      if (next <= now) {
-        next.setMonth(next.getMonth() + 1);
-        next.setDate(target);
+      nextL.setUTCDate(target);
+      if (nextL <= nowL) {
+        nextL.setUTCMonth(nextL.getUTCMonth() + 1);
+        nextL.setUTCDate(target);
       }
     }
-    return next;
+
+    // Convert the chosen wall-clock time back to an absolute UTC instant.
+    let utcMs = nextL.getTime() - off * 60000;
+    const off2 = tzOffsetMinutes(new Date(utcMs), tz);
+    if (off2 !== off) utcMs = nextL.getTime() - off2 * 60000;
+    return new Date(utcMs);
   }
 }
