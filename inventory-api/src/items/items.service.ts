@@ -518,6 +518,61 @@ export class ItemsService implements OnModuleInit {
     });
   }
 
+  // Manual status override (SUPER_ADMIN). Changes ONLY the status field —
+  // it does not touch assignment. DISPOSED/LOST are blocked (use their flows).
+  async changeStatus(
+    itemId: string,
+    dto: { status: ItemStatus; notes: string },
+    userId: string,
+  ): Promise<Item> {
+    return this.dataSource.transaction(async (manager) => {
+      const item = await manager.findOne(Item, { where: { id: itemId } });
+      if (!item) throw new NotFoundException('Item not found');
+
+      const allowed = [
+        ItemStatus.WAREHOUSE,
+        ItemStatus.IN_USE,
+        ItemStatus.IN_REPAIR,
+        ItemStatus.SENT_TO_REPAIR,
+        ItemStatus.IN_TRANSIT,
+      ];
+      if (!allowed.includes(dto.status)) {
+        throw new BadRequestException('This status cannot be set via manual change.');
+      }
+
+      if (item.status === ItemStatus.DISPOSED) {
+        throw new BadRequestException(
+          `Cannot change status of "${item.name}" — it has been disposed.`,
+        );
+      }
+      if (item.status === ItemStatus.LOST) {
+        throw new BadRequestException(
+          `Cannot change status of "${item.name}" — it is reported lost. Use Recover instead.`,
+        );
+      }
+
+      const prevStatus = item.status;
+      if (prevStatus === dto.status) {
+        throw new BadRequestException(`Item is already "${dto.status}".`);
+      }
+
+      item.status = dto.status;
+      const saved = await manager.save(Item, item);
+
+      const event = manager.create(ItemEvent, {
+        itemId: saved.id,
+        eventType: ItemEventType.ITEM_EDITED,
+        fromStatus: prevStatus,
+        toStatus: saved.status,
+        performedByUserId: userId,
+        notes: `Status manually changed: ${prevStatus} → ${saved.status}. Reason: ${dto.notes}`,
+      });
+      await manager.save(ItemEvent, event);
+
+      return saved;
+    });
+  }
+
   // ========================================
   // EMPLOYEES — global name correction
   // ========================================

@@ -122,6 +122,11 @@ export const itemService = {
     return data;
   },
 
+  changeStatus: async (id: string, status: string, notes: string) => {
+    const { data } = await apiClient.post(`/items/${id}/change-status`, { status, notes });
+    return data;
+  },
+
   uploadWarranty: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);

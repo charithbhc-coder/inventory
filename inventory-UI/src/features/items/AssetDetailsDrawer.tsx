@@ -20,7 +20,8 @@ import {
   Camera,
   AlertOctagon,
   Hash,
-  ClipboardList
+  ClipboardList,
+  SlidersHorizontal
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { itemService, Item } from '@/services/item.service';
@@ -32,6 +33,7 @@ import ReportLostModal from './ReportLostModal';
 import ReturnFromRepairModal from './ReturnFromRepairModal';
 import RecoverItemModal from './RecoverItemModal';
 import ReturnToWarehouseModal from './ReturnToWarehouseModal';
+import ChangeStatusModal from './ChangeStatusModal';
 import RequestDisposalModal from '@/features/disposal-requests/RequestDisposalModal';
 import { useAuthStore } from '@/store/auth.store';
 import { AdminPermission, ItemStatus } from '@/types';
@@ -56,7 +58,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
   const item = timelineData?.item || initialItem;
   const events = timelineData?.events || [];
 
-  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'request-disposal' | 'lost' | 'return' | 'recover' | 'return-warehouse' | null>(null);
+  const [activeModal, setActiveModal] = useState<'assign' | 'repair' | 'dispose' | 'request-disposal' | 'lost' | 'return' | 'recover' | 'return-warehouse' | 'change-status' | null>(null);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [disposalJustSubmitted, setDisposalJustSubmitted] = useState(false);
@@ -266,6 +268,12 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
                 </div>
               )
             ))}
+            {item.status !== ItemStatus.DISPOSED && item.status !== ItemStatus.LOST && isSuperAdmin() && (
+              <button className="hub-btn" onClick={() => setActiveModal('change-status')} title="Manually change status (SUPER_ADMIN only)">
+                <SlidersHorizontal size={16} />
+                <span>Change Status</span>
+              </button>
+            )}
             {item.status !== ItemStatus.DISPOSED && isSuperAdmin() && (
               <button className="hub-btn danger" onClick={() => setActiveModal('dispose')} style={{ opacity: 0.8 }} title="Emergency direct disposal (SUPER_ADMIN only)">
                 <Trash2 size={16} />
@@ -493,6 +501,7 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
         <ReturnFromRepairModal item={item} isOpen={activeModal === 'return'} onClose={() => setActiveModal(null)} />
         <RecoverItemModal item={item} isOpen={activeModal === 'recover'} onClose={() => setActiveModal(null)} />
         <ReturnToWarehouseModal item={item} isOpen={activeModal === 'return-warehouse'} onClose={() => setActiveModal(null)} />
+        <ChangeStatusModal item={item} isOpen={activeModal === 'change-status'} onClose={() => setActiveModal(null)} />
 
         {/* QR Print Modal */}
         <QrPrintModal

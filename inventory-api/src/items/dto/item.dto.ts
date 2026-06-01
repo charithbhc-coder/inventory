@@ -1,6 +1,17 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsUUID, IsBoolean, IsDateString, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsUUID, IsBoolean, IsDateString, IsArray, IsIn } from 'class-validator';
 import { ItemCondition, ItemStatus, DisposalMethod } from '../../common/enums';
 import { Type } from 'class-transformer';
+
+// Statuses that can be set via the manual "Change Status" action.
+// DISPOSED and LOST are intentionally excluded — they have their own
+// approval/recovery workflows and must not be set by a free status change.
+export const MANUAL_STATUSES: ItemStatus[] = [
+  ItemStatus.WAREHOUSE,
+  ItemStatus.IN_USE,
+  ItemStatus.IN_REPAIR,
+  ItemStatus.SENT_TO_REPAIR,
+  ItemStatus.IN_TRANSIT,
+];
 
 export class CreateItemDto {
   
@@ -229,6 +240,17 @@ export class AssignBulkDto extends AssignItemDto {
 
 export class ReportLostDto {
   
+  @IsString()
+  @IsNotEmpty()
+  notes: string;
+}
+
+export class ChangeStatusDto {
+  @IsIn(MANUAL_STATUSES, {
+    message: 'Status must be one of: WAREHOUSE, IN_USE, IN_REPAIR, SENT_TO_REPAIR, IN_TRANSIT',
+  })
+  status: ItemStatus;
+
   @IsString()
   @IsNotEmpty()
   notes: string;

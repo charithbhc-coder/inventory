@@ -28,6 +28,7 @@ import {
   ReturnFromRepairDto,
   ReportLostDto,
   UpdateEmployeeDto,
+  ChangeStatusDto,
 } from './dto/item.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -169,6 +170,12 @@ export class ItemsController {
   @Roles(UserRole.SUPER_ADMIN)
   dispose(@Param('id') id: string, @Body() dto: DisposeItemDto, @CurrentUser() user: JwtPayload) {
     return this.itemsService.dispose(id, dto, user.sub, `${user.email}`);
+  }
+
+  @Post(':id/change-status')
+  @Roles(UserRole.SUPER_ADMIN)
+  changeStatus(@Param('id') id: string, @Body() dto: ChangeStatusDto, @CurrentUser() user: JwtPayload) {
+    return this.itemsService.changeStatus(id, dto, user.sub);
   }
 
   @Post(':id/lost')
