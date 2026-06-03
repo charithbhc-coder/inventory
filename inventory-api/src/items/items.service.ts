@@ -448,12 +448,19 @@ export class ItemsService implements OnModuleInit {
     });
   }
 
-  async assignBulk(dto: any, userId: string): Promise<void> {
+  async assignBulk(dto: any, userId: string): Promise<{ errors: { itemId: string; error: string }[] }> {
     const { itemIds, ...assignDto } = dto;
+    const errors: { itemId: string; error: string }[] = [];
     await this.dataSource.transaction(async (manager) => {
-      for (const id of itemIds) {
-        const item = await manager.findOne(Item, { where: { id } });
+      for (const itemId of itemIds) {
+        const item = await manager.findOne(Item, { where: { id: itemId } });
         if (!item) continue;
+
+        // STATE GUARD: Skip locked items — a transfer request is pending
+        if (item.pendingTransferRequestId) {
+          errors.push({ itemId, error: 'Asset is locked — a transfer request is pending' });
+          continue;
+        }
 
         // STATE GUARD: Skip items currently in repair during bulk assignment
         if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
@@ -497,6 +504,7 @@ export class ItemsService implements OnModuleInit {
         await manager.save(ItemEvent, event);
       }
     });
+    return { errors };
   }
 
   async unassign(itemId: string, userId: string): Promise<Item> {
