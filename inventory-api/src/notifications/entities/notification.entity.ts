@@ -72,6 +72,9 @@ export class Notification {
   @Column({ type: 'timestamp', nullable: true })
   emailSentAt?: Date | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  metadata?: Record<string, any> | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }
