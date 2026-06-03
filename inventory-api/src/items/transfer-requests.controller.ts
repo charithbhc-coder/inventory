@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { TransferRequestsService } from './transfer-requests.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
@@ -26,6 +26,15 @@ export class TransferRequestsController {
     return this.transferRequestsService.getPendingRequests();
   }
 
+  @Get('history')
+  @Permissions(AdminPermission.APPROVE_TRANSFERS)
+  async getHistory(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.transferRequestsService.getHistory(Number(page), Number(limit));
+  }
+
   @Patch(':id/approve')
   @Permissions(AdminPermission.APPROVE_TRANSFERS)
   async approveRequest(
@@ -44,5 +53,14 @@ export class TransferRequestsController {
     @Request() req: any
   ) {
     return this.transferRequestsService.rejectRequest(id, req.user.sub, notes);
+  }
+
+  @Delete(':itemId/cancel')
+  @Permissions(AdminPermission.REQUEST_TRANSFERS)
+  async cancelRequest(
+    @Param('itemId') itemId: string,
+    @Request() req: any
+  ) {
+    return this.transferRequestsService.cancelRequest(itemId, req.user.sub);
   }
 }

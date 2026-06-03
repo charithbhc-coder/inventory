@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransferRequest, TransferRequestStatus, TransferTargetType } from './entities/transfer-request.entity';
@@ -162,5 +162,38 @@ export class TransferRequestsService {
     });
 
     return request;
+  }
+
+  async cancelRequest(itemId: string, userId: string) {
+    const request = await this.transferRequestRepo.findOne({
+      where: { itemId, status: TransferRequestStatus.PENDING },
+    });
+    if (!request) throw new NotFoundException('No pending transfer request found for this item');
+    if (request.requestedByUserId !== userId) {
+      throw new ForbiddenException('You can only cancel your own requests');
+    }
+
+    await this.transferRequestRepo.manager.transaction(async (em) => {
+      request.status = TransferRequestStatus.CANCELLED;
+      await em.save(TransferRequest, request);
+      await em.update(Item, itemId, { pendingTransferRequestId: null });
+    });
+
+    return { success: true };
+  }
+
+  async getHistory(page = 1, limit = 20) {
+    const [items, total] = await this.transferRequestRepo.findAndCount({
+      where: [
+        { status: TransferRequestStatus.APPROVED },
+        { status: TransferRequestStatus.REJECTED },
+        { status: TransferRequestStatus.CANCELLED },
+      ],
+      relations: ['item', 'requestedByUser', 'reviewedByUser'],
+      order: { updatedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { items, total, page, limit };
   }
 }
