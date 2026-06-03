@@ -31,6 +31,14 @@ export interface Item {
   parentItemId?: string | null;
   parentItem?: { id: string; name: string; barcode: string; category?: { name: string } } | null;
   childItems?: { id: string; name: string; barcode: string; category?: { name: string } }[];
+  pendingTransferRequestId?: string | null;
+  pendingTransferRequest?: {
+    id: string;
+    newAssignedToName: string | null;
+    newAssignedToEmployeeId: string | null;
+    targetType: string;
+    requestedByUserId: string;
+  } | null;
 }
 
 export interface EmployeeGroup {
