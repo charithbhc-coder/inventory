@@ -179,6 +179,7 @@ export class ItemsService implements OnModuleInit {
       .leftJoinAndSelect('item.category', 'category')
       .leftJoinAndSelect('item.company', 'company')
       .leftJoinAndSelect('item.department', 'department')
+      .leftJoinAndSelect('item.pendingTransferRequest', 'pendingTransferRequest')
       .where('(item.assignedToName IS NOT NULL OR item.previousAssignedToName IS NOT NULL)');
 
     if (query.companyId) qb.andWhere('item.companyId = :companyId', { companyId: query.companyId });
