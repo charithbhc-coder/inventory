@@ -19,6 +19,7 @@ interface CreateNotificationPayload {
   entityType?: string;
   entityId?: string;
   actionUrl?: string;
+  metadata?: Record<string, any> | null;
 }
 
 @Injectable()

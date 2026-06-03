@@ -128,22 +128,37 @@ export class TransferRequestsService {
   async rejectRequest(id: string, adminId: string, notes: string) {
     const request = await this.transferRequestRepo.findOne({ where: { id }, relations: ['item'] });
     if (!request) throw new NotFoundException('Transfer request not found');
-    
-    request.status = TransferRequestStatus.REJECTED;
-    request.reviewedByUserId = adminId;
-    request.reviewNotes = notes;
+    if (request.status !== TransferRequestStatus.PENDING) {
+      throw new ConflictException('This request has already been resolved');
+    }
 
-    await this.transferRequestRepo.save(request);
+    // Atomically mark rejected and unlock
+    await this.transferRequestRepo.manager.transaction(async (em) => {
+      request.status = TransferRequestStatus.REJECTED;
+      request.reviewedByUserId = adminId;
+      request.reviewNotes = notes;
+      await em.save(TransferRequest, request);
+      await em.update(Item, request.itemId, { pendingTransferRequestId: null });
+    });
 
-    // Notify Requestor
+    // Notify Requestor with resubmit metadata
     await this.notificationsService.create({
       recipientUserId: request.requestedByUserId,
       type: NotificationType.TRANSFER_REQUEST_REJECTED,
       title: 'Transfer Request Rejected',
-      message: `Your transfer request for ${request.item.name} has been rejected.`,
+      message: `Your transfer request for ${request.item.name} was rejected: ${notes}`,
       entityType: 'TransferRequest',
       entityId: request.id,
-      actionUrl: `/items/${request.item.id}`,
+      actionUrl: `/employees`,
+      metadata: {
+        itemId: request.itemId,
+        itemName: request.item.name,
+        itemBarcode: request.item.barcode,
+        targetType: request.targetType,
+        newAssignedToName: request.newAssignedToName,
+        newAssignedToEmployeeId: request.newAssignedToEmployeeId,
+        reason: request.reason,
+      },
     });
 
     return request;
