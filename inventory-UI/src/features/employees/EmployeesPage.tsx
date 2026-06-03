@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
+import api from '@/services/api.client';
 import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText, Printer, ListTodo } from 'lucide-react';
 import { itemService, Item, EmployeeGroup } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
@@ -46,6 +48,11 @@ export default function EmployeesPage() {
   const EMP_PER_PAGE = 20;
   const ASSET_PER_PAGE = 8;
 
+  const location = useLocation();
+  const [cancellingItemId, setCancellingItemId] = useState<string | null>(null);
+  const [resubmitPrefill, setResubmitPrefill] = useState<any>(null);
+
+  const queryClient = useQueryClient();
   const { hasPermission, user } = useAuthStore();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -53,6 +60,22 @@ export default function EmployeesPage() {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.resubmitTransfer) {
+      const prefill = state.resubmitTransfer;
+      setResubmitPrefill(prefill);
+      setTransferItem({
+        id: prefill.itemId,
+        name: prefill.itemName,
+        barcode: prefill.itemBarcode,
+        assignedToName: null,
+      } as any);
+      setIsTransferRequestModalOpen(true);
+      window.history.replaceState({}, '');
+    }
   }, []);
 
   // Reset selection when employee changes
@@ -201,6 +224,20 @@ export default function EmployeesPage() {
       } else {
         toast.error("You don't have permission to transfer items.");
       }
+    }
+  };
+
+  const handleCancelRequest = async (item: Item) => {
+    if (!window.confirm(`Cancel the pending transfer request for "${item.name}"? The asset will be unlocked.`)) return;
+    setCancellingItemId(item.id);
+    try {
+      await api.delete(`/transfer-requests/${item.id}/cancel`);
+      toast.success('Transfer request cancelled — asset unlocked');
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to cancel request');
+    } finally {
+      setCancellingItemId(null);
     }
   };
 
@@ -480,9 +517,12 @@ export default function EmployeesPage() {
                       </thead>
                       <tbody>
                         {pagedAssets.map(item => (
-                          <tr key={item.id} style={{ 
+                          <tr key={item.id} style={{
                             borderBottom: '1px solid var(--border-dark)',
-                            background: selectedItemIds.has(item.id) ? 'rgba(255, 224, 83, 0.05)' : 'transparent',
+                            background: item.pendingTransferRequestId
+                              ? 'rgba(240, 165, 0, 0.04)'
+                              : selectedItemIds.has(item.id) ? 'rgba(255, 224, 83, 0.05)' : 'transparent',
+                            borderLeft: item.pendingTransferRequestId ? '2px solid rgba(240, 165, 0, 0.3)' : undefined,
                             transition: 'background 0.2s'
                           }}>
                             {isSelectionMode && (
@@ -504,7 +544,20 @@ export default function EmployeesPage() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-yellow)' }}><Package size={16} /></div>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>{item.name}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                                    {item.name}
+                                    {item.pendingTransferRequestId && (
+                                      <span style={{
+                                        marginLeft: 8, padding: '2px 8px',
+                                        background: 'rgba(240, 165, 0, 0.15)',
+                                        color: '#f0a500',
+                                        border: '1px solid rgba(240, 165, 0, 0.3)',
+                                        borderRadius: 10, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap'
+                                      }}>
+                                        ⏳ Pending → {item.pendingTransferRequest?.newAssignedToName || 'transfer'}
+                                      </span>
+                                    )}
+                                  </div>
                                   <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.barcode}</div>
                                 </div>
                               </div>
@@ -521,13 +574,31 @@ export default function EmployeesPage() {
                                 <button className="hover-card" onClick={() => setQrPrintItem(item)} title="Print QR" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#eab308', cursor: 'pointer' }}><QrCode size={14} /></button>
                                 <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14} /></button>
                                 {item.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase() && (
-                                  <button
-                                    onClick={() => handleTransferClick(item)}
-                                    className="hover-card"
-                                    style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                                  >
-                                    Request Transfer
-                                  </button>
+                                  item.pendingTransferRequestId ? (
+                                    <button
+                                      onClick={() => handleCancelRequest(item)}
+                                      disabled={cancellingItemId === item.id}
+                                      style={{
+                                        padding: '4px 10px',
+                                        background: 'rgba(244, 67, 54, 0.12)',
+                                        color: '#f44336',
+                                        border: '1px solid rgba(244, 67, 54, 0.3)',
+                                        borderRadius: 6, fontSize: 11, fontWeight: 600,
+                                        cursor: cancellingItemId === item.id ? 'not-allowed' : 'pointer',
+                                        opacity: cancellingItemId === item.id ? 0.6 : 1,
+                                      }}
+                                    >
+                                      {cancellingItemId === item.id ? 'Cancelling...' : 'Cancel Request'}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleTransferClick(item)}
+                                      className="hover-card"
+                                      style={{ padding: '6px 12px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#3b82f6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                                    >
+                                      Request Transfer
+                                    </button>
+                                  )
                                 )}
                                 {item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase() && (
                                   <span style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(71,85,105,0.1)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
@@ -577,7 +648,12 @@ export default function EmployeesPage() {
         <TransferRequestModal
           item={transferItem}
           isOpen={isTransferRequestModalOpen}
-          onClose={() => { setIsTransferRequestModalOpen(false); setTransferItem(null); }}
+          prefill={resubmitPrefill || undefined}
+          onClose={() => {
+            setIsTransferRequestModalOpen(false);
+            setTransferItem(null);
+            setResubmitPrefill(null);
+          }}
         />
       )}
 
