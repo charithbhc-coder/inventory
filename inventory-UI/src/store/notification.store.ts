@@ -91,6 +91,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           queryClient.invalidateQueries({ queryKey: ['disposal-check'] });
         }
 
+        // Sync Transfer Requests
+        if (type.startsWith('TRANSFER_REQUEST_')) {
+          queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+        }
+
         return {
           notifications: [newNotif, ...state.notifications],
           unreadCount: state.unreadCount + 1

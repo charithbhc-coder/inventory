@@ -405,6 +405,26 @@ export default function TopNavbar({ onToggleCollapse, onOpenMobile }: any) {
                             <div style={{ fontSize: 13, fontWeight: 700, color: n.isRead ? 'var(--text-muted)' : 'var(--text-main)', marginBottom: 2, paddingRight: 20 }}>{n.title}</div>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 6 }}>{n.message}</div>
                             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{formatDistanceToNow(new Date(n.createdAt))} ago</div>
+                            {n.type === 'TRANSFER_REQUEST_REJECTED' && n.metadata && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!n.isRead) markAsRead(n.id);
+                                  setNotifOpen(false);
+                                  navigate('/employees', { state: { resubmitTransfer: n.metadata } });
+                                }}
+                                style={{
+                                  marginTop: 6, padding: '4px 12px',
+                                  background: 'rgba(59, 130, 246, 0.12)',
+                                  color: '#3b82f6',
+                                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                                  borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                  display: 'inline-block',
+                                }}
+                              >
+                                Resubmit Request
+                              </button>
+                            )}
                           </div>
 
                           {/* Dismiss Button */}
