@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransferRequest, TransferRequestStatus, TransferTargetType } from './entities/transfer-request.entity';
 import { ItemsService } from './items.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../common/enums';
+import { AdminPermission, NotificationType } from '../common/enums';
 import { Item } from './entities/item.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -25,10 +25,14 @@ export class TransferRequestsService {
     const item = await this.itemsRepo.findOne({ where: { id: itemId } });
     if (!item) throw new NotFoundException('Item not found');
 
+    if (item.pendingTransferRequestId) {
+      throw new ConflictException('This asset already has a pending transfer request');
+    }
+
     const request = this.transferRequestRepo.create({
       itemId,
       requestedByUserId: userId,
-      targetType: dto.targetType, // PERSON, DEPARTMENT, COMPANY
+      targetType: dto.targetType,
       newAssignedToName: dto.newAssignedToName,
       newAssignedToEmployeeId: dto.newAssignedToEmployeeId,
       newDepartmentId: dto.newDepartmentId,
@@ -39,19 +43,19 @@ export class TransferRequestsService {
 
     await this.transferRequestRepo.save(request);
 
-    // Notify Super Admins
-    const superAdmins = await this.usersRepo.find({ where: { role: 'SUPER_ADMIN' as any } });
-    for (const admin of superAdmins) {
-      await this.notificationsService.create({
-        recipientUserId: admin.id,
-        type: NotificationType.TRANSFER_REQUEST_SUBMITTED,
-        title: 'Transfer Request Submitted',
-        message: `A transfer request for ${item.name} has been submitted.`,
-        entityType: 'TransferRequest',
-        entityId: request.id,
-        actionUrl: `/items/${item.id}`,
-      });
-    }
+    // Lock the item
+    item.pendingTransferRequestId = request.id;
+    await this.itemsRepo.save(item);
+
+    // Notify all SUPER_ADMINs + users with APPROVE_TRANSFERS
+    await this.notificationsService.broadcastToPrivilegedUsers(AdminPermission.APPROVE_TRANSFERS, {
+      type: NotificationType.TRANSFER_REQUEST_SUBMITTED,
+      title: 'Transfer Request Submitted',
+      message: `A transfer request for ${item.name} has been submitted.`,
+      entityType: 'TransferRequest',
+      entityId: request.id,
+      actionUrl: `/transfers`,
+    });
 
     return request;
   }
