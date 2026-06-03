@@ -19,7 +19,7 @@ export class TransferRequestsService {
   ) {}
 
   async createRequest(userId: string, itemId: string, dto: any) {
-    return this.itemsRepo.manager.transaction(async (em) => {
+    const { request, itemName } = await this.itemsRepo.manager.transaction(async (em) => {
       const item = await em.findOne(Item, {
         where: { id: itemId },
         lock: { mode: 'pessimistic_write' },
@@ -47,18 +47,20 @@ export class TransferRequestsService {
       item.pendingTransferRequestId = request.id;
       await em.save(Item, item);
 
-      // Notify outside transaction (non-critical, fire-and-forget)
-      this.notificationsService.broadcastToPrivilegedUsers(AdminPermission.APPROVE_TRANSFERS, {
-        type: NotificationType.TRANSFER_REQUEST_SUBMITTED,
-        title: 'Transfer Request Submitted',
-        message: `A transfer request for ${item.name} has been submitted.`,
-        entityType: 'TransferRequest',
-        entityId: request.id,
-        actionUrl: `/transfers`,
-      }).catch(() => { /* notification failure should not fail the request */ });
-
-      return request;
+      return { request, itemName: item.name };
     });
+
+    // Notify outside transaction — notification failure must not affect the transaction
+    this.notificationsService.broadcastToPrivilegedUsers(AdminPermission.APPROVE_TRANSFERS, {
+      type: NotificationType.TRANSFER_REQUEST_SUBMITTED,
+      title: 'Transfer Request Submitted',
+      message: `A transfer request for ${itemName} has been submitted.`,
+      entityType: 'TransferRequest',
+      entityId: request.id,
+      actionUrl: `/transfers`,
+    }).catch(() => { /* notification failure should not fail the request */ });
+
+    return request;
   }
 
   async getPendingRequests() {
