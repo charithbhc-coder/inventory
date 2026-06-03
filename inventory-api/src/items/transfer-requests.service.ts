@@ -165,15 +165,16 @@ export class TransferRequestsService {
   }
 
   async cancelRequest(itemId: string, userId: string) {
-    const request = await this.transferRequestRepo.findOne({
-      where: { itemId, status: TransferRequestStatus.PENDING },
-    });
-    if (!request) throw new NotFoundException('No pending transfer request found for this item');
-    if (request.requestedByUserId !== userId) {
-      throw new ForbiddenException('You can only cancel your own requests');
-    }
-
     await this.transferRequestRepo.manager.transaction(async (em) => {
+      const request = await em.findOne(TransferRequest, {
+        where: { itemId, status: TransferRequestStatus.PENDING },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!request) throw new NotFoundException('No pending transfer request found for this item');
+      if (request.requestedByUserId !== userId) {
+        throw new ForbiddenException('You can only cancel your own requests');
+      }
+
       request.status = TransferRequestStatus.CANCELLED;
       await em.save(TransferRequest, request);
       await em.update(Item, itemId, { pendingTransferRequestId: null });

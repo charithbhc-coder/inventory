@@ -32,7 +32,9 @@ export class TransferRequestsController {
     @Query('page') page = '1',
     @Query('limit') limit = '20',
   ) {
-    return this.transferRequestsService.getHistory(Number(page), Number(limit));
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    return this.transferRequestsService.getHistory(parsedPage, parsedLimit);
   }
 
   @Patch(':id/approve')
