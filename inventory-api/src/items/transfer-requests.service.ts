@@ -72,22 +72,31 @@ export class TransferRequestsService {
   }
 
   async approveRequest(id: string, adminId: string, notes?: string) {
-    const request = await this.transferRequestRepo.findOne({ where: { id }, relations: ['item'] });
-    if (!request) throw new NotFoundException('Transfer request not found');
-    if (request.status !== TransferRequestStatus.PENDING) {
-      throw new ConflictException('This request has already been resolved');
-    }
+    let savedRequest: TransferRequest;
 
-    // Atomically mark approved and unlock
     await this.transferRequestRepo.manager.transaction(async (em) => {
+      const request = await em.findOne(TransferRequest, {
+        where: { id },
+        relations: ['item'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!request) throw new NotFoundException('Transfer request not found');
+      if (request.status !== TransferRequestStatus.PENDING) {
+        throw new ConflictException('This request has already been resolved');
+      }
+
       request.status = TransferRequestStatus.APPROVED;
       request.reviewedByUserId = adminId;
       request.reviewNotes = notes || null;
       await em.save(TransferRequest, request);
       await em.update(Item, request.itemId, { pendingTransferRequestId: null });
+
+      savedRequest = request;
     });
 
-    // Perform the transfer (outside transaction — if this fails the admin can retry; request stays APPROVED, item stays unlocked)
+    const request = savedRequest!;
+
+    // Perform the transfer (outside transaction — assign has its own transaction)
     if (request.targetType === TransferTargetType.PERSON) {
       await this.itemsService.assign(request.itemId, {
         assignedToName: request.newAssignedToName || undefined,
@@ -107,7 +116,7 @@ export class TransferRequestsService {
       request.item.assignedToName = null;
       request.item.assignedToEmployeeId = null;
       request.item.departmentId = null;
-      request.item.pendingTransferRequestId = null;  // explicit — em.update() only did SQL, not in-memory
+      request.item.pendingTransferRequestId = null;
       await this.itemsRepo.save(request.item);
     }
 
@@ -126,20 +135,29 @@ export class TransferRequestsService {
   }
 
   async rejectRequest(id: string, adminId: string, notes: string) {
-    const request = await this.transferRequestRepo.findOne({ where: { id }, relations: ['item'] });
-    if (!request) throw new NotFoundException('Transfer request not found');
-    if (request.status !== TransferRequestStatus.PENDING) {
-      throw new ConflictException('This request has already been resolved');
-    }
+    let savedRequest: TransferRequest;
 
-    // Atomically mark rejected and unlock
     await this.transferRequestRepo.manager.transaction(async (em) => {
+      const request = await em.findOne(TransferRequest, {
+        where: { id },
+        relations: ['item'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!request) throw new NotFoundException('Transfer request not found');
+      if (request.status !== TransferRequestStatus.PENDING) {
+        throw new ConflictException('This request has already been resolved');
+      }
+
       request.status = TransferRequestStatus.REJECTED;
       request.reviewedByUserId = adminId;
       request.reviewNotes = notes;
       await em.save(TransferRequest, request);
       await em.update(Item, request.itemId, { pendingTransferRequestId: null });
+
+      savedRequest = request;
     });
+
+    const request = savedRequest!;
 
     // Notify Requestor with resubmit metadata
     await this.notificationsService.create({
