@@ -44,6 +44,7 @@ import LicensesPage     from '@/features/licenses/LicensesPage';
 const EmployeesPage    = lazyWithRetry(() => import('@/features/employees/EmployeesPage'));
 const DisposalRequestsPage = lazyWithRetry(() => import('@/features/disposal-requests/DisposalRequestsPage'));
 const GatePassesPage = lazyWithRetry(() => import('@/features/gate-passes/GatePassesPage'));
+const TransfersPage = lazyWithRetry(() => import('@/features/transfers/TransfersPage'));
 
 
 const router = createBrowserRouter([
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
           { path: '/employees',   element: <EmployeesPage /> },
           { path: '/disposals',   element: <DisposalRequestsPage /> },
           { path: '/gate-passes', element: <GatePassesPage /> },
+          { path: '/transfers',   element: <TransfersPage /> },
           { path: '/reports',     element: <ReportsPage /> },
 
           { path: '/logs',        element: <AuditLogsPage /> },
