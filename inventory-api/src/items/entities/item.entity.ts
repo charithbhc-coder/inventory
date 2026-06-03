@@ -79,7 +79,7 @@ export class Item {
   pendingTransferRequestId: string | null;
 
   @ManyToOne(() => TransferRequest, { nullable: true, eager: false, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'pending_transfer_request_id' })
+  @JoinColumn({ name: 'pendingTransferRequestId' })
   pendingTransferRequest: TransferRequest | null;
 
   // --- Status & Condition ---
