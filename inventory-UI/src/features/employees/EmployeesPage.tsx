@@ -76,7 +76,7 @@ export default function EmployeesPage() {
       setIsTransferRequestModalOpen(true);
       window.history.replaceState({}, '');
     }
-  }, []);
+  }, [location]);
 
   // Reset selection when employee changes
   useEffect(() => {
@@ -233,7 +233,7 @@ export default function EmployeesPage() {
     try {
       await api.delete(`/transfer-requests/${item.id}/cancel`);
       toast.success('Transfer request cancelled — asset unlocked');
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to cancel request');
     } finally {
