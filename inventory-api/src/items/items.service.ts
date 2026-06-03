@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, OnModuleInit } from '@nestjs/common';
 import * as qrcode from 'qrcode';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner } from 'typeorm';
@@ -276,6 +276,10 @@ export class ItemsService implements OnModuleInit {
       const item = await manager.findOne(Item, { where: { id } });
       if (!item) throw new NotFoundException('Item not found');
 
+      if (item.pendingTransferRequestId) {
+        throw new ConflictException('Asset is locked — a transfer request is pending');
+      }
+
       const prevStatus = item.status;
 
       // Regenerate barcode if company or category changed.
@@ -347,6 +351,10 @@ export class ItemsService implements OnModuleInit {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      if (item.pendingTransferRequestId) {
+        throw new ConflictException('Asset is locked — a transfer request is pending');
+      }
 
       // STATE GUARD: Cannot assign items in repair or terminal states
       if (item.status === ItemStatus.IN_REPAIR || item.status === ItemStatus.SENT_TO_REPAIR) {
@@ -495,6 +503,10 @@ export class ItemsService implements OnModuleInit {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id: itemId } });
       if (!item) throw new NotFoundException('Item not found');
+
+      if (item.pendingTransferRequestId) {
+        throw new ConflictException('Asset is locked — a transfer request is pending');
+      }
 
       // STATE GUARD: Cannot unassign terminal-state items
       if (item.status === ItemStatus.DISPOSED) {
