@@ -86,8 +86,8 @@ async function urlToBase64(url: string, token?: string): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch (err) {
-    console.warn('urlToBase64 failed, falling back to original URL:', url, err);
-    return url; // Fall back to the original URL
+    console.warn('urlToBase64 failed:', url, err);
+    return '';
   }
 }
 
@@ -146,9 +146,6 @@ function renderItemsTable(items: PrintableItem[]): string {
             <td>${item.condition || 'Good'}</td>
             <td>${item.remarks || item.category || ''}</td>
           </tr>
-        `).join('')}
-        ${Array.from({ length: Math.max(0, 4 - items.length) }).map(() => `
-          <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
         `).join('')}
       </tbody>
     </table>
@@ -228,7 +225,7 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 
   <div class="section-title">Acknowledgement &amp; Declaration by Employee</div>
   <div class="declaration">
-    I, Ms/Mr. <strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong>, acknowledge receipt of the above-listed 
+    I, Ms/Mr. <span style="display:inline-block;border-bottom:1px solid #000;min-width:220px;margin:0 4px;">&nbsp;</span> acknowledge receipt of the above-listed 
     asset(s) in working condition from ${companyDisplay}. I understand and agree to the following:<br/><br/>
     1. I will take full responsibility for the safe custody and proper use of the issued assets.<br/>
     2. I will immediately report any damage, theft, or loss to the IT/Admin department.<br/>
@@ -324,45 +321,42 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
           <td style="font-family:monospace;font-size:10px">${item.serialNumber || item.barcode || ''}</td>
         </tr>
       `).join('')}
-      ${Array.from({ length: Math.max(0, 5 - items.length) }).map(() => `
-        <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
-      `).join('')}
     </tbody>
   </table>
 
   <div class="section-title" style="margin-top:16px">Details of the Person Holding the Asset</div>
-  <div class="field-row">
-    <div class="field-label">Name:</div>
-    <div class="field-line">${employee.name || ''}</div>
-  </div>
-  <div class="field-row">
-    <div class="field-label">Employee ID:</div>
-    <div class="field-line">${employee.employeeId || ''}</div>
+  <div style="display:flex;gap:20px;">
+    <div class="field-row" style="flex:2">
+      <div class="field-label">Name:</div>
+      <div class="field-line">${employee.name || ''}</div>
+    </div>
+    <div class="field-row" style="flex:1">
+      <div class="field-label">Employee ID:</div>
+      <div class="field-line">${employee.employeeId || ''}</div>
+    </div>
   </div>
   <div class="field-row">
     <div class="field-label">Address:</div>
     <div class="field-line">${employee.address || ''}</div>
   </div>
-  <div class="field-row">
-    <div class="field-label">Designation:</div>
-    <div class="field-line">${employee.designation || ''}</div>
-  </div>
-  <div class="field-row">
-    <div class="field-label">Department:</div>
-    <div class="field-line">${employee.department || ''}</div>
+  <div style="display:flex;gap:20px;">
+    <div class="field-row" style="flex:1">
+      <div class="field-label">Designation:</div>
+      <div class="field-line">${employee.designation || ''}</div>
+    </div>
+    <div class="field-row" style="flex:1">
+      <div class="field-label">Department:</div>
+      <div class="field-line">${employee.department || ''}</div>
+    </div>
   </div>
   <div class="field-row">
     <div class="field-label">Official or Personal Contact No:</div>
     <div class="field-line">${employee.contact || ''}</div>
   </div>
-  <div class="field-row">
-    <div class="field-label">Date:</div>
-    <div class="field-line">${date}</div>
-  </div>
 
   <div class="section-title">Acknowledgement and Declaration by Employee</div>
   <div class="declaration">
-    I, Ms/Mr. <strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong> confirm that I am returning the above-listed 
+    I, Ms/Mr. <span style="display:inline-block;border-bottom:1px solid #000;min-width:240px;margin:0 4px;">&nbsp;</span> confirm that I am returning the above-listed 
     assets to ${companyDisplay} and agree to the following:<br/><br/>
     1. Upon my resignation/termination, I'll immediately hand over this asset in its working condition to the company.<br/>
     2. I will be solely responsible for the company property belonging to me.
