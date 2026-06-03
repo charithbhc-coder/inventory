@@ -16,18 +16,26 @@ const createTransferRequest = async (itemId: string, payload: any) => {
   }
 };
 
-interface Props {
-  item: Item;
-  isOpen: boolean;
-  onClose: () => void;
+interface Prefill {
+  targetType?: 'PERSON' | 'DEPARTMENT';
+  newAssignedToName?: string;
+  newAssignedToEmployeeId?: string;
+  reason?: string;
 }
 
-export default function TransferRequestModal({ item, isOpen, onClose }: Props) {
+interface Props {
+  item: Pick<Item, 'id' | 'name' | 'barcode' | 'assignedToName'>;
+  isOpen: boolean;
+  onClose: () => void;
+  prefill?: Prefill;
+}
+
+export default function TransferRequestModal({ item, isOpen, onClose, prefill }: Props) {
   const queryClient = useQueryClient();
-  const [targetType, setTargetType] = useState<'PERSON' | 'DEPARTMENT' | 'COMPANY'>('PERSON');
-  const [newAssignedToName, setNewAssignedToName] = useState('');
-  const [newAssignedToEmployeeId, setNewAssignedToEmployeeId] = useState('');
-  const [reason, setReason] = useState('');
+  const [targetType, setTargetType] = useState<'PERSON' | 'DEPARTMENT' | 'COMPANY'>(prefill?.targetType || 'PERSON');
+  const [newAssignedToName, setNewAssignedToName] = useState(prefill?.newAssignedToName || '');
+  const [newAssignedToEmployeeId, setNewAssignedToEmployeeId] = useState(prefill?.newAssignedToEmployeeId || '');
+  const [reason, setReason] = useState(prefill?.reason || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -51,8 +59,9 @@ export default function TransferRequestModal({ item, isOpen, onClose }: Props) {
         newAssignedToEmployeeId: targetType === 'PERSON' ? newAssignedToEmployeeId : undefined,
         reason,
       });
-      toast.success('Transfer request submitted to Super Admins');
+      toast.success('Transfer request submitted — pending admin approval');
       queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       onClose();
     } catch (err: any) {
       toast.error(err.message || 'Error submitting request');
