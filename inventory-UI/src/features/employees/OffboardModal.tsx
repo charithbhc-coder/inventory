@@ -63,13 +63,13 @@ export default function OffboardModal({ isOpen, onClose, employeeName, items, on
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#3b82f6' }}>
                <Printer size={32} />
             </div>
-            <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, color: 'var(--text-main)' }}>Print Handover Form?</h3>
+            <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, color: 'var(--text-main)' }}>Print Return Form?</h3>
             <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Before returning all {items.length} assets from <strong>{employeeName}</strong>, have you printed the Handover Form for them to sign?
+              Before returning all {items.length} assets from <strong>{employeeName}</strong>, have you printed the Return & Clearance Form for them to sign?
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button onClick={() => { onPrintHandover(); setStep('CONFIRM'); }} style={{ padding: '12px 20px', borderRadius: 12, background: '#3b82f6', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                 Yes, Print Handover Form
+                 Yes, Print Return Form
               </button>
               <button onClick={() => setStep('CONFIRM')} style={{ padding: '12px 20px', borderRadius: 12, background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: 'var(--text-main)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                  Skip & Continue to Offboard

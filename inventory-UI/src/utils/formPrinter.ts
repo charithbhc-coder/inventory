@@ -161,7 +161,7 @@ function buildLogoHtml(logoSource: string, companyName: string): string {
 }
 
 /**
- * Asset Issuance Form — printed when giving assets to an employee for the first time.
+ * Asset Issue & Acknowledgement Form — printed when giving assets to an employee.
  */
 export async function printAssetIssuanceForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -173,7 +173,7 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 
   const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
   const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
-  const filename = `${safeFilename(employee.name)}_Asset_Issuance_Form`;
+  const filename = `${safeFilename(employee.name)}_Asset_Issue_Acknowledgement_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -187,7 +187,7 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
     ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
-      <h2>Asset Issuance Form</h2>
+      <h2>Asset Issue &amp; Acknowledgement Form</h2>
     </div>
     ${rightLogoHtml}
   </div>
@@ -260,8 +260,7 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
 }
 
 /**
- * Asset Handover Form — printed when an employee leaves or returns assets.
- * Matches the physical BLOCKCHAIN GROUP ASSET HANDOVER FORM format.
+ * Asset Return & Clearance Form — printed when an employee returns assets upon offboarding or transfer.
  */
 export async function printAssetHandoverForm(employee: EmployeeInfo, items: PrintableItem[]): Promise<void> {
   const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -273,7 +272,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
 
   const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
   const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
-  const filename = `${safeFilename(employee.name)}_Asset_Handover_Form`;
+  const filename = `${safeFilename(employee.name)}_Asset_Return_Clearance_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -287,7 +286,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
     ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
-      <h2>Asset Handover Form</h2>
+      <h2>Asset Return &amp; Clearance Form</h2>
     </div>
     ${rightLogoHtml}
   </div>
@@ -298,7 +297,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
   </div>
 
   <div class="field-row">
-    <div class="field-label">To whom the Asset handed over:</div>
+    <div class="field-label">Assets Returned By:</div>
     <div class="field-line">${employee.name || ''}</div>
   </div>
 
@@ -357,9 +356,10 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
   <div class="section-title">Acknowledgement and Declaration by Employee</div>
   <div class="declaration">
     I, Ms/Mr. <span style="display:inline-block;border-bottom:1px solid #000;min-width:240px;margin:0 4px;">&nbsp;</span> confirm that I am returning the above-listed 
-    assets to ${companyDisplay} and agree to the following:<br/><br/>
-    1. Upon my resignation/termination, I'll immediately hand over this asset in its working condition to the company.<br/>
-    2. I will be solely responsible for the company property belonging to me.
+    assets to ${companyDisplay} and acknowledge the following:<br/><br/>
+    1. I confirm that I am returning all the above-listed assets in the condition as described, and I have no further claims over them.<br/>
+    2. I acknowledge that my responsibility for the above company assets ends upon the signing of this form.<br/>
+    3. I confirm that no assets under my custody have been withheld, damaged, or lost without prior reporting to the IT/Admin department.
   </div>
 
   <div style="margin-top:8px">

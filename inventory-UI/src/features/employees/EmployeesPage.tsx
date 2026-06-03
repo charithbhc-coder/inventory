@@ -441,7 +441,7 @@ export default function EmployeesPage() {
                           onClick={() => handlePrintIssuance(selectedEmployee)}
                           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)', color: '#10b981', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                         >
-                          <FileText size={14} /> Print Issuance
+                          <FileText size={14} /> Issue Form
                         </button>
                       )}
                     </>
@@ -452,7 +452,7 @@ export default function EmployeesPage() {
                     onClick={() => handlePrintHandover(selectedEmployee)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.05)', color: '#f97316', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                   >
-                    <FileText size={14} /> Print Handover
+                    <FileText size={14} /> Return Form
                   </button>
                   {/* Active: bulk offboard */}
                   {(hasPermission(AdminPermission.MANAGE_EMPLOYEES) || hasPermission(AdminPermission.DELETE_USERS)) && selectedEmployee.isActive && (
