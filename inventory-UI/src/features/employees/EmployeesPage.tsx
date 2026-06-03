@@ -228,6 +228,10 @@ export default function EmployeesPage() {
   };
 
   const handleCancelRequest = async (item: Item) => {
+    if (!hasPermission(AdminPermission.REQUEST_TRANSFERS)) {
+      toast.error("You don't have permission to cancel transfer requests.");
+      return;
+    }
     if (!window.confirm(`Cancel the pending transfer request for "${item.name}"? The asset will be unlocked.`)) return;
     setCancellingItemId(item.id);
     try {
@@ -575,21 +579,23 @@ export default function EmployeesPage() {
                                 <button className="hover-card" onClick={() => { setTrackingItem(item); setIsTrackingModalOpen(true); }} title="Asset Journey" style={{ padding: 6, borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: '#3b82f6', cursor: 'pointer' }}><Activity size={14} /></button>
                                 {item.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase() && (
                                   item.pendingTransferRequestId ? (
-                                    <button
-                                      onClick={() => handleCancelRequest(item)}
-                                      disabled={cancellingItemId === item.id}
-                                      style={{
-                                        padding: '4px 10px',
-                                        background: 'rgba(244, 67, 54, 0.12)',
-                                        color: '#f44336',
-                                        border: '1px solid rgba(244, 67, 54, 0.3)',
-                                        borderRadius: 6, fontSize: 11, fontWeight: 600,
-                                        cursor: cancellingItemId === item.id ? 'not-allowed' : 'pointer',
-                                        opacity: cancellingItemId === item.id ? 0.6 : 1,
-                                      }}
-                                    >
-                                      {cancellingItemId === item.id ? 'Cancelling...' : 'Cancel Request'}
-                                    </button>
+                                    hasPermission(AdminPermission.REQUEST_TRANSFERS) && (
+                                      <button
+                                        onClick={() => handleCancelRequest(item)}
+                                        disabled={cancellingItemId === item.id}
+                                        style={{
+                                          padding: '4px 10px',
+                                          background: 'rgba(244, 67, 54, 0.12)',
+                                          color: '#f44336',
+                                          border: '1px solid rgba(244, 67, 54, 0.3)',
+                                          borderRadius: 6, fontSize: 11, fontWeight: 600,
+                                          cursor: cancellingItemId === item.id ? 'not-allowed' : 'pointer',
+                                          opacity: cancellingItemId === item.id ? 0.6 : 1,
+                                        }}
+                                      >
+                                        {cancellingItemId === item.id ? 'Cancelling...' : 'Cancel Request'}
+                                      </button>
+                                    )
                                   ) : (
                                     <button
                                       onClick={() => handleTransferClick(item)}

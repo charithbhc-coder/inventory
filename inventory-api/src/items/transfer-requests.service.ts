@@ -183,20 +183,31 @@ export class TransferRequestsService {
   }
 
   async cancelRequest(itemId: string, userId: string) {
-    await this.transferRequestRepo.manager.transaction(async (em) => {
-      const request = await em.findOne(TransferRequest, {
+    const request = await this.transferRequestRepo.manager.transaction(async (em) => {
+      const req = await em.findOne(TransferRequest, {
         where: { itemId, status: TransferRequestStatus.PENDING },
         lock: { mode: 'pessimistic_write' },
       });
-      if (!request) throw new NotFoundException('No pending transfer request found for this item');
-      if (request.requestedByUserId !== userId) {
+      if (!req) throw new NotFoundException('No pending transfer request found for this item');
+      if (req.requestedByUserId !== userId) {
         throw new ForbiddenException('You can only cancel your own requests');
       }
 
-      request.status = TransferRequestStatus.CANCELLED;
-      await em.save(TransferRequest, request);
+      req.status = TransferRequestStatus.CANCELLED;
+      await em.save(TransferRequest, req);
       await em.update(Item, itemId, { pendingTransferRequestId: null });
+      return req;
     });
+
+    // Fire-and-forget notification to approvers
+    this.notificationsService.broadcastToPrivilegedUsers(AdminPermission.APPROVE_TRANSFERS, {
+      type: NotificationType.TRANSFER_REQUEST_CANCELLED,
+      title: 'Transfer Request Cancelled',
+      message: `A pending transfer request has been withdrawn by IT Support.`,
+      entityType: 'TransferRequest',
+      entityId: request.id,
+      actionUrl: `/transfers`,
+    }).catch(() => {});
 
     return { success: true };
   }
