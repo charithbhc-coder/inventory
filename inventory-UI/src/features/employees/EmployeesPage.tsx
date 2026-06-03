@@ -181,7 +181,7 @@ export default function EmployeesPage() {
       } else if (item.status === 'LOST') {
         statusStr = 'Lost';
       }
-      
+
       return {
         name: item.name,
         barcode: item.barcode,
@@ -400,11 +400,11 @@ export default function EmployeesPage() {
                             className="hover-card"
                             disabled={selectedItemIds.size === 0}
                             onClick={() => setIsBulkQrModalOpen(true)}
-                            style={{ 
-                              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, 
-                              background: selectedItemIds.size === 0 ? 'var(--bg-dark)' : 'var(--accent-yellow)', 
-                              color: '#000', fontSize: 12, fontWeight: 800, cursor: selectedItemIds.size === 0 ? 'not-allowed' : 'pointer', 
-                              transition: 'all 0.2s', border: 'none', opacity: selectedItemIds.size === 0 ? 0.5 : 1 
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10,
+                              background: selectedItemIds.size === 0 ? 'var(--bg-dark)' : 'var(--accent-yellow)',
+                              color: '#000', fontSize: 12, fontWeight: 800, cursor: selectedItemIds.size === 0 ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.2s', border: 'none', opacity: selectedItemIds.size === 0 ? 0.5 : 1
                             }}
                           >
                             <Printer size={14} /> Print Selected ({selectedItemIds.size})
@@ -434,7 +434,7 @@ export default function EmployeesPage() {
                           </button>
                         </>
                       )}
-                      
+
                       {!isSelectionMode && (
                         <button
                           className="hover-card"
@@ -497,8 +497,8 @@ export default function EmployeesPage() {
                         <tr style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--border-dark)' }}>
                           {isSelectionMode && (
                             <th style={{ padding: '14px 20px', width: 40 }}>
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 style={{ cursor: 'pointer' }}
                                 checked={pagedAssets.every(item => selectedItemIds.has(item.id))}
                                 onChange={(e) => {
@@ -531,8 +531,8 @@ export default function EmployeesPage() {
                           }}>
                             {isSelectionMode && (
                               <td style={{ padding: '16px 20px' }}>
-                                <input 
-                                  type="checkbox" 
+                                <input
+                                  type="checkbox"
                                   style={{ cursor: 'pointer' }}
                                   checked={selectedItemIds.has(item.id)}
                                   onChange={() => {
@@ -568,9 +568,9 @@ export default function EmployeesPage() {
                             </td>
                             <td style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-main)' }}>{item.category?.name || '-'}</td>
                             <td style={{ padding: '16px 20px' }}>
-                              <StatusBadge 
-                                status={item.status} 
-                                isHistory={item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase()} 
+                              <StatusBadge
+                                status={item.status}
+                                isHistory={item.assignedToName?.trim().toLowerCase() !== selectedEmployee.name.trim().toLowerCase()}
                               />
                             </td>
                             <td style={{ padding: '16px 20px', textAlign: 'center' }}>
@@ -710,7 +710,7 @@ export default function EmployeesPage() {
             }
           }}
           items={
-            isSelectionMode 
+            isSelectionMode
               ? selectedEmployee.items.filter(i => selectedItemIds.has(i.id))
               : selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())
           }

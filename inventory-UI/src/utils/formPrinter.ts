@@ -171,9 +171,9 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
     fetchLogoBase64(employee.mainCompanyLogoUrl),
   ]);
 
-  const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
+  const leftLogoHtml = buildLogoHtml(leftLogoBase64, companyDisplay);
   const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
-  const filename = `${safeFilename(employee.name)}_Asset_Issue_Acknowledgement_Form`;
+  const filename = `${safeFilename(employee.name)}_Asset_Issue_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -187,7 +187,7 @@ export async function printAssetIssuanceForm(employee: EmployeeInfo, items: Prin
     ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
-      <h2>Asset Issue &amp; Acknowledgement Form</h2>
+      <h2>Asset Issue Form</h2>
     </div>
     ${rightLogoHtml}
   </div>
@@ -270,9 +270,9 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
     fetchLogoBase64(employee.mainCompanyLogoUrl),
   ]);
 
-  const leftLogoHtml  = buildLogoHtml(leftLogoBase64, companyDisplay);
+  const leftLogoHtml = buildLogoHtml(leftLogoBase64, companyDisplay);
   const rightLogoHtml = buildLogoHtml(rightLogoBase64 || leftLogoBase64, 'KTMG');
-  const filename = `${safeFilename(employee.name)}_Asset_Return_Clearance_Form`;
+  const filename = `${safeFilename(employee.name)}_Asset_Return_Form`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -286,7 +286,7 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
     ${leftLogoHtml}
     <div class="header-center">
       <h1>${companyDisplay}</h1>
-      <h2>Asset Return &amp; Clearance Form</h2>
+      <h2>Asset Return Form</h2>
     </div>
     ${rightLogoHtml}
   </div>
@@ -357,9 +357,8 @@ export async function printAssetHandoverForm(employee: EmployeeInfo, items: Prin
   <div class="declaration">
     I, Ms/Mr. <span style="display:inline-block;border-bottom:1px solid #000;min-width:240px;margin:0 4px;">&nbsp;</span> confirm that I am returning the above-listed 
     assets to ${companyDisplay} and acknowledge the following:<br/><br/>
-    1. I confirm that I am returning all the above-listed assets in the condition as described, and I have no further claims over them.<br/>
-    2. I acknowledge that my responsibility for the above company assets ends upon the signing of this form.<br/>
-    3. I confirm that no assets under my custody have been withheld, damaged, or lost without prior reporting to the IT/Admin department.
+    1. I confirm that I am returning all the above-listed assets, and I have no further claims over them.<br/>
+    2. I confirm that no assets under my custody have been withheld, damaged, or lost without prior reporting to the IT/Admin department.
   </div>
 
   <div style="margin-top:8px">
