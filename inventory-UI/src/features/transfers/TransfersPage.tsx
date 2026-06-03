@@ -59,6 +59,12 @@ function RejectModal({ request, onClose, onConfirm }: {
   );
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  APPROVED: '#4caf50',
+  REJECTED: '#f44336',
+  CANCELLED: '#888',
+};
+
 export default function TransfersPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<'pending' | 'history'>('pending');
@@ -86,6 +92,7 @@ export default function TransfersPage() {
       await transferRequestsService.approve(req.id);
       toast.success(`Transfer approved — asset reassigned to ${req.newAssignedToName || 'department'}`);
       queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to approve');
@@ -101,18 +108,14 @@ export default function TransfersPage() {
       await transferRequestsService.reject(rejectTarget.id, notes);
       toast.success('Transfer request rejected');
       queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to reject');
     } finally {
       setActionId(null);
       setRejectTarget(null);
     }
-  };
-
-  const statusColors: Record<string, string> = {
-    APPROVED: '#4caf50',
-    REJECTED: '#f44336',
-    CANCELLED: '#888',
   };
 
   return (
@@ -261,7 +264,7 @@ export default function TransfersPage() {
                       </td>
                       <td style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-muted)' }}>{req.requestedByUser?.name || '—'}</td>
                       <td style={{ padding: '12px 14px' }}>
-                        <span style={{ padding: '2px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: `${statusColors[req.status] || '#888'}20`, color: statusColors[req.status] || '#aaa', border: `1px solid ${statusColors[req.status] || '#888'}40` }}>
+                        <span style={{ padding: '2px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: `${STATUS_COLORS[req.status] || '#888'}20`, color: STATUS_COLORS[req.status] || '#aaa', border: `1px solid ${STATUS_COLORS[req.status] || '#888'}40` }}>
                           {req.status}
                         </span>
                       </td>
