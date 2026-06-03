@@ -12,6 +12,7 @@ export interface Notification {
   isDismissed: boolean;
   actionUrl?: string;
   createdAt: string;
+  metadata?: Record<string, any> | null;
 }
 
 export const notificationsService = {
