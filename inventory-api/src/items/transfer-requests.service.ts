@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransferRequest, TransferRequestStatus, TransferTargetType } from './entities/transfer-request.entity';
@@ -78,15 +78,16 @@ export class TransferRequestsService {
       throw new ConflictException('This request has already been resolved');
     }
 
-    request.status = TransferRequestStatus.APPROVED;
-    request.reviewedByUserId = adminId;
-    request.reviewNotes = notes || null;
-    await this.transferRequestRepo.save(request);
+    // Atomically mark approved and unlock
+    await this.transferRequestRepo.manager.transaction(async (em) => {
+      request.status = TransferRequestStatus.APPROVED;
+      request.reviewedByUserId = adminId;
+      request.reviewNotes = notes || null;
+      await em.save(TransferRequest, request);
+      await em.update(Item, request.itemId, { pendingTransferRequestId: null });
+    });
 
-    // Unlock BEFORE assign so the lock guard in ItemsService.assign() doesn't block
-    await this.itemsRepo.update(request.itemId, { pendingTransferRequestId: null });
-
-    // Perform the transfer
+    // Perform the transfer (outside transaction — if this fails the admin can retry; request stays APPROVED, item stays unlocked)
     if (request.targetType === TransferTargetType.PERSON) {
       await this.itemsService.assign(request.itemId, {
         assignedToName: request.newAssignedToName || undefined,
@@ -106,6 +107,7 @@ export class TransferRequestsService {
       request.item.assignedToName = null;
       request.item.assignedToEmployeeId = null;
       request.item.departmentId = null;
+      request.item.pendingTransferRequestId = null;  // explicit — em.update() only did SQL, not in-memory
       await this.itemsRepo.save(request.item);
     }
 
