@@ -75,14 +75,16 @@ export class TransferRequestsService {
     const request = await this.transferRequestRepo.findOne({ where: { id }, relations: ['item'] });
     if (!request) throw new NotFoundException('Transfer request not found');
     if (request.status !== TransferRequestStatus.PENDING) {
-      throw new BadRequestException('Request is not pending');
+      throw new ConflictException('This request has already been resolved');
     }
 
     request.status = TransferRequestStatus.APPROVED;
     request.reviewedByUserId = adminId;
     request.reviewNotes = notes || null;
-
     await this.transferRequestRepo.save(request);
+
+    // Unlock BEFORE assign so the lock guard in ItemsService.assign() doesn't block
+    await this.itemsRepo.update(request.itemId, { pendingTransferRequestId: null });
 
     // Perform the transfer
     if (request.targetType === TransferTargetType.PERSON) {
@@ -95,13 +97,11 @@ export class TransferRequestsService {
     } else if (request.targetType === TransferTargetType.DEPARTMENT) {
       await this.itemsService.assign(request.itemId, {
         departmentId: request.newDepartmentId || undefined,
-        assignedToName: undefined, // Unassign from person
+        assignedToName: undefined,
         assignedToEmployeeId: undefined,
         notes: request.reason,
       }, adminId);
     } else if (request.targetType === TransferTargetType.COMPANY && request.newCompanyId) {
-      // Typically need a custom logic to transfer company, but AssignItem DTO might not support companyId.
-      // We can update the item directly or through a new method.
       request.item.companyId = request.newCompanyId;
       request.item.assignedToName = null;
       request.item.assignedToEmployeeId = null;
@@ -114,7 +114,7 @@ export class TransferRequestsService {
       recipientUserId: request.requestedByUserId,
       type: NotificationType.TRANSFER_REQUEST_APPROVED,
       title: 'Transfer Request Approved',
-      message: `Your transfer request for ${request.item.name} has been approved.`,
+      message: `Your transfer request for ${request.item.name} has been approved and the asset has been reassigned.`,
       entityType: 'TransferRequest',
       entityId: request.id,
       actionUrl: `/items/${request.item.id}`,
