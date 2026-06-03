@@ -15,6 +15,7 @@ import { Department } from '../../departments/entities/department.entity';
 import { ItemCategory } from './item-category.entity';
 import { User } from '../../users/entities/user.entity';
 import { GatePass } from './gate-pass.entity';
+import { TransferRequest } from './transfer-request.entity';
 
 @Entity('items')
 @Index(['companyId', 'status'])
@@ -72,6 +73,14 @@ export class Item {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   previousAssignedToEmployeeId: string | null;
+
+  // --- Transfer Lock ---
+  @Column({ type: 'uuid', nullable: true })
+  pendingTransferRequestId: string | null;
+
+  @ManyToOne(() => TransferRequest, { nullable: true, eager: false, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'pending_transfer_request_id' })
+  pendingTransferRequest: TransferRequest | null;
 
   // --- Status & Condition ---
   @Column({
