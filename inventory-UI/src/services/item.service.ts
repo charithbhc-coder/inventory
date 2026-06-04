@@ -52,14 +52,35 @@ export interface EmployeeGroup {
   isActive: boolean;
 }
 
+export interface EmployeeSummary {
+  name: string;
+  employeeId: string;
+  departmentId: string;
+  departmentName: string;
+  companyId: string;
+  companyName: string;
+  itemCount: number;
+  isActive: boolean;
+}
+
 export const itemService = {
   getItems: async (params: any) => {
     const { data } = await apiClient.get('/items', { params });
     return data;
   },
 
-  getEmployeeGroups: async (params: { companyId?: string; departmentId?: string }): Promise<{ activeEmployees: EmployeeGroup[]; deactivatedEmployees: EmployeeGroup[] }> => {
+  getEmployeeGroups: async (params: { companyId?: string; departmentId?: string; employeeName?: string }): Promise<{ activeEmployees: EmployeeGroup[]; deactivatedEmployees: EmployeeGroup[] }> => {
     const { data } = await apiClient.get('/items/employees', { params });
+    return data;
+  },
+
+  getEmployeeGroupsSummary: async (params: { companyId?: string; departmentId?: string }): Promise<{ activeEmployees: EmployeeSummary[]; deactivatedEmployees: EmployeeSummary[] }> => {
+    const { data } = await apiClient.get('/items/employees/summary', { params });
+    return data;
+  },
+
+  getEmployeeItems: async (employeeName: string, params: { companyId?: string; departmentId?: string }): Promise<{ activeEmployees: EmployeeGroup[]; deactivatedEmployees: EmployeeGroup[] }> => {
+    const { data } = await apiClient.get('/items/employees', { params: { ...params, employeeName } });
     return data;
   },
 
