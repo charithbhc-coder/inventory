@@ -41,7 +41,7 @@ const MENU_ITEMS: MenuItem[] = [
   { path: '/gate-passes', label: 'GATE PASSES', icon: ClipboardCheck, anyPermission: [AdminPermission.CREATE_GATE_PASS, AdminPermission.APPROVE_GATE_PASS] },
   { path: '/transfers', label: 'TRANSFERS', icon: ArrowLeftRight, anyPermission: [AdminPermission.APPROVE_TRANSFERS] },
   { path: '/disposals', label: 'DISPOSALS', icon: Trash2, anyPermission: [AdminPermission.MANAGE_DISPOSALS, AdminPermission.APPROVE_DISPOSAL_L1, AdminPermission.APPROVE_DISPOSAL_L2, AdminPermission.REQUEST_DISPOSAL] },
-  { path: '/employees', label: 'EMPLOYEES', icon: UserCheck, permission: AdminPermission.VIEW_EMPLOYEES },
+  { path: '/employees', label: 'EMPLOYEES', icon: UserCheck, anyPermission: [AdminPermission.VIEW_EMPLOYEES, AdminPermission.REQUEST_TRANSFERS] },
   { path: '/users', label: 'USERS', icon: Users, permission: AdminPermission.VIEW_USERS },
   { path: '/reports', label: 'REPORTS', icon: BarChart3, permission: AdminPermission.VIEW_REPORTS },
   { path: '/logs', label: 'AUDIT LOGS', icon: ListTodo, permission: AdminPermission.VIEW_AUDIT_LOGS },
