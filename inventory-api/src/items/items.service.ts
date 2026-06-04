@@ -21,7 +21,7 @@ import {
 } from './dto/item.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
-interface EmployeeSummaryEntry {
+export interface EmployeeSummaryEntry {
   name: string;
   employeeId: string;
   departmentId: string;
@@ -257,6 +257,7 @@ export class ItemsService implements OnModuleInit {
   async getEmployeeGroupsSummary(query: { companyId?: string; departmentId?: string }) {
     const qb = this.itemsRepository.createQueryBuilder('item')
       .select([
+        'item.id',
         'item.assignedToName',
         'item.assignedToEmployeeId',
         'item.previousAssignedToName',
