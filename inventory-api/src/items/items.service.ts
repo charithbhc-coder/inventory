@@ -21,6 +21,17 @@ import {
 } from './dto/item.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
+interface EmployeeSummaryEntry {
+  name: string;
+  employeeId: string;
+  departmentId: string;
+  departmentName: string;
+  companyId: string;
+  companyName: string;
+  itemCount: number;
+  isActive: boolean;
+}
+
 @Injectable()
 export class ItemsService implements OnModuleInit {
   constructor(
@@ -236,6 +247,78 @@ export class ItemsService implements OnModuleInit {
     for (const key of activeMap.keys()) deactMap.delete(key);
 
     const sortAlpha = (a: any, b: any) => a.name.localeCompare(b.name);
+
+    return {
+      activeEmployees: Array.from(activeMap.values()).sort(sortAlpha),
+      deactivatedEmployees: Array.from(deactMap.values()).sort(sortAlpha),
+    };
+  }
+
+  async getEmployeeGroupsSummary(query: { companyId?: string; departmentId?: string }) {
+    const qb = this.itemsRepository.createQueryBuilder('item')
+      .select([
+        'item.assignedToName',
+        'item.assignedToEmployeeId',
+        'item.previousAssignedToName',
+        'item.previousAssignedToEmployeeId',
+        'item.status',
+        'item.departmentId',
+        'item.companyId',
+      ])
+      .leftJoin('item.department', 'department')
+      .addSelect(['department.id', 'department.name'])
+      .leftJoin('item.company', 'company')
+      .addSelect(['company.id', 'company.name'])
+      .where('(item.assignedToName IS NOT NULL OR item.previousAssignedToName IS NOT NULL)');
+
+    if (query.companyId) qb.andWhere('item.companyId = :companyId', { companyId: query.companyId });
+    if (query.departmentId) qb.andWhere('item.departmentId = :departmentId', { departmentId: query.departmentId });
+
+    const items = await qb.getMany();
+
+    const activeMap = new Map<string, EmployeeSummaryEntry>();
+    const deactMap = new Map<string, EmployeeSummaryEntry>();
+
+    items.filter(i => i.status === ItemStatus.IN_USE).forEach(item => {
+      if (!item.assignedToName) return;
+      const key = item.assignedToName.toLowerCase().trim();
+      if (!activeMap.has(key)) {
+        activeMap.set(key, {
+          name: item.assignedToName.trim(),
+          employeeId: item.assignedToEmployeeId || '',
+          departmentId: item.departmentId || '',
+          departmentName: item.department?.name || 'Unknown Dept',
+          companyId: item.companyId || '',
+          companyName: item.company?.name || 'Unknown Company',
+          itemCount: 0,
+          isActive: true,
+        });
+      }
+      activeMap.get(key)!.itemCount++;
+    });
+
+    items.forEach(item => {
+      const pastName = item.previousAssignedToName;
+      if (!pastName) return;
+      const key = pastName.toLowerCase().trim();
+      if (activeMap.has(key)) return;
+      if (!deactMap.has(key)) {
+        deactMap.set(key, {
+          name: pastName.trim(),
+          employeeId: item.previousAssignedToEmployeeId || '',
+          departmentId: item.departmentId || '',
+          departmentName: item.department?.name || '-',
+          companyId: item.companyId || '',
+          companyName: item.company?.name || '-',
+          itemCount: 0,
+          isActive: false,
+        });
+      }
+    });
+
+    for (const key of activeMap.keys()) deactMap.delete(key);
+
+    const sortAlpha = (a: EmployeeSummaryEntry, b: EmployeeSummaryEntry) => a.name.localeCompare(b.name);
 
     return {
       activeEmployees: Array.from(activeMap.values()).sort(sortAlpha),
