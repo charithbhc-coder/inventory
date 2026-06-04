@@ -322,6 +322,7 @@ export class ItemsService implements OnModuleInit {
           isActive: false,
         });
       }
+      deactMap.get(key)!.itemCount++;
     });
 
     for (const key of activeMap.keys()) deactMap.delete(key);
