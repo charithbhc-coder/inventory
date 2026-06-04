@@ -93,7 +93,7 @@ export class ItemsController {
     @Query('departmentId') departmentId?: string,
     @CurrentUser() user?: JwtPayload,
   ) {
-    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? companyId : user?.companyId;
+    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? companyId : (companyId || user?.companyId);
     return this.itemsService.getEmployeeGroups({ companyId: callerCompanyId, departmentId });
   }
 

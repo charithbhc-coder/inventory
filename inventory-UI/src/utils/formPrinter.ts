@@ -55,11 +55,11 @@ const sharedStyles = `
   .highlight { font-weight: bold; }
   .stamp-area { border: 1px dashed #999; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #888; margin-top: 8px; }
   @media print {
-    body { padding: 20px 30px;
+    body { padding: 1.5cm 2cm;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    @page { margin: 1cm; size: A4; }
+    @page { margin: 0; size: A4; }
     table { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
     .declaration { page-break-inside: avoid; break-inside: avoid; }
