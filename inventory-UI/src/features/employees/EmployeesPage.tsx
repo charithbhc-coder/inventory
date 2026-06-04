@@ -712,7 +712,7 @@ export default function EmployeesPage() {
           items={
             isSelectionMode
               ? selectedEmployee.items.filter(i => selectedItemIds.has(i.id))
-              : selectedEmployee.items.filter(i => i.status === 'IN_USE')
+              : selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())
           }
           title={isSelectionMode ? `Selected Assets for ${selectedEmployee.name}` : `${selectedEmployee.name}'s Assets`}
         />
