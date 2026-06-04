@@ -720,7 +720,8 @@ export default function EmployeesPage() {
       {selectedEmployee && isEditEmployeeModalOpen && (
         <EditEmployeeModal
           isOpen={isEditEmployeeModalOpen}
-          onClose={() => { setIsEditEmployeeModalOpen(false); setSelectedEmployee(null); }}
+          onClose={() => setIsEditEmployeeModalOpen(false)}
+          onSuccess={(newName) => setSelectedEmployee(prev => prev ? { ...prev, name: newName } : null)}
           employee={{ name: selectedEmployee.name, employeeId: selectedEmployee.employeeId }}
         />
       )}

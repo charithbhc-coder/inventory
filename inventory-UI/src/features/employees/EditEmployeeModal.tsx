@@ -7,13 +7,14 @@ import { itemService } from '@/services/item.service';
 interface EditEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (newName: string) => void;
   employee: {
     name: string;
     employeeId: string;
   };
 }
 
-export default function EditEmployeeModal({ isOpen, onClose, employee }: EditEmployeeModalProps) {
+export default function EditEmployeeModal({ isOpen, onClose, onSuccess, employee }: EditEmployeeModalProps) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     newName: employee.name,
@@ -25,8 +26,11 @@ export default function EditEmployeeModal({ isOpen, onClose, employee }: EditEmp
       itemService.updateEmployee(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-items'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       toast.success('Employee details updated globally');
+      onSuccess?.(formData.newName.trim());
       onClose();
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update employee')
