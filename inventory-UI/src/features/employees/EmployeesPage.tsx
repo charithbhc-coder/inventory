@@ -254,6 +254,7 @@ export default function EmployeesPage() {
       await api.delete(`/transfer-requests/${item.id}/cancel`);
       toast.success('Transfer request cancelled — asset unlocked');
       queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-items'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to cancel request');
     } finally {
