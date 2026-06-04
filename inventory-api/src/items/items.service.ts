@@ -185,7 +185,7 @@ export class ItemsService implements OnModuleInit {
     return paginate(items, total, page, limit);
   }
 
-  async getEmployeeGroups(query: { companyId?: string; departmentId?: string }) {
+  async getEmployeeGroups(query: { companyId?: string; departmentId?: string; employeeName?: string }) {
     const qb = this.itemsRepository.createQueryBuilder('item')
       .leftJoinAndSelect('item.category', 'category')
       .leftJoinAndSelect('item.company', 'company')
@@ -195,6 +195,13 @@ export class ItemsService implements OnModuleInit {
 
     if (query.companyId) qb.andWhere('item.companyId = :companyId', { companyId: query.companyId });
     if (query.departmentId) qb.andWhere('item.departmentId = :departmentId', { departmentId: query.departmentId });
+    if (query.employeeName) {
+      const nameParam = query.employeeName.toLowerCase().trim();
+      qb.andWhere(
+        '(LOWER(TRIM(item.assignedToName)) = :empName OR LOWER(TRIM(item.previousAssignedToName)) = :empName)',
+        { empName: nameParam }
+      );
+    }
 
     const items = await qb.getMany();
 

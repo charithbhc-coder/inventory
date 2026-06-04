@@ -85,16 +85,29 @@ export class ItemsController {
     return this.itemsService.findAll({ page, limit, search, status, categoryId, companyId, departmentId, isWorking, needsRepair, assignedTo });
   }
 
+  @Get('employees/summary')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Permissions(AdminPermission.VIEW_EMPLOYEES, AdminPermission.REQUEST_TRANSFERS)
+  getEmployeeGroupsSummary(
+    @Query('companyId') companyId?: string,
+    @Query('departmentId') departmentId?: string,
+    @CurrentUser() user?: JwtPayload,
+  ) {
+    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? companyId : (companyId || user?.companyId);
+    return this.itemsService.getEmployeeGroupsSummary({ companyId: callerCompanyId, departmentId });
+  }
+
   @Get('employees')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_EMPLOYEES, AdminPermission.REQUEST_TRANSFERS)
   getEmployeeGroups(
     @Query('companyId') companyId?: string,
     @Query('departmentId') departmentId?: string,
+    @Query('employeeName') employeeName?: string,
     @CurrentUser() user?: JwtPayload,
   ) {
     const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? companyId : (companyId || user?.companyId);
-    return this.itemsService.getEmployeeGroups({ companyId: callerCompanyId, departmentId });
+    return this.itemsService.getEmployeeGroups({ companyId: callerCompanyId, departmentId, employeeName });
   }
 
   @Get('warehouse/:companyId')
