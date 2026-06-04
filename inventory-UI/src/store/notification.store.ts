@@ -95,6 +95,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         if (type.startsWith('TRANSFER_REQUEST_')) {
           queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
           queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+          queryClient.invalidateQueries({ queryKey: ['items', 'employee-items'] });
         }
 
         return {

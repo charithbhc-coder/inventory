@@ -94,6 +94,7 @@ export default function TransfersPage() {
       queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-items'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to approve');
     } finally {
@@ -110,6 +111,7 @@ export default function TransfersPage() {
       queryClient.invalidateQueries({ queryKey: ['transfer-requests'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['items', 'employee-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['items', 'employee-items'] });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to reject');
     } finally {
