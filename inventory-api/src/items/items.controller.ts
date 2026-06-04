@@ -87,7 +87,7 @@ export class ItemsController {
 
   @Get('employees')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @Permissions(AdminPermission.VIEW_EMPLOYEES)
+  @Permissions(AdminPermission.VIEW_EMPLOYEES, AdminPermission.REQUEST_TRANSFERS)
   getEmployeeGroups(
     @Query('companyId') companyId?: string,
     @Query('departmentId') departmentId?: string,
