@@ -103,10 +103,10 @@ export default function EmployeesPage() {
     staleTime: 30_000,
   });
 
-  const selectedEmployeeItems: Item[] = selectedEmployeeData
-    ? (selectedEmployee?.isActive
-        ? selectedEmployeeData.activeEmployees[0]?.items ?? []
-        : selectedEmployeeData.deactivatedEmployees[0]?.items ?? [])
+  const selectedEmployeeItems: Item[] = selectedEmployeeData && selectedEmployee
+    ? (selectedEmployee.isActive
+        ? selectedEmployeeData.activeEmployees.find(e => e.name === selectedEmployee.name)?.items ?? []
+        : selectedEmployeeData.deactivatedEmployees.find(e => e.name === selectedEmployee.name)?.items ?? [])
     : [];
 
   const { data: companyData } = useQuery({
