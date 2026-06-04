@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import api from '@/services/api.client';
 import { UserCheck, Search, Building2, Package, QrCode, PowerOff, Activity, FileText, Printer, ListTodo } from 'lucide-react';
-import { itemService, Item, EmployeeGroup } from '@/services/item.service';
+import { itemService, Item, EmployeeSummary } from '@/services/item.service';
 import { companyService } from '@/services/company.service';
 import { departmentService } from '@/services/department.service';
 import { useAuthStore } from '@/store/auth.store';
@@ -27,7 +27,7 @@ export default function EmployeesPage() {
   const [deptFilter, setDeptFilter] = useState('');
   const [tab, setTab] = useState<'ACTIVE' | 'DEACTIVATED'>('ACTIVE');
 
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeGroup | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSummary | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
 
@@ -87,11 +87,27 @@ export default function EmployeesPage() {
 
   const { data: employeeData, isLoading } = useQuery({
     queryKey: ['items', 'employee-groups', companyFilter, deptFilter],
-    queryFn: () => itemService.getEmployeeGroups({
+    queryFn: () => itemService.getEmployeeGroupsSummary({
       companyId: companyFilter || undefined,
       departmentId: deptFilter || undefined,
     }),
   });
+
+  const { data: selectedEmployeeData, isLoading: isLoadingItems } = useQuery({
+    queryKey: ['items', 'employee-items', selectedEmployee?.name, companyFilter, deptFilter],
+    queryFn: () => itemService.getEmployeeItems(selectedEmployee!.name, {
+      companyId: companyFilter || undefined,
+      departmentId: deptFilter || undefined,
+    }),
+    enabled: !!selectedEmployee,
+    staleTime: 30_000,
+  });
+
+  const selectedEmployeeItems: Item[] = selectedEmployeeData
+    ? (selectedEmployee?.isActive
+        ? selectedEmployeeData.activeEmployees[0]?.items ?? []
+        : selectedEmployeeData.deactivatedEmployees[0]?.items ?? [])
+    : [];
 
   const { data: companyData } = useQuery({
     queryKey: ['companies', 'active'],
@@ -122,8 +138,8 @@ export default function EmployeesPage() {
     return ktmg?.logoUrl || undefined;
   }, [brandingData]);
 
-  const activeEmployees: EmployeeGroup[] = employeeData?.activeEmployees || [];
-  const deactivatedEmployees: EmployeeGroup[] = employeeData?.deactivatedEmployees || [];
+  const activeEmployees: EmployeeSummary[] = employeeData?.activeEmployees || [];
+  const deactivatedEmployees: EmployeeSummary[] = employeeData?.deactivatedEmployees || [];
 
   const activeCount = useMemo(() => activeEmployees.length, [activeEmployees]);
   const deactivatedCount = useMemo(() => deactivatedEmployees.length, [deactivatedEmployees]);
@@ -140,7 +156,7 @@ export default function EmployeesPage() {
   const pagedEmployees = filteredEmployees.slice((empPage - 1) * EMP_PER_PAGE, empPage * EMP_PER_PAGE);
 
   // Asset pagination
-  const selectedAssets = selectedEmployee?.items || [];
+  const selectedAssets = selectedEmployeeItems;
   const totalAssetPages = Math.ceil(selectedAssets.length / ASSET_PER_PAGE);
   const pagedAssets = selectedAssets.slice((assetPage - 1) * ASSET_PER_PAGE, assetPage * ASSET_PER_PAGE);
 
@@ -162,7 +178,7 @@ export default function EmployeesPage() {
   };
 
   // Helper: build employee/item objects for form printing
-  const buildPrintData = (emp: EmployeeGroup, itemsToPrint: Item[]): [EmployeeInfo, PrintableItem[]] => {
+  const buildPrintData = (emp: EmployeeSummary, itemsToPrint: Item[]): [EmployeeInfo, PrintableItem[]] => {
     const companyObj = companies.find((c: any) => c.id === emp.companyId);
     const employeeInfo: EmployeeInfo = {
       name: emp.name,
@@ -195,8 +211,8 @@ export default function EmployeesPage() {
     return [employeeInfo, printableItems];
   };
 
-  const handlePrintIssuance = async (emp: EmployeeGroup) => {
-    const activeItems = emp.items.filter(i => i.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase());
+  const handlePrintIssuance = async (emp: EmployeeSummary) => {
+    const activeItems = selectedEmployeeItems.filter(i => i.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase());
     if (!activeItems.length) { toast.error('No assigned assets to print issuance for.'); return; }
     const [empInfo, printItems] = buildPrintData(emp, activeItems);
     toast.loading('Preparing issuance form...', { id: 'print' });
@@ -204,8 +220,8 @@ export default function EmployeesPage() {
     toast.dismiss('print');
   };
 
-  const handlePrintHandover = async (emp: EmployeeGroup, overrideItems?: Item[]) => {
-    const itemsToPrint = overrideItems ?? emp.items;
+  const handlePrintHandover = async (emp: EmployeeSummary, overrideItems?: Item[]) => {
+    const itemsToPrint = overrideItems ?? selectedEmployeeItems;
     if (!itemsToPrint.length) { toast.error('No assets to include in handover form.'); return; }
     const [empInfo, printItems] = buildPrintData(emp, itemsToPrint);
     toast.loading('Preparing handover form...', { id: 'print' });
@@ -331,7 +347,7 @@ export default function EmployeesPage() {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 8, minWidth: 50 }}>
                       <span style={{ fontSize: 13, fontWeight: 800, color: emp.isActive ? 'var(--accent-yellow)' : 'var(--text-muted)' }}>
-                        {emp.isActive ? emp.items.filter(i => i.assignedToName?.trim().toLowerCase() === emp.name.trim().toLowerCase()).length : '0'}
+                        {emp.isActive ? emp.itemCount : '0'}
                       </span>
                       <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{emp.isActive ? 'ITEMS' : 'PAST'}</span>
                     </div>
@@ -478,7 +494,7 @@ export default function EmployeesPage() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>
                     {selectedEmployee.isActive ? 'Assigned Assets & History' : 'Previously Held Assets (History)'}
                   </h3>
-                  {!selectedEmployee.isActive && selectedEmployee.items.length > 0 && (
+                  {!selectedEmployee.isActive && selectedEmployeeItems.length > 0 && (
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
                       These are assets this employee <strong>previously held</strong>. They are now returned.
                     </div>
@@ -490,6 +506,13 @@ export default function EmployeesPage() {
                   )}
                 </div>
 
+                {isLoadingItems ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--text-muted)' }}>
+                    <div style={{ width: 28, height: 28, border: '3px solid var(--border-dark)', borderTopColor: 'var(--accent-yellow)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginRight: 12 }} />
+                    Loading assets...
+                  </div>
+                ) : (
+                <>
                 <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-dark)', overflow: 'hidden' }}>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
@@ -628,6 +651,8 @@ export default function EmployeesPage() {
                     <button disabled={assetPage === totalAssetPages} onClick={() => setAssetPage(p => p + 1)} style={{ padding: '6px 12px', background: 'var(--bg-dark)', border: '1px solid var(--border-dark)', color: assetPage === totalAssetPages ? 'var(--text-muted)' : 'var(--text-main)', borderRadius: 6, cursor: assetPage === totalAssetPages ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600 }}>Next</button>
                   </div>
                 )}
+                </>
+                )}
               </div>
             </>
           ) : (
@@ -686,7 +711,7 @@ export default function EmployeesPage() {
           isOpen={isOffboardModalOpen}
           onClose={() => setIsOffboardModalOpen(false)}
           employeeName={selectedEmployee.name}
-          items={selectedEmployee.items.filter(i => i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
+          items={selectedEmployeeItems.filter(i => i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())}
           onPrintHandover={() => handlePrintHandover(selectedEmployee)}
         />
       )}
@@ -711,8 +736,8 @@ export default function EmployeesPage() {
           }}
           items={
             isSelectionMode
-              ? selectedEmployee.items.filter(i => selectedItemIds.has(i.id))
-              : selectedEmployee.items.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())
+              ? selectedEmployeeItems.filter(i => selectedItemIds.has(i.id))
+              : selectedEmployeeItems.filter(i => i.status === 'IN_USE' && i.assignedToName?.trim().toLowerCase() === selectedEmployee.name.trim().toLowerCase())
           }
           title={isSelectionMode ? `Selected Assets for ${selectedEmployee.name}` : `${selectedEmployee.name}'s Assets`}
         />
