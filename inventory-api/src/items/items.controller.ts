@@ -55,8 +55,7 @@ export class ItemsController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.CREATE_ITEMS)
   create(@Body() dto: CreateItemDto, @CurrentUser() user: JwtPayload) {
-    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? undefined : user?.companyId;
-    return this.itemsService.create(dto, user.sub, callerCompanyId);
+    return this.itemsService.create(dto, user.sub);
   }
 
   @Get('preview-barcode')
@@ -148,8 +147,7 @@ export class ItemsController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.UPDATE_ITEMS)
   update(@Param('id') id: string, @Body() dto: UpdateItemDto, @CurrentUser() user: JwtPayload) {
-    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? undefined : user?.companyId;
-    return this.itemsService.update(id, dto, user.sub, callerCompanyId);
+    return this.itemsService.update(id, dto, user.sub);
   }
 
   // --- ACTIONS ---

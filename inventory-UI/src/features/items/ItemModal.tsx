@@ -141,6 +141,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const showCompanySelector =
     user?.role === UserRole.SUPER_ADMIN || isEdit || !user?.companyId;
 
+  const selectedCategory = categories.find((c: any) => c.id === formData.categoryId);
+  const serialCheckEnabled = (selectedCategory as any)?.code
+    ? ['CPU', 'MON'].some(k => (selectedCategory as any).code.toUpperCase().includes(k))
+    : false;
+
   const nameSuggestions = useMemo(() => {
     const raw = Array.isArray(nameSuggestionsRaw) ? nameSuggestionsRaw : (nameSuggestionsRaw as any)?.data || [];
     const seen = new Set<string>();
@@ -443,6 +448,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                           if (isEdit && newCatId !== formData.categoryId) setCategoryChanged(true);
                           else if (isEdit && newCatId === item?.categoryId) setCategoryChanged(false);
                           setFormData({ ...formData, categoryId: newCatId });
+                          setSerialStatus('idle');
+                          setSerialConflict(null);
+                          if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
                         }}
                       >
                         <option value="">{isLoadingCategories ? 'Loading categories...' : 'Select Category'}</option>
@@ -533,7 +541,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       style={{
                         ...styles.inputSimple,
                         borderColor: serialStatus === 'taken'
-                          ? '#ef4444'
+                          ? '#f59e0b'
                           : serialStatus === 'available'
                           ? '#10b981'
                           : undefined,
@@ -547,7 +555,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                         setSerialConflict(null);
                         if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
                         const trimmed = val.trim();
-                        if (!trimmed) return;
+                        if (!trimmed || !serialCheckEnabled) return;
                         setSerialStatus('checking');
                         serialDebounceRef.current = setTimeout(async () => {
                           const reqId = ++serialReqIdRef.current;
@@ -579,8 +587,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                           <span style={{ color: '#10b981' }}>✓ Available</span>
                         )}
                         {serialStatus === 'taken' && (
-                          <span style={{ color: '#ef4444' }}>
-                            ✗ Already registered on {serialConflict?.barcode ?? 'another asset'}
+                          <span style={{ color: '#f59e0b' }}>
+                            ⚠ Serial already registered on {serialConflict?.barcode ?? 'another asset'}
                           </span>
                         )}
                       </div>
@@ -769,10 +777,10 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               className="primary-btn"
               style={{
                 padding: '10px 32px',
-                fontWeight: 800, cursor: (mutation.isPending || serialStatus === 'checking' || serialStatus === 'taken') ? 'not-allowed' : 'pointer',
-                opacity: (mutation.isPending || serialStatus === 'checking' || serialStatus === 'taken') ? 0.7 : 1
+                fontWeight: 800, cursor: (mutation.isPending || serialStatus === 'checking') ? 'not-allowed' : 'pointer',
+                opacity: (mutation.isPending || serialStatus === 'checking') ? 0.7 : 1
               }}
-              disabled={mutation.isPending || uploadMutation.isPending || serialStatus === 'checking' || serialStatus === 'taken'}
+              disabled={mutation.isPending || uploadMutation.isPending || serialStatus === 'checking'}
             >
               {mutation.isPending || uploadMutation.isPending ? 'Processing...' : isEdit ? 'Save Changes' : 'Confirm Intake'}
             </button>

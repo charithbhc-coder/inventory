@@ -74,17 +74,12 @@ export class ItemsService implements OnModuleInit {
   // CRUD
   // ========================================
 
-  async create(dto: CreateItemDto, userId: string, callerCompanyId?: string): Promise<Item> {
+  async create(dto: CreateItemDto, userId: string): Promise<Item> {
     const category = await this.categoriesRepository.findOne({ where: { id: dto.categoryId } });
     if (!category) throw new NotFoundException('Category not found');
 
     const company = await this.companyRepository.findOne({ where: { id: dto.companyId } });
     if (!company) throw new NotFoundException('Company not found');
-
-    if (dto.serialNumber?.trim()) {
-      const { exists, item: conflict } = await this.checkSerialExists(dto.serialNumber.trim(), undefined, callerCompanyId);
-      if (exists) throw new ConflictException(`Serial number already registered on ${conflict?.barcode ?? 'another asset'}`);
-    }
 
     const saved = await this.dataSource.transaction(async (manager) => {
       // Atomic counter increment via INSERT ... ON CONFLICT DO UPDATE.
@@ -392,12 +387,7 @@ export class ItemsService implements OnModuleInit {
     return { item, events };
   }
 
-  async update(id: string, dto: UpdateItemDto, userId: string, callerCompanyId?: string): Promise<Item> {
-    if (dto.serialNumber !== undefined && dto.serialNumber?.trim()) {
-      const { exists, item: conflict } = await this.checkSerialExists(dto.serialNumber.trim(), id, callerCompanyId);
-      if (exists) throw new ConflictException(`Serial number already registered on ${conflict?.barcode ?? 'another asset'}`);
-    }
-
+  async update(id: string, dto: UpdateItemDto, userId: string): Promise<Item> {
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id } });
       if (!item) throw new NotFoundException('Item not found');
