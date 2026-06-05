@@ -35,8 +35,11 @@ export default function AssignModal({ item, isOpen, onClose, modalTitle }: Assig
 
   const { data: departmentsRes } = useQuery({
     queryKey: ['departments', item.companyId],
-    queryFn: () => departmentService.getDepartments(item.companyId),
-    enabled: isOpen
+    queryFn: () => departmentService.getDepartments(item.companyId, { limit: 5000 }),
+    enabled: isOpen,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev: any) => prev,
   });
 
   // Load all employees via the dedicated employee groups endpoint (same as Employees page)

@@ -140,7 +140,7 @@ export default function ItemsPage() {
 
   const { data: deptData } = useQuery({ 
     queryKey: ['departments', companyFilter], 
-    queryFn: () => departmentService.getDepartments(companyFilter || undefined, { limit: 100 }),
+    queryFn: () => departmentService.getDepartments(companyFilter || undefined, { limit: 5000 }),
     enabled: !!companyFilter
   });
   

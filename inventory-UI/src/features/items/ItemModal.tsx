@@ -80,13 +80,26 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [itemFile, setItemFile] = useState<File | null>(null);
 
-  const { data: companies = [] } = useQuery({ queryKey: ['companies', 'active'], queryFn: () => companyService.getCompanies() });
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => categoryService.getCategories({ limit: 500 }) });
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies', 'active'],
+    queryFn: () => companyService.getCompanies(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoryService.getCategories({ limit: 5000 }),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', formData.companyId],
-    queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
-    enabled: !!formData.companyId
+    queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 5000 }),
+    enabled: !!formData.companyId,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev: any) => prev,
   });
 
   const { data: companyItems = [] } = useQuery({

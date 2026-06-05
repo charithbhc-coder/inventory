@@ -154,7 +154,7 @@ function ReportBuilderTab({ canExport }: { canExport: boolean }) {
   const { data: categoriesRaw } = useQuery({ queryKey: ['categories', 'all'], queryFn: () => categoryService.getCategories({ limit: 100 }) });
   const { data: deptsRaw } = useQuery({
     queryKey: ['departments', filters.companyId],
-    queryFn: () => departmentService.getDepartments(filters.companyId, { limit: 100 }),
+    queryFn: () => departmentService.getDepartments(filters.companyId, { limit: 5000 }),
     enabled: !!filters.companyId,
   });
 
