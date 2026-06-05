@@ -100,13 +100,13 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     queryFn: () => companyService.getCompanies(),
     staleTime: 5 * 60 * 1000,
   });
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories({ limit: 500 }),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
+  const { data: departments = [] } = useQuery({
     queryKey: ['departments', formData.companyId],
     queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
     enabled: !!formData.companyId,
@@ -453,7 +453,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                           if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
                         }}
                       >
-                        <option value="">{isLoadingCategories ? 'Loading categories...' : 'Select Category'}</option>
+                        <option value="">Select Category</option>
                         {categoriesList.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
@@ -523,9 +523,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       style={styles.input}
                       value={formData.departmentId}
                       onChange={e => setFormData({ ...formData, departmentId: e.target.value })}
-                      disabled={!formData.companyId || isLoadingDepartments}
+                      disabled={!formData.companyId}
                     >
-                      <option value="">{isLoadingDepartments ? 'Loading departments...' : 'Select Department'}</option>
+                      <option value="">Select Department</option>
                       {departmentsList.map((d: any) => (
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
