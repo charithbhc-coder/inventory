@@ -81,6 +81,11 @@ export class ItemsService implements OnModuleInit {
     const company = await this.companyRepository.findOne({ where: { id: dto.companyId } });
     if (!company) throw new NotFoundException('Company not found');
 
+    if (dto.serialNumber?.trim()) {
+      const { exists, item: conflict } = await this.checkSerialExists(dto.serialNumber.trim());
+      if (exists) throw new ConflictException(`Serial number already registered on ${conflict?.barcode ?? 'another asset'}`);
+    }
+
     const saved = await this.dataSource.transaction(async (manager) => {
       // Atomic counter increment via INSERT ... ON CONFLICT DO UPDATE.
       // PostgreSQL serializes concurrent upserts on the same primary key row,
@@ -388,6 +393,11 @@ export class ItemsService implements OnModuleInit {
   }
 
   async update(id: string, dto: UpdateItemDto, userId: string): Promise<Item> {
+    if (dto.serialNumber !== undefined && dto.serialNumber?.trim()) {
+      const { exists, item: conflict } = await this.checkSerialExists(dto.serialNumber.trim(), id);
+      if (exists) throw new ConflictException(`Serial number already registered on ${conflict?.barcode ?? 'another asset'}`);
+    }
+
     return this.dataSource.transaction(async (manager) => {
       const item = await manager.findOne(Item, { where: { id } });
       if (!item) throw new NotFoundException('Item not found');
