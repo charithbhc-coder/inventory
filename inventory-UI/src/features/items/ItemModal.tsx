@@ -141,7 +141,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const showCompanySelector =
     user?.role === UserRole.SUPER_ADMIN || isEdit || !user?.companyId;
 
-  const selectedCategory = categories.find((c: any) => c.id === formData.categoryId);
+  const selectedCategory = categoriesList.find((c: any) => c.id === formData.categoryId);
   const serialCheckEnabled = (selectedCategory as any)?.code
     ? ['CPU', 'MON'].some(k => (selectedCategory as any).code.toUpperCase().includes(k))
     : false;
