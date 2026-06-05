@@ -96,16 +96,6 @@ export const itemService = {
     return data;
   },
 
-  checkSerial: async (
-    sn: string,
-    excludeId?: string,
-  ): Promise<{ exists: boolean; item?: { id: string; barcode: string; name: string } }> => {
-    const { data } = await apiClient.get('/items/check-serial', {
-      params: { sn, ...(excludeId ? { excludeId } : {}) },
-    });
-    return data;
-  },
-
   createItem: async (item: any) => {
     const { data } = await apiClient.post('/items', item);
     return data;

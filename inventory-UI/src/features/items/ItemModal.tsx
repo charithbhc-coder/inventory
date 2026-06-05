@@ -8,8 +8,6 @@ import { companyService } from '@/services/company.service';
 import { categoryService } from '@/services/category.service';
 import { departmentService } from '@/services/department.service';
 import CategoryModal from '../categories/CategoryModal';
-import { useAuthStore } from '@/store/auth.store';
-import { UserRole } from '@/types';
 
 interface ItemModalProps {
   item: Item | null;
@@ -21,12 +19,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const queryClient = useQueryClient();
   const [lastCreatedItem, setLastCreatedItem] = useState<any | null>(null);
   const isEdit = !!item;
-  const user = useAuthStore(state => state.user);
 
   const [formData, setFormData] = useState({
     name: item?.name || '',
     categoryId: item?.categoryId || '',
-    companyId: item?.companyId || (!item && user?.role !== UserRole.SUPER_ADMIN ? (user?.companyId ?? '') : ''),
+    companyId: item?.companyId || '',
     departmentId: item?.departmentId || '',
     serialNumber: item?.serialNumber || '',
     condition: item?.condition || 'NEW',
@@ -43,7 +40,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setFormData({
         name: item?.name || '',
         categoryId: item?.categoryId || '',
-        companyId: item?.companyId || (!isEdit && user?.role !== UserRole.SUPER_ADMIN ? (user?.companyId ?? '') : ''),
+        companyId: item?.companyId || '',
         departmentId: item?.departmentId || '',
         serialNumber: item?.serialNumber || '',
         condition: item?.condition || 'NEW',
@@ -61,16 +58,10 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setLastCreatedItem(null);
       setCategoryChanged(false);
       setCompanyChanged(false);
-      setSerialStatus('idle');
-      setSerialConflict(null);
     }
-  }, [item, isOpen, user]);
+  }, [item, isOpen]);
 
-  useEffect(() => {
-    return () => {
-      if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
-    };
-  }, []);
+
 
   const [previewBarcode, setPreviewBarcode] = useState<string>('');
   const [categoryChanged, setCategoryChanged] = useState(false);
@@ -82,12 +73,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nameWrapRef = useRef<HTMLDivElement>(null);
 
-  // Serial number uniqueness check
-  const serialDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const serialReqIdRef = useRef(0);
-  const [serialStatus, setSerialStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [serialConflict, setSerialConflict] = useState<{ barcode: string; name: string } | null>(null);
-
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   // File states
@@ -95,25 +80,13 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [itemFile, setItemFile] = useState<File | null>(null);
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies', 'active'],
-    queryFn: () => companyService.getCompanies(),
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryService.getCategories({ limit: 500 }),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+  const { data: companies = [] } = useQuery({ queryKey: ['companies', 'active'], queryFn: () => companyService.getCompanies() });
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => categoryService.getCategories({ limit: 500 }) });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', formData.companyId],
     queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
-    enabled: !!formData.companyId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    placeholderData: (prev: any) => prev,
+    enabled: !!formData.companyId
   });
 
   const { data: companyItems = [] } = useQuery({
@@ -140,14 +113,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   }, [categories, formData.categoryId]);
   const departmentsList = useMemo(() => Array.isArray(departments) ? departments : (departments as any)?.data || [], [departments]);
   const itemsList = useMemo(() => Array.isArray(companyItems) ? companyItems : (companyItems as any)?.data || (companyItems as any)?.items || [], [companyItems]);
-
-  const showCompanySelector =
-    user?.role === UserRole.SUPER_ADMIN || isEdit || !user?.companyId;
-
-  const selectedCategory = categoriesList.find((c: any) => c.id === formData.categoryId);
-  const serialCheckEnabled = (selectedCategory as any)?.code
-    ? ['CPU', 'MON'].some(k => (selectedCategory as any).code.toUpperCase().includes(k))
-    : false;
 
   const nameSuggestions = useMemo(() => {
     const raw = Array.isArray(nameSuggestionsRaw) ? nameSuggestionsRaw : (nameSuggestionsRaw as any)?.data || [];
@@ -236,15 +201,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!formData.companyId) {
-      toast.error(
-        !showCompanySelector
-          ? 'Your account has no company assigned — contact an administrator.'
-          : 'Please select a company'
-      );
-      return;
-    }
-    if (!formData.name || !formData.categoryId) {
+    if (!formData.name || !formData.companyId || !formData.categoryId) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -451,9 +408,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                           if (isEdit && newCatId !== formData.categoryId) setCategoryChanged(true);
                           else if (isEdit && newCatId === item?.categoryId) setCategoryChanged(false);
                           setFormData({ ...formData, categoryId: newCatId });
-                          setSerialStatus('idle');
-                          setSerialConflict(null);
-                          if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
                         }}
                       >
                         <option value="">Select Category</option>
@@ -487,7 +441,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   )}
                 </div>
 
-                {showCompanySelector && (
                 <div>
                   <label htmlFor="item-company" style={styles.label}>COMPANY SUBSIDIARY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                   <div style={styles.inputWrap}>
@@ -515,7 +468,6 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     </p>
                   )}
                 </div>
-                )}
 
                 <div>
                   <label htmlFor="item-department" style={styles.label}>DEPARTMENT / WING</label>
@@ -541,61 +493,11 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     <label htmlFor="item-serial" style={styles.label} title="Manufacturer unique hardware tracking number">SERIAL NUMBER</label>
                     <input
                       id="item-serial"
-                      style={{
-                        ...styles.inputSimple,
-                        borderColor: serialStatus === 'taken'
-                          ? '#f59e0b'
-                          : serialStatus === 'available'
-                          ? '#10b981'
-                          : undefined,
-                      }}
+                      style={styles.inputSimple}
                       placeholder="e.g. SN-12003X"
                       value={formData.serialNumber}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setFormData({ ...formData, serialNumber: val });
-                        setSerialStatus('idle');
-                        setSerialConflict(null);
-                        if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
-                        const trimmed = val.trim();
-                        if (!trimmed || !serialCheckEnabled) return;
-                        setSerialStatus('checking');
-                        serialDebounceRef.current = setTimeout(async () => {
-                          const reqId = ++serialReqIdRef.current;
-                          try {
-                            const result = await itemService.checkSerial(
-                              trimmed,
-                              isEdit ? item?.id : undefined,
-                            );
-                            if (reqId !== serialReqIdRef.current) return; // stale response
-                            if (result.exists) {
-                              setSerialStatus('taken');
-                              setSerialConflict(result.item ?? null);
-                            } else {
-                              setSerialStatus('available');
-                            }
-                          } catch {
-                            if (reqId !== serialReqIdRef.current) return;
-                            setSerialStatus('idle');
-                          }
-                        }, 500);
-                      }}
+                      onChange={e => setFormData({ ...formData, serialNumber: e.target.value })}
                     />
-                    {formData.serialNumber.trim() !== '' && serialStatus !== 'idle' && (
-                      <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700 }}>
-                        {serialStatus === 'checking' && (
-                          <span style={{ color: 'var(--text-muted)' }}>Checking...</span>
-                        )}
-                        {serialStatus === 'available' && (
-                          <span style={{ color: '#10b981' }}>✓ Available</span>
-                        )}
-                        {serialStatus === 'taken' && (
-                          <span style={{ color: '#f59e0b' }}>
-                            ⚠ Serial already registered on {serialConflict?.barcode ?? 'another asset'}
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
                   <div style={{ flex: '1 1 150px' }}>
                     <label htmlFor="item-price" style={styles.label}>PURCHASE PRICE (LKR)</label>
@@ -780,10 +682,10 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               className="primary-btn"
               style={{
                 padding: '10px 32px',
-                fontWeight: 800, cursor: (mutation.isPending || serialStatus === 'checking') ? 'not-allowed' : 'pointer',
-                opacity: (mutation.isPending || serialStatus === 'checking') ? 0.7 : 1
+                fontWeight: 800, cursor: mutation.isPending ? 'default' : 'pointer',
+                opacity: mutation.isPending ? 0.7 : 1
               }}
-              disabled={mutation.isPending || uploadMutation.isPending || serialStatus === 'checking'}
+              disabled={mutation.isPending || uploadMutation.isPending}
             >
               {mutation.isPending || uploadMutation.isPending ? 'Processing...' : isEdit ? 'Save Changes' : 'Confirm Intake'}
             </button>
