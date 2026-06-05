@@ -58,10 +58,16 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setLastCreatedItem(null);
       setCategoryChanged(false);
       setCompanyChanged(false);
+      setSerialStatus('idle');
+      setSerialConflict(null);
     }
   }, [item, isOpen]);
 
-
+  useEffect(() => {
+    return () => {
+      if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
+    };
+  }, []);
 
   const [previewBarcode, setPreviewBarcode] = useState<string>('');
   const [categoryChanged, setCategoryChanged] = useState(false);
@@ -72,6 +78,12 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nameWrapRef = useRef<HTMLDivElement>(null);
+
+  // Serial number uniqueness check
+  const serialDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const serialReqIdRef = useRef(0);
+  const [serialStatus, setSerialStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [serialConflict, setSerialConflict] = useState<{ barcode: string; name: string } | null>(null);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
@@ -493,11 +505,61 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     <label htmlFor="item-serial" style={styles.label} title="Manufacturer unique hardware tracking number">SERIAL NUMBER</label>
                     <input
                       id="item-serial"
-                      style={styles.inputSimple}
+                      style={{
+                        ...styles.inputSimple,
+                        borderColor: serialStatus === 'taken'
+                          ? '#ef4444'
+                          : serialStatus === 'available'
+                          ? '#10b981'
+                          : undefined,
+                      }}
                       placeholder="e.g. SN-12003X"
                       value={formData.serialNumber}
-                      onChange={e => setFormData({ ...formData, serialNumber: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, serialNumber: val });
+                        setSerialStatus('idle');
+                        setSerialConflict(null);
+                        if (serialDebounceRef.current) clearTimeout(serialDebounceRef.current);
+                        const trimmed = val.trim();
+                        if (!trimmed) return;
+                        setSerialStatus('checking');
+                        serialDebounceRef.current = setTimeout(async () => {
+                          const reqId = ++serialReqIdRef.current;
+                          try {
+                            const result = await itemService.checkSerial(
+                              trimmed,
+                              isEdit ? item?.id : undefined,
+                            );
+                            if (reqId !== serialReqIdRef.current) return; // stale response
+                            if (result.exists) {
+                              setSerialStatus('taken');
+                              setSerialConflict(result.item ?? null);
+                            } else {
+                              setSerialStatus('available');
+                            }
+                          } catch {
+                            if (reqId !== serialReqIdRef.current) return;
+                            setSerialStatus('idle');
+                          }
+                        }, 500);
+                      }}
                     />
+                    {formData.serialNumber.trim() !== '' && serialStatus !== 'idle' && (
+                      <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700 }}>
+                        {serialStatus === 'checking' && (
+                          <span style={{ color: 'var(--text-muted)' }}>Checking...</span>
+                        )}
+                        {serialStatus === 'available' && (
+                          <span style={{ color: '#10b981' }}>✓ Available</span>
+                        )}
+                        {serialStatus === 'taken' && (
+                          <span style={{ color: '#ef4444' }}>
+                            ✗ Already registered on {serialConflict?.barcode ?? 'another asset'}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div style={{ flex: '1 1 150px' }}>
                     <label htmlFor="item-price" style={styles.label}>PURCHASE PRICE (LKR)</label>
@@ -682,10 +744,10 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               className="primary-btn"
               style={{
                 padding: '10px 32px',
-                fontWeight: 800, cursor: mutation.isPending ? 'default' : 'pointer',
-                opacity: mutation.isPending ? 0.7 : 1
+                fontWeight: 800, cursor: (mutation.isPending || serialStatus === 'checking' || serialStatus === 'taken') ? 'not-allowed' : 'pointer',
+                opacity: (mutation.isPending || serialStatus === 'checking' || serialStatus === 'taken') ? 0.7 : 1
               }}
-              disabled={mutation.isPending || uploadMutation.isPending}
+              disabled={mutation.isPending || uploadMutation.isPending || serialStatus === 'checking' || serialStatus === 'taken'}
             >
               {mutation.isPending || uploadMutation.isPending ? 'Processing...' : isEdit ? 'Save Changes' : 'Confirm Intake'}
             </button>
