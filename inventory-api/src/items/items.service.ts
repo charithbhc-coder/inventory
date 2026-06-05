@@ -138,16 +138,23 @@ export class ItemsService implements OnModuleInit {
   async checkSerialExists(
     sn: string,
     excludeId?: string,
+    callerCompanyId?: string, // undefined = SUPER_ADMIN (no restriction)
   ): Promise<{ exists: boolean; item?: { id: string; barcode: string; name: string } }> {
     const trimmed = sn?.trim();
     if (!trimmed) return { exists: false };
     const qb = this.itemsRepository
       .createQueryBuilder('item')
-      .select(['item.id', 'item.barcode', 'item.name'])
+      .select(['item.id', 'item.barcode', 'item.name', 'item.companyId'])
       .where('item.serialNumber = :sn', { sn: trimmed });
     if (excludeId) qb.andWhere('item.id != :excludeId', { excludeId });
     const found = await qb.getOne();
     if (!found) return { exists: false };
+    // Cross-tenant guard: if the caller is scoped to a company and the
+    // conflicting item belongs to a different company, confirm existence
+    // without leaking the other tenant's barcode/name.
+    if (callerCompanyId && found.companyId !== callerCompanyId) {
+      return { exists: true };
+    }
     return { exists: true, item: { id: found.id, barcode: found.barcode, name: found.name } };
   }
 

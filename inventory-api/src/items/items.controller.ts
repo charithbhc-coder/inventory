@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   ParseFilePipeBuilder,
+  ParseUUIDPipe,
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -72,9 +73,11 @@ export class ItemsController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   checkSerial(
     @Query('sn') sn: string,
-    @Query('excludeId') excludeId?: string,
+    @Query('excludeId', new ParseUUIDPipe({ optional: true, version: '4' })) excludeId?: string,
+    @CurrentUser() user?: JwtPayload,
   ) {
-    return this.itemsService.checkSerialExists(sn, excludeId);
+    const callerCompanyId = user?.role === UserRole.SUPER_ADMIN ? undefined : user?.companyId;
+    return this.itemsService.checkSerialExists(sn, excludeId, callerCompanyId);
   }
 
   @Get()
