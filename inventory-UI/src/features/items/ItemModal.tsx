@@ -104,6 +104,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories({ limit: 500 }),
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: departments = [] } = useQuery({
@@ -111,6 +112,8 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
     enabled: !!formData.companyId,
     staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev: any) => prev,
   });
 
   const { data: companyItems = [] } = useQuery({
