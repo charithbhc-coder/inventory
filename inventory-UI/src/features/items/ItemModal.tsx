@@ -8,6 +8,8 @@ import { companyService } from '@/services/company.service';
 import { categoryService } from '@/services/category.service';
 import { departmentService } from '@/services/department.service';
 import CategoryModal from '../categories/CategoryModal';
+import { useAuthStore } from '@/store/auth.store';
+import { UserRole } from '@/types';
 
 interface ItemModalProps {
   item: Item | null;
@@ -19,11 +21,12 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const queryClient = useQueryClient();
   const [lastCreatedItem, setLastCreatedItem] = useState<any | null>(null);
   const isEdit = !!item;
+  const user = useAuthStore(state => state.user);
 
   const [formData, setFormData] = useState({
     name: item?.name || '',
     categoryId: item?.categoryId || '',
-    companyId: item?.companyId || '',
+    companyId: item?.companyId || (!item && user?.role !== UserRole.SUPER_ADMIN ? (user?.companyId ?? '') : ''),
     departmentId: item?.departmentId || '',
     serialNumber: item?.serialNumber || '',
     condition: item?.condition || 'NEW',
@@ -40,7 +43,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setFormData({
         name: item?.name || '',
         categoryId: item?.categoryId || '',
-        companyId: item?.companyId || '',
+        companyId: item?.companyId || (!isEdit && user?.role !== UserRole.SUPER_ADMIN ? (user?.companyId ?? '') : ''),
         departmentId: item?.departmentId || '',
         serialNumber: item?.serialNumber || '',
         condition: item?.condition || 'NEW',
@@ -61,7 +64,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       setSerialStatus('idle');
       setSerialConflict(null);
     }
-  }, [item, isOpen]);
+  }, [item, isOpen, user]);
 
   useEffect(() => {
     return () => {
@@ -92,13 +95,22 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [itemFile, setItemFile] = useState<File | null>(null);
 
-  const { data: companies = [] } = useQuery({ queryKey: ['companies', 'active'], queryFn: () => companyService.getCompanies() });
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: () => categoryService.getCategories({ limit: 500 }) });
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies', 'active'],
+    queryFn: () => companyService.getCompanies(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoryService.getCategories({ limit: 500 }),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const { data: departments = [] } = useQuery({
+  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
     queryKey: ['departments', formData.companyId],
     queryFn: () => departmentService.getDepartments(formData.companyId, { limit: 500 }),
-    enabled: !!formData.companyId
+    enabled: !!formData.companyId,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: companyItems = [] } = useQuery({
@@ -125,6 +137,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   }, [categories, formData.categoryId]);
   const departmentsList = useMemo(() => Array.isArray(departments) ? departments : (departments as any)?.data || [], [departments]);
   const itemsList = useMemo(() => Array.isArray(companyItems) ? companyItems : (companyItems as any)?.data || (companyItems as any)?.items || [], [companyItems]);
+
+  const showCompanySelector =
+    user?.role === UserRole.SUPER_ADMIN || isEdit || !user?.companyId;
 
   const nameSuggestions = useMemo(() => {
     const raw = Array.isArray(nameSuggestionsRaw) ? nameSuggestionsRaw : (nameSuggestionsRaw as any)?.data || [];
@@ -213,7 +228,15 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.companyId || !formData.categoryId) {
+    if (!formData.companyId) {
+      toast.error(
+        !showCompanySelector
+          ? 'Your account has no company assigned — contact an administrator.'
+          : 'Please select a company'
+      );
+      return;
+    }
+    if (!formData.name || !formData.categoryId) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -422,7 +445,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                           setFormData({ ...formData, categoryId: newCatId });
                         }}
                       >
-                        <option value="">Select Category</option>
+                        <option value="">{isLoadingCategories ? 'Loading categories...' : 'Select Category'}</option>
                         {categoriesList.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
@@ -453,6 +476,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                   )}
                 </div>
 
+                {showCompanySelector && (
                 <div>
                   <label htmlFor="item-company" style={styles.label}>COMPANY SUBSIDIARY <span style={{ color: 'var(--accent-red)' }}>*</span></label>
                   <div style={styles.inputWrap}>
@@ -480,6 +504,7 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                     </p>
                   )}
                 </div>
+                )}
 
                 <div>
                   <label htmlFor="item-department" style={styles.label}>DEPARTMENT / WING</label>
@@ -490,9 +515,9 @@ export default function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                       style={styles.input}
                       value={formData.departmentId}
                       onChange={e => setFormData({ ...formData, departmentId: e.target.value })}
-                      disabled={!formData.companyId}
+                      disabled={!formData.companyId || isLoadingDepartments}
                     >
-                      <option value="">Select Department</option>
+                      <option value="">{isLoadingDepartments ? 'Loading departments...' : 'Select Department'}</option>
                       {departmentsList.map((d: any) => (
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
