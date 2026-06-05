@@ -67,6 +67,16 @@ export class ItemsController {
     return this.itemsService.previewBarcode(companyId, categoryId);
   }
 
+  @Get('check-serial')
+  @SkipAudit()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  checkSerial(
+    @Query('sn') sn: string,
+    @Query('excludeId') excludeId?: string,
+  ) {
+    return this.itemsService.checkSerialExists(sn, excludeId);
+  }
+
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @Permissions(AdminPermission.VIEW_ITEMS)

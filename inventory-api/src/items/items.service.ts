@@ -135,6 +135,22 @@ export class ItemsService implements OnModuleInit {
     return saved;
   }
 
+  async checkSerialExists(
+    sn: string,
+    excludeId?: string,
+  ): Promise<{ exists: boolean; item?: { id: string; barcode: string; name: string } }> {
+    const trimmed = sn?.trim();
+    if (!trimmed) return { exists: false };
+    const qb = this.itemsRepository
+      .createQueryBuilder('item')
+      .select(['item.id', 'item.barcode', 'item.name'])
+      .where('item.serialNumber = :sn', { sn: trimmed });
+    if (excludeId) qb.andWhere('item.id != :excludeId', { excludeId });
+    const found = await qb.getOne();
+    if (!found) return { exists: false };
+    return { exists: true, item: { id: found.id, barcode: found.barcode, name: found.name } };
+  }
+
   async findAll(query: {
     page?: number;
     limit?: number;
