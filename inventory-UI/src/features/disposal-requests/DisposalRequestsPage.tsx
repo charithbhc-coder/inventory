@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   createColumnHelper,
@@ -65,7 +66,31 @@ export default function DisposalRequestsPage() {
   const [_companyFilter, _setCompanyFilter] = useState('');
   const [search, setSearch] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<DisposalRequest | null>(null);
+  const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Deep-link: open a specific request's drawer when arriving from an email /
+  // in-app notification (e.g. /disposals?open=<requestId>). The drawer fetches
+  // its own data by id, so the request need not be on the current page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const open = searchParams.get('open');
+    if (open) {
+      setDeepLinkId(open);
+      setIsDrawerOpen(true);
+    }
+  }, [searchParams]);
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedRequest(null);
+    setDeepLinkId(null);
+    if (searchParams.has('open')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('open');
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: isRequesterOnly
@@ -231,11 +256,11 @@ export default function DisposalRequestsPage() {
         </table>
       </div>
 
-      {selectedRequest && (
+      {(selectedRequest || deepLinkId) && (
         <DisposalRequestDetailDrawer
-          requestId={selectedRequest.id}
+          requestId={selectedRequest?.id ?? deepLinkId!}
           isOpen={isDrawerOpen}
-          onClose={() => { setIsDrawerOpen(false); setSelectedRequest(null); }}
+          onClose={closeDrawer}
         />
       )}
     </div>

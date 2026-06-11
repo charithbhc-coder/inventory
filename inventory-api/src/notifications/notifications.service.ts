@@ -228,7 +228,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been permanently disposed.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
 
     // Broadcast to relevant privileged users
@@ -259,7 +259,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been marked as LOST and removed from active inventory.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
 
     // Broadcast to relevant privileged users
@@ -271,7 +271,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been reported missing. Immediate review recommended.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 
@@ -289,7 +289,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been assigned to ${payload.assignedTo}.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 
@@ -309,7 +309,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been added to inventory.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 
@@ -331,7 +331,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been sent for repair.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 
@@ -349,7 +349,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been returned from repair and is back in service.`,
       entityType: 'Item',
       entityId: payload.itemId,
-      actionUrl: `/items?barcode=${payload.barcode}`,
+      actionUrl: `/items?search=${payload.barcode}`,
     });
   }
 
@@ -568,7 +568,7 @@ export class NotificationsService {
       message: `${payload.itemName} (${payload.barcode}) has been submitted for disposal approval.`,
       entityType: 'DisposalRequest',
       entityId: payload.requestId,
-      actionUrl: `/disposal-requests/${payload.requestId}`,
+      actionUrl: `/disposals?open=${payload.requestId}`,
     };
 
     await this.broadcastToCompanyUsersWithAnyPermission(
@@ -595,7 +595,7 @@ export class NotificationsService {
         message: `A disposal request has been recommended by IT Manager and is awaiting your final approval.`,
         entityType: 'DisposalRequest',
         entityId: payload.requestId,
-        actionUrl: `/disposal-requests/${payload.requestId}`,
+        actionUrl: `/disposals?open=${payload.requestId}`,
       },
     );
   }
@@ -615,7 +615,7 @@ export class NotificationsService {
       message: `Your disposal request has been rejected at the IT Manager review stage.`,
       entityType: 'DisposalRequest',
       entityId: payload.requestId,
-      actionUrl: `/disposal-requests/${payload.requestId}`,
+      actionUrl: `/disposals?open=${payload.requestId}`,
     });
   }
 
@@ -637,7 +637,7 @@ export class NotificationsService {
       message: `Your disposal request for ${payload.itemName} (${payload.barcode}) has been approved.`,
       entityType: 'DisposalRequest',
       entityId: payload.requestId,
-      actionUrl: `/disposal-requests/${payload.requestId}`,
+      actionUrl: `/disposals?open=${payload.requestId}`,
     });
 
     await this.broadcastToCompanyUsersWithPermission(
@@ -651,7 +651,7 @@ export class NotificationsService {
         message: `${payload.itemName} (${payload.barcode}) has been approved for disposal via protocol.`,
         entityType: 'Item',
         entityId: payload.itemId,
-        actionUrl: `/disposal-requests/${payload.requestId}`,
+        actionUrl: `/disposals?open=${payload.requestId}`,
       },
     );
   }
@@ -672,7 +672,7 @@ export class NotificationsService {
       message: `Your disposal request has been rejected at the final approval stage.`,
       entityType: 'DisposalRequest',
       entityId: payload.requestId,
-      actionUrl: `/disposal-requests/${payload.requestId}`,
+      actionUrl: `/disposals?open=${payload.requestId}`,
     });
 
     if (payload.l1ReviewedByUserId) {
@@ -685,7 +685,7 @@ export class NotificationsService {
         message: `A disposal request you recommended has been rejected at the final approval stage.`,
         entityType: 'DisposalRequest',
         entityId: payload.requestId,
-        actionUrl: `/disposal-requests/${payload.requestId}`,
+        actionUrl: `/disposals?open=${payload.requestId}`,
       });
     }
   }
@@ -707,7 +707,7 @@ export class NotificationsService {
         message: `A disposal request has been withdrawn by the requester.`,
         entityType: 'DisposalRequest',
         entityId: payload.requestId,
-        actionUrl: `/disposal-requests/${payload.requestId}`,
+        actionUrl: `/disposals?open=${payload.requestId}`,
       },
     );
   }
