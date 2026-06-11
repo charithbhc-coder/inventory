@@ -9,7 +9,7 @@ import {
 import { departmentService, Department } from '@/services/department.service';
 import { companyService, Company } from '@/services/company.service';
 import { itemService, Item } from '@/services/item.service';
-import { Plus, Edit, Search, Building2, ShieldAlert, ShieldCheck, MapPin, LayoutGrid, ChevronLeft, ChevronRight, X, Package, Tag } from 'lucide-react';
+import { Plus, Edit, Search, Building2, ShieldAlert, ShieldCheck, MapPin, LayoutGrid, ChevronLeft, ChevronRight, X, Package, Tag, Archive } from 'lucide-react';
 import DepartmentModal from './DepartmentModal';
 import { useSearchParams } from 'react-router-dom';
 import { getUploadUrl } from '@/lib/config';
@@ -42,6 +42,7 @@ export default function DepartmentsPage() {
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [page, setPage]                 = useState(1);
+  const [showInactive, setShowInactive] = useState(false);
 
   // Drawer state
   const [drawerDept, setDrawerDept] = useState<Department | null>(null);
@@ -68,6 +69,13 @@ export default function DepartmentsPage() {
     placeholderData: (prev) => prev,
   });
   const departments: Department[] = useMemo(() => (deptData as any)?.data || [], [deptData]);
+
+  /* ── All inactive departments (not bound to the current page) ── */
+  const { data: inactiveData } = useQuery({
+    queryKey: ['departments-inactive', effectiveCompanyId, search],
+    queryFn:  () => departmentService.getDepartments(effectiveCompanyId || undefined, { search, page: 1, limit: 1000 }),
+    placeholderData: (prev) => prev,
+  });
 
   // Combined Deep Link & Search Sync
   useEffect(() => {
@@ -293,7 +301,10 @@ export default function DepartmentsPage() {
   ], [hasPermission]);
 
   const activeDepartments = useMemo(() => departments.filter(d => d.isActive), [departments]);
-  const inactiveDepartments = useMemo(() => departments.filter(d => !d.isActive), [departments]);
+  const inactiveDepartments = useMemo(
+    () => (((inactiveData as any)?.data || []) as Department[]).filter(d => !d.isActive),
+    [inactiveData],
+  );
 
   const activeTable = useReactTable({
     data: activeDepartments,
@@ -370,6 +381,34 @@ export default function DepartmentsPage() {
               }}
             />
           </div>
+
+          {inactiveDepartments.length > 0 && (
+            <button
+              onClick={() => setShowInactive(v => !v)}
+              title={showInactive ? 'Hide archived departments' : 'Show archived departments'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
+                fontSize: 13, fontWeight: 600,
+                border: `1px solid ${showInactive ? 'rgba(239,68,68,0.3)' : 'var(--border-dark)'}`,
+                background: showInactive ? 'rgba(239,68,68,0.1)' : 'var(--search-bg)',
+                color: showInactive ? '#ef4444' : 'var(--text-main)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Archive size={15} />
+              {showInactive ? 'Hide Archived' : 'Show Archived'}
+              <span style={{
+                minWidth: 18, height: 18, padding: '0 5px', borderRadius: 50,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 800,
+                background: showInactive ? '#ef4444' : 'rgba(239,68,68,0.15)',
+                color: showInactive ? '#fff' : '#ef4444',
+              }}>
+                {inactiveDepartments.length}
+              </span>
+            </button>
+          )}
 
           <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
             {meta.total} total department{meta.total !== 1 ? 's' : ''}
@@ -503,10 +542,21 @@ export default function DepartmentsPage() {
         </div>
       </div>
 
-      {inactiveDepartments.length > 0 && (
+      {showInactive && inactiveDepartments.length > 0 && (
         <div className="dark-card" style={{ marginTop: 32 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dark)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>Archived / Inactive Departments</h3>
+            <button
+              onClick={() => setShowInactive(false)}
+              title="Hide archived departments"
+              style={{
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)',
+                borderRadius: 8, padding: '6px', cursor: 'pointer', color: '#ef4444',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <X size={16} />
+            </button>
           </div>
           <div style={{ overflowX: 'auto', opacity: 0.6 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
