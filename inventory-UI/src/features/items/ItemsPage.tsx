@@ -97,7 +97,9 @@ export default function ItemsPage() {
   }, []);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlSearch = searchParams.get('search');
+  // `barcode` is accepted as a legacy alias for `search` so links in older
+  // notification emails (which used ?barcode=) still open the asset drawer.
+  const urlSearch = searchParams.get('search') ?? searchParams.get('barcode');
   const urlOpen = searchParams.get('open');
   const urlCategory = searchParams.get('category');
 

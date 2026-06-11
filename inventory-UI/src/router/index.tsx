@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { RequireAuth, RequireGuest } from './guards';
 
@@ -47,6 +47,14 @@ const GatePassesPage = lazyWithRetry(() => import('@/features/gate-passes/GatePa
 const TransfersPage = lazyWithRetry(() => import('@/features/transfers/TransfersPage'));
 
 
+// Backward-compat: older notification emails linked to /disposal-requests/:id
+// (a path that never had a route, so it fell through to the dashboard). Forward
+// those legacy links to the canonical deep-link that opens the request drawer.
+function LegacyDisposalRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/disposals?open=${id}`} replace />;
+}
+
 const router = createBrowserRouter([
   // Public / Guest routes
   {
@@ -77,6 +85,7 @@ const router = createBrowserRouter([
           { path: '/licenses',    element: <LicensesPage /> },
           { path: '/employees',   element: <EmployeesPage /> },
           { path: '/disposals',   element: <DisposalRequestsPage /> },
+          { path: '/disposal-requests/:id', element: <LegacyDisposalRedirect /> },
           { path: '/gate-passes', element: <GatePassesPage /> },
           { path: '/transfers',   element: <TransfersPage /> },
           { path: '/reports',     element: <ReportsPage /> },
