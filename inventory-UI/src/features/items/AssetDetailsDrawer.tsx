@@ -684,8 +684,8 @@ export default function AssetDetailsDrawer({ item: initialItem, isOpen, onClose 
           .info-item:hover {
             transform: translateY(-3px);
             border-color: var(--accent-yellow);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            background: var(--bg-sidebar);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            background: var(--bg-hover);
           }
           .action-hub {
             display: flex;
